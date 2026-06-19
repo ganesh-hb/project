@@ -275,14 +275,13 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                     userId: user.userId,
                     name: user.name,
                     email: user.email,
-                    groupName: user.userCompanyGroups?.map((ucg) => ucg.group?.groupName).filter(Boolean),
-                    assignments: user.userCompanyGroups?.map((ucg) => ({
-                        companyId: ucg.companyId,
-                        companyName: ucg.company?.companyName,
-                        groupId: ucg.groupId,
-                        groupName: ucg.group?.groupName,
-                        is_parent: ucg.is_parent,
-                    })),
+                    primaryProfile: user.userCompanyGroups?.[0]
+                    ? {
+                        companyName: user.userCompanyGroups[0].company?.companyName,
+                        groupName: user.userCompanyGroups[0].group?.groupName,
+                        is_parent: user.userCompanyGroups[0].is_parent,
+                    }
+                    : null,
                 },
             };
         } catch (error: any) {
@@ -299,7 +298,10 @@ async getUsers(param: any, req?: any) {
     try {
         let queryBuilder = this.userEntity
             .createQueryBuilder('user')
-            .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
+            .leftJoinAndSelect(
+                'user.userCompanyGroups', 'ucg',
+                'ucg.is_parent = :isParent', { isParent: 0 }
+            )
             .leftJoinAndSelect('ucg.company', 'company')
             .leftJoinAndSelect('ucg.group', 'group');
 
@@ -309,8 +311,7 @@ async getUsers(param: any, req?: any) {
             });
         }
 
-        const alias = 'user';
-        const queryString = await this.filter.makeFilterString(param?.filters, alias);
+        const queryString = await this.filter.makeFilterString(param?.filters, 'user');
         if (queryString && queryString !== '') queryBuilder.andWhere(queryString);
 
         const [skip, limit] = (await this.filter.calcPages(param, this.userEntity)) as [number, number];
@@ -321,36 +322,52 @@ async getUsers(param: any, req?: any) {
         const formattedData = data.map((user) => ({
             ...user,
             assignments: user.userCompanyGroups?.map((ucg) => ({
+                id: ucg.id,
                 companyId: ucg.companyId,
                 companyName: ucg.company?.companyName,
                 groupId: ucg.groupId,
                 groupName: ucg.group?.groupName,
                 is_parent: ucg.is_parent,
-            })),
+            })) ?? [],
         }));
 
         return_data = { success: 1, message: 'List fetched successfully', data: formattedData };
     } catch (err: any) {
         return_data = { success: 0, message: err.message };
     }
-
     return return_data;
 }
-
-   async getUser(query: any, req?: any) {
+async getUser(query: any, req?: any) {
     try {
-        const targetId = Number(query);
-        const isCustomer = req?.userRoles?.includes('customer') && !req?.isSuperAdmin;
+        const targetId = Number(query.id ?? query);
+        const profileId = query.profileId ? Number(query.profileId) : null;
 
-        if (isCustomer && req.user.userId !== targetId) {
-            return { success: 0, message: 'Access denied' };
-        }
+        const user = await this.userEntity.findOne({
+            where: { userId: targetId },
+            relations: ['userCompanyGroups', 'userCompanyGroups.company', 'userCompanyGroups.group'],
+        });
 
-        const user = await this.loadUserWithAssignments(targetId);
-        if (!user) throw new NotFoundException('User not found');
+        if (!user) return { success: 0, message: 'User not found' };
 
-        const createdByUser = await this.userEntity.findOne({ where: { userId: user.createdBy } });
-        const updatedByUser = await this.userEntity.findOne({ where: { userId: user.updatedBy } });
+        const [createdByUser, updatedByUser] = await Promise.all([
+            user.createdBy ? this.userEntity.findOne({ where: { userId: user.createdBy }, select: ['name'] }) : null,
+            user.updatedBy ? this.userEntity.findOne({ where: { userId: user.updatedBy }, select: ['name'] }) : null,
+        ]);
+
+        const allAssignments = user.userCompanyGroups ?? [];
+
+        const activeAssignment = profileId != null
+            ? (allAssignments.find((u) => u.id === profileId) ?? null)
+            : (allAssignments.find((u) => u.is_parent === 0) ?? allAssignments[0] ?? null);
+
+        const mapAssignment = (ucg: any) => ({
+            id: ucg.id,
+            companyId: ucg.companyId,
+            companyName: ucg.company?.companyName ?? null,
+            groupId: ucg.groupId,
+            groupName: ucg.group?.groupName ?? null,
+            is_parent: ucg.is_parent,
+        });
 
         return {
             userId: user.userId,
@@ -359,22 +376,16 @@ async getUsers(param: any, req?: any) {
             age: user.age,
             phone: user.phone,
             status: user.status,
-            createdBy: createdByUser?.name,
-            updatedBy: updatedByUser?.name,
+            createdBy: createdByUser?.name ?? null,
+            updatedBy: updatedByUser?.name ?? null,
             userFile: user.userFile,
             createdAt: user.createdAt,
             updatedDate: user.updatedDate,
-            assignments: user.userCompanyGroups?.map((ucg) => ({
-                id: ucg.id,
-                companyId: ucg.companyId,
-                companyName: ucg.company?.companyName,
-                groupId: ucg.groupId,
-                groupName: ucg.group?.groupName,
-                is_parent: ucg.is_parent,
-            })),
+            activeAssignment: activeAssignment ? mapAssignment(activeAssignment) : null,
+            assignments: allAssignments.map(mapAssignment),
         };
-    } catch (err) {
-        return err;
+    } catch (err: any) {
+        return { success: 0, message: err.message };
     }
 }
 
@@ -514,7 +525,7 @@ async getUsers(param: any, req?: any) {
             where: { userId: Number(userId), groupId: Number(groupId), companyId: Number(companyId) },
         });
         if (existing) {
-            return { success: 0, message: 'This profile combination already exists' };
+            return { success: 0, message: 'This profile combination already exiszts' };
         }
 
         const row = this.ucgEntity.create({

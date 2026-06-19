@@ -32,31 +32,32 @@ export class CompanyService {
         return this.finishFailure(res);
     }
 
-    async insertCompany(params: any, companyFile: any) {
-        const queryParams: any = {};
-        let resultData: any = {};
+async insertCompany(params: any, companyFile: any) {
+    const queryParams: any = {};
+    try {
+        if (params.companyName)     queryParams.companyName     = params.companyName;
+        if (params.companyCode)     queryParams.companyCode     = params.companyCode;
+        if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
+        if (params.status)          queryParams.status          = params.status;
+        if (params.email)           queryParams.email           = params.email;
+        if (params.website)         queryParams.website         = params.website;
+        if (params.dialCode)        queryParams.dialCode        = Number(params.dialCode);
+        if (params.phone)           queryParams.phone           = Number(params.phone);
+        if (params.country)         queryParams.country         = params.country;
+        if (params.state)           queryParams.state           = params.state;
+        if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
+        if (params.AddressLineOne)  queryParams.AddressLineOne  = params.AddressLineOne;
+        if (params.ownerName)       queryParams.ownerName       = params.ownerName;
+        if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
+        if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
+        if (companyFile)            queryParams.companyFile     = companyFile.filename;
 
-        try {
-            if (params.companyName)     queryParams.companyName     = params.companyName;
-            if (params.companyCode)     queryParams.companyCode     = params.companyCode;
-            if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
-            if (params.status)          queryParams.status          = params.status;
-            if (companyFile)            queryParams.companyFile     = companyFile.filename;
-
-            const result = await this.companyEntity.insert(queryParams);
-            const insertData = result?.raw?.insertId;
-
-            resultData = {
-                success: 1,
-                message: 'Inserted successfully',
-                data: { insertData },
-            };
-        } catch (err: any) {
-            resultData = { success: 0, message: err?.message };
-        }
-
-        return resultData;
+        const result = await this.companyEntity.insert(queryParams);
+        return { success: 1, message: 'Inserted successfully', data: { insertData: result?.raw?.insertId } };
+    } catch (err: any) {
+        return { success: 0, message: err?.message };
     }
+}
 
     async finishSuccess(res: any, params: any, companyFile: any) {
         const output: any = {
@@ -85,45 +86,42 @@ export class CompanyService {
         return this.finishFailure(res);
     }
 
-    async updateCompany(params: any, companyFile: any) {
-        const queryParams: any = {};
+  async updateCompany(params: any, companyFile: any) {
+    const queryParams: any = {};
 
-        if (!params.companyId) {
-            return { success: 0, message: 'companyId is mandatory' };
+    if (!params.companyId) return { success: 0, message: 'companyId is mandatory' };
+
+    try {
+        if (params.companyName)     queryParams.companyName     = params.companyName;
+        if (params.companyCode)     queryParams.companyCode     = params.companyCode;
+        if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
+        if (params.status)          queryParams.status          = params.status;
+        if (params.email)           queryParams.email           = params.email;
+        if (params.website)         queryParams.website         = params.website;
+        if (params.dialCode)        queryParams.dialCode        = Number(params.dialCode);
+        if (params.phone)           queryParams.phone           = Number(params.phone);
+        if (params.country)         queryParams.country         = params.country;
+        if (params.state)           queryParams.state           = params.state;
+        if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
+        if (params.AddressLineOne)  queryParams.AddressLineOne  = params.AddressLineOne;
+        if (params.ownerName)       queryParams.ownerName       = params.ownerName;
+        if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
+        if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
+        if (companyFile)            queryParams.companyFile     = companyFile.filename;
+
+        queryParams.updatedDate = () => 'NOW()';
+
+        const result = await this.companyEntity.update({ companyId: params.companyId }, queryParams);
+
+        if (companyFile) {
+            await this.fileTransfer.fileTransfer3(companyFile.filename, params.companyId, params.companyId);
         }
 
-        try {
-            if (params.companyName)     queryParams.companyName     = params.companyName;
-            if (params.companyCode)     queryParams.companyCode     = params.companyCode;
-            if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
-            if (params.status)          queryParams.status          = params.status;
-            if (companyFile)            queryParams.companyFile     = companyFile.filename;
-
-            queryParams.updatedDate = () => 'NOW()';
-
-            const result = await this.companyEntity.update(
-                { companyId: params.companyId },
-                queryParams,
-            );
-
-            if (companyFile) {
-                await this.fileTransfer.fileTransfer3(
-                    companyFile.filename,
-                    params.companyId,
-                    params.companyId,
-                );
-            }
-
-            return {
-                success: 1,
-                message: 'Updated successfully',
-                data: { affected: result.affected },
-            };
-        } catch (err: any) {
-            return { success: 0, message: err?.message };
-        }
+        return { success: 1, message: 'Updated successfully', data: { affected: result.affected } };
+    } catch (err: any) {
+        return { success: 0, message: err?.message };
     }
-
+}
     async updateSuccess(result: any, params: any) {
         return { status: result, data: params };
     }

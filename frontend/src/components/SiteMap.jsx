@@ -17,6 +17,20 @@ export default function SiteMap() {
             ],
             redirectTo: 'http://localhost:3000/users'
         },
+        {
+            title: "Companies",
+            items: [
+                "Company List",
+            ],
+            redirectTo: 'http://localhost:3000/company-list'
+        },
+        {
+            title: "Groups",
+            items: [
+                "Group List",
+            ],
+            redirectTo: 'http://localhost:3000/group-list'
+        },
     ];
     const router = useRouter()
     const gotoPage = (e, item) => {

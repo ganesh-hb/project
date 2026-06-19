@@ -5,6 +5,7 @@ import {
     Param,
     Post,
     Put,
+    Query,
     Req,
     UploadedFile,
     UseGuards,
@@ -104,6 +105,7 @@ export class UserController {
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async login(@Body() body: login) {
         const result = await this.userService.login(body);
+        // console.log(result)
         return {
         encrypted: encryptResponse(result),
 };
@@ -114,7 +116,6 @@ export class UserController {
     @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async getUsers(@Body() body: getUserListDto) {
-
     const result = await this.userService.getUsers(body);
     // console.log(encryptResponse(result))
     return {
@@ -123,15 +124,11 @@ export class UserController {
     }
 
     @Get("user-details/:id")
-     @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'))
     @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
-    async getUser(@Param('id') param) {
-    const result = await this.userService.getUser(param);
-    // console.log(result)
-    // console.log(encryptResponse(result))
-    return {
-        encrypted: encryptResponse(result),
-    };
+    async getUser(@Param('id') id: string, @Query('profileId') profileId?: string) {
+        const result = await this.userService.getUser({ id, profileId });
+        return { encrypted: encryptResponse(result) };
     }
 
     @Post('user-confirm-otp')

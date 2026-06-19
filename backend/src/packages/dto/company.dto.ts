@@ -1,21 +1,16 @@
 import { Transform, Type } from "class-transformer";
-import { IsEmail, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Length, Min, ValidateNested } from "class-validator";
-import { EntitySchemaOptions } from "typeorm";
+import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Length, ValidateNested } from "class-validator";
 
-export enum isOptional {
-    YES = "yes",
-    NO = "no"
-}
-export enum isStatus{
-    ACTIVE="active",
-    INACTIVE="inactive",
-    PENDING="pending",
-    BLOCK="block"
+export enum isStatus {
+    ACTIVE = "active",
+    INACTIVE = "inactive",
+    PENDING = "pending",
+    BLOCK = "block"
 }
 
-export class CompanyDto{
+export class CompanyDto {
     @IsString()
-    @Length(2, 20)
+    @Length(2, 100)
     companyName!: string;
 
     @IsString()
@@ -26,49 +21,140 @@ export class CompanyDto{
     @IsEnum(isStatus)
     status!: string;
 
-
+    @IsOptional()
     @IsString()
-    @Length(2, 50)
-    companyLocation!: string;
+    @Length(2, 100)
+    companyLocation?: string;
+
+    @IsOptional()
+    @IsEmail()
+    email?: string;
+
+    @IsOptional()
+    @IsString()
+    website?: string;
+
+    @IsOptional()
+    @IsNumber()
+    @Transform(({ value }) => Number(value))
+    dialCode?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @Transform(({ value }) => Number(value))
+    phone?: number;
+
+    @IsOptional()
+    @IsString()
+    country?: string;
+
+    @IsOptional()
+    @IsString()
+    state?: string;
+
+    @IsOptional()
+    @IsNumber()
+    @Transform(({ value }) => Number(value))
+    postalCode?: number;
+
+    @IsOptional()
+    @IsString()
+    AddressLineOne?: string;
+
+    @IsOptional()
+    @IsString()
+    ownerName?: string;
+
+    @IsOptional()
+    @IsEmail()
+    ownerEmail?: string;
+
+    @IsOptional()
+    @IsString()
+    ownerPhone?: string;
 
     @IsOptional()
     companyFile: any;
-
 }
 
 export class CompanyUpdateDto {
-
     @IsInt()
     @IsNotEmpty()
-    companyId!:number;
+    @Transform(({ value }) => Number(value))
+    companyId!: number;
 
-    @IsNotEmpty()
+    @IsOptional()
     @IsString()
-    @Length(2, 20)
-    companyName!: string;
+    @Length(2, 100)
+    companyName?: string;
 
     @IsOptional()
     @IsString()
     @Length(2, 20)
-    companyCode!: string;
+    companyCode?: string;
 
-
+    @IsOptional()
     @IsString()
-    @Length(2, 50)
-    companyLocation!: string;
+    @Length(2, 100)
+    companyLocation?: string;
 
     @IsOptional()
     @IsString()
     @IsEnum(isStatus)
-    status!: string;
+    status?: string;
+
+    @IsOptional()
+    @IsEmail()
+    email?: string;
+
+    @IsOptional()
+    @IsString()
+    website?: string;
+
+    @IsOptional()
+    @IsNumber()
+    @Transform(({ value }) => Number(value))
+    dialCode?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @Transform(({ value }) => Number(value))
+    phone?: number;
+
+    @IsOptional()
+    @IsString()
+    country?: string;
+
+    @IsOptional()
+    @IsString()
+    state?: string;
+
+    @IsOptional()
+    @IsNumber()
+    @Transform(({ value }) => Number(value))
+    postalCode?: number;
+
+    @IsOptional()
+    @IsString()
+    AddressLineOne?: string;
+
+    @IsOptional()
+    @IsString()
+    ownerName?: string;
+
+    @IsOptional()
+    @IsEmail()
+    ownerEmail?: string;
+
+    @IsOptional()
+    @IsString()
+    ownerPhone?: string;
 
     @IsOptional()
     companyFile: any;
 }
 
-
-
-export class getCompanyListDto{
+export class getCompanyListDto {
     @IsOptional()
     @IsInt()
     @Transform(({ value }) => Number(value))
@@ -78,24 +164,22 @@ export class getCompanyListDto{
     @IsInt()
     @Transform(({ value }) => Number(value))
     limit!: number;
-    
+
     @IsOptional()
-  @ValidateNested()
-  @Type(() => filterDto)
-  filters: any;
+    @ValidateNested()
+    @Type(() => filterDto)
+    filters: any;
 }
 
 export class filterDto {
+    @IsString()
+    @IsNotEmpty()
+    key!: string;
+
+    @IsNotEmpty()
+    value!: string;
 
     @IsString()
-  @IsNotEmpty()
-  key!: string;
-
-  @IsNotEmpty()
-  value!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  operator!: string;
+    @IsNotEmpty()
+    operator!: string;
 }
-

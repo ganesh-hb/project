@@ -203,6 +203,7 @@ export default function AddUserPage() {
                 method: "POST",
                 headers: { endpoint: "user-add" },
                 body: payload,
+                module: 'user',
             });
 
             if (response.ok) {

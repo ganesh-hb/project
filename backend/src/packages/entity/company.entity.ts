@@ -25,6 +25,39 @@ export class CompanyEntity {
     @Column()
     companyFile!: string;
 
+    @Column()
+    email! : string;
+
+    @Column()
+    website!: string;
+
+    @Column()
+    dialCode!:number;
+
+    @Column()
+    phone!:number;
+
+    @Column()
+    country!:string;
+
+    @Column()
+    state!:string;
+
+    @Column()
+    postalCode!:number;
+
+    @Column()
+    AddressLineOne!:string;
+
+    @Column()
+    ownerName!:string;
+
+    @Column()
+    ownerEmail!:string;
+
+    @Column()
+    ownerPhone!:string;
+
     @CreateDateColumn()
     createdAt!: Date;
 

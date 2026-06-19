@@ -81,6 +81,7 @@ export default function ConfirmOtp() {
                 headers: {
                     'Content-Type': 'application/json',
                     endpoint: 'user-confirm-otp',
+                    module: 'user',
                 },
                 body: JSON.stringify({ email, otp: Number(otp) }),
             });

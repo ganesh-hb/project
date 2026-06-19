@@ -4,8 +4,8 @@ import { decryptResponse } from "../lib/crypto";
 const BACKEND = process.env.BACKEND_URL || "http://localhost:4000";
 
 function getServiceBase(request) {
-    const service = request.headers.get("service") || "user";
-    return `${BACKEND}/${service}`;
+    const module = request.headers.get("module") || "user";
+    return `${BACKEND}/${module}`;
 }
 
 export async function GET(request) {
@@ -14,7 +14,9 @@ export async function GET(request) {
         const token = request.headers.get("authorization");
         const base = getServiceBase(request);
 
-        const res = await fetch(`${base}/${endpoint}`, {
+        const profileId = request.headers.get("x-profile-id");
+        const qs = profileId ? `?profileId=${profileId}` : "";
+        const res = await fetch(`${base}/${endpoint}${qs}`, {
             method: "GET",
             headers: { ...(token ? { Authorization: token } : {}) },
         });
@@ -58,10 +60,12 @@ export async function PUT(request) {
 }
 
 export async function POST(request) {
+    console.log("################ in the relay api")
     try {
         const endpoint = request.headers.get("endpoint");
         const contentType = request.headers.get("content-type") || "";
         const token = request.headers.get("authorization");
+        const module = request.headers.get("module");
         const base = getServiceBase(request);
 
         let body;
@@ -75,7 +79,7 @@ export async function POST(request) {
         } else {
             body = await request.formData();
         }
-
+        console.log(`${base}/${endpoint}##################### relay api post`)
         const res = await fetch(`${base}/${endpoint}`, { method: "POST", headers: fetchHeaders, body });
         const payload = await res.json();
         const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;

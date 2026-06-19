@@ -3,8 +3,6 @@ import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import Header from "./Header";
 import { userListContext } from "./hooks/UserListContext";
-
-
 import {
     Pagination,
     PaginationContent,
@@ -82,6 +80,7 @@ export default function UsersPage() {
                 headers: {
                     ...authHeaders(),
                     endpoint: "user-list",
+                    module: "user"
                 },
                 body: JSON.stringify(body),
             });
@@ -103,8 +102,6 @@ export default function UsersPage() {
                 ? decryptResponse(payload.encrypted)
                 : payload;
 
-            // Map API response to the shape used by this component.
-            // New backend returns user.assignments[] instead of flat groupName[]/companyName[].
             setUsers(
                 Array.isArray(data)
                     ? data
@@ -116,7 +113,6 @@ export default function UsersPage() {
                         user_status: user.status,
                         user_userFile: user.userFile,
                         user_age: user.age,
-                        // New: structured assignments [{ companyId, companyName, groupId, groupName, is_parent }]
                         assignments: Array.isArray(user.assignments) ? user.assignments : [],
                     }))
             );
@@ -227,7 +223,6 @@ export default function UsersPage() {
                         </div>
                     )}
 
-                    {/* ── Grid view ─────────────────────────────────────────── */}
                     {!loading && !error && viewMode === "grid" && (
                         <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
                             {users?.map((user, index) => (

@@ -112,6 +112,7 @@ export default function LoginPage() {
                 headers: {
                     endpoint: "user-login",
                     "Content-Type": "application/json",
+                    module: "user"
                 },
                 body: JSON.stringify(formData),
             });

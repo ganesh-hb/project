@@ -62,6 +62,7 @@ export default function ResetPassword() {
                 headers: {
                     'Content-Type': 'application/json',
                     endpoint: 'user-resetpass',
+                    module: 'user'
                 },
                 body: JSON.stringify({
                     token,

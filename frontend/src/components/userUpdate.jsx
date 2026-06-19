@@ -240,6 +240,7 @@ export default function EditUserPage({ user, onBack }) {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                     endpoint: "user-update",
+                    module: 'user',
                 },
                 body: payload,
             });

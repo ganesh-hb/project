@@ -83,6 +83,7 @@ export default function Header({ onSearch, page }) {
                 headers: {
                     ...authHeaders(),
                     endpoint: `user-details/${loggedIn}`,
+                    module: "user"
                 },
             });
 

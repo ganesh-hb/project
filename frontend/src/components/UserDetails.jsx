@@ -2,6 +2,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditUserPage from "./userUpdate";
+import { useContext } from "react";
+import { loginContext } from "./hooks/LoginContext";
 import Header from "./Header";
 import { authHeaders } from "@/app/lib/auth";
 
@@ -15,8 +17,10 @@ export default function UserDetailsPage({ id }) {
     const [addForm, setAddForm] = useState({ groupId: "", companyId: "", isActive: "Active" });
     const [addError, setAddError] = useState("");
     const [addLoading, setAddLoading] = useState(false);
+    const [selectedProfileIndex, setSelectedProfileIndex] = useState(0);
     const router = useRouter();
     const route = useRouter();
+    const { switchProfile } = useContext(loginContext);
 
     const gotoPages = (e, url) => {
         e.preventDefault();
@@ -24,11 +28,12 @@ export default function UserDetailsPage({ id }) {
         route.push(`http://localhost:3000${url}`);
     };
 
-    const fetchUser = async () => {
+    const fetchUser = async (profileId = null) => {
+        const headers = { ...authHeaders(), endpoint: `user-details/${id}` };
+        if (profileId) headers["x-profile-id"] = String(profileId);
         const allData = await fetch(`http://localhost:3000/relayapi`, {
             method: "GET",
-            headers: { ...authHeaders(), endpoint: `user-details/${id}` },
-            next: { revalidate: 60 },
+            headers,
         });
         const res = await allData.json();
         setUser(res);
@@ -125,13 +130,13 @@ export default function UserDetailsPage({ id }) {
     const imageurl = `http://localhost:4000/upload/${userData.user_userId}/${userData.user_userFile}`;
     const assignments = Array.isArray(userData.assignments) ? userData.assignments : [];
 
-    const primaryAssignment = assignments.find((a) => a.is_parent === 0) || null;
+    const selectedAssignment = user.activeAssignment || assignments[selectedProfileIndex] || null;
 
-    const formattedGroupName = primaryAssignment?.groupName
-        ? primaryAssignment.groupName.replace(/([A-Z])/g, " $1").trim()
+    const formattedGroupName = selectedAssignment?.groupName
+        ? selectedAssignment.groupName.replace(/([A-Z])/g, " $1").trim()
         : "N/A";
 
-    const formattedCompanyName = primaryAssignment?.companyName || "N/A";
+    const formattedCompanyName = selectedAssignment?.companyName || "N/A";
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "N/A";
@@ -289,15 +294,14 @@ export default function UserDetailsPage({ id }) {
                                         {assignments.map((a, i) => (
                                             <div
                                                 key={a.id || i}
-                                                className="rounded-xl border border-gray-100 bg-gray-50 p-5 shadow-sm hover:shadow-md transition"
-                                            >
+                                                className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition ${selectedProfileIndex === i ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-gray-50"}`}>
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>
-                                                    {a.is_parent === 0 && (
-                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Primary</span>
+                                                    {selectedProfileIndex === i && (
+                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Active</span>
                                                     )}
                                                 </div>
-                                                <div className="space-y-2">
+                                                <div className="space-y-2 mb-4">
                                                     <div>
                                                         <p className="text-xs text-gray-400">Company</p>
                                                         <p className="font-semibold text-gray-800">{a.companyName || "N/A"}</p>
@@ -309,6 +313,19 @@ export default function UserDetailsPage({ id }) {
                                                         </p>
                                                     </div>
                                                 </div>
+                                                {selectedProfileIndex !== i && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedProfileIndex(i);
+                                                            switchProfile(a);
+                                                            fetchUser(a.id);
+                                                            setActiveTab("summary");
+                                                        }}
+                                                        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 transition"
+                                                    >
+                                                        Set as Active
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

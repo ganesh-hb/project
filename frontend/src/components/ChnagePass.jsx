@@ -52,7 +52,8 @@ export default function ChangePassword() {
                 headers: {
                     ...authHeaders(),
                     "Content-Type": "application/json",
-                    endpoint: "user-changepass"
+                    endpoint: "user-changepass",
+                    module: 'user',
                 },
                 body: JSON.stringify({
                     email: isLogin?.email,
