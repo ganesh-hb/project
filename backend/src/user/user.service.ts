@@ -59,9 +59,6 @@ export class UserService {
         await this.ucgEntity.save(rows);
     }
 
-    
-    //  Load a user with all their company+group assignments (with joined relations).
-     
     private async loadUserWithAssignments(userId: number) {
         return this.userEntity.findOne({
             where: { userId },
@@ -245,7 +242,7 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             .where('user.email = :email', { email: body.email })
             .getOne();
             // console.log(user,"####################### user login")
-            if (!user) {
+            if (!user) {    
                 return { success: 0, message: 'Enter valid Email and password' };
             }
             const isMatch = await bcrypt.compare(
@@ -345,7 +342,6 @@ async getUsers(param: any, req?: any) {
         const targetId = Number(query);
         const isCustomer = req?.userRoles?.includes('customer') && !req?.isSuperAdmin;
 
-        // customer can only view their own profile
         if (isCustomer && req.user.userId !== targetId) {
             return { success: 0, message: 'Access denied' };
         }
@@ -506,4 +502,30 @@ async getUsers(param: any, req?: any) {
             return { success: 0, message: 'Something went wrong' };
         }
     }
+
+    async addProfile(body: { userId: number; groupId: number; companyId: number; isActive: string }) {
+    try {
+        const { userId, groupId, companyId, isActive } = body;
+        if (!userId || !groupId || !companyId) {
+            return { success: 0, message: 'userId, groupId and companyId are required' };
+        }
+
+        const existing = await this.ucgEntity.findOne({
+            where: { userId: Number(userId), groupId: Number(groupId), companyId: Number(companyId) },
+        });
+        if (existing) {
+            return { success: 0, message: 'This profile combination already exists' };
+        }
+
+        const row = this.ucgEntity.create({
+            userId: Number(userId),
+            groupId: Number(groupId),
+            companyId: Number(companyId),
+            is_parent: Number(userId), 
+        });
+        return { success: 1, message: 'Profile added successfully' };
+    } catch (err: any) {
+        return { success: 0, message: err.message };
+    }
+}
 }

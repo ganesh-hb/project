@@ -156,4 +156,12 @@ export class UserController {
         console.log('hello')
         return await this.userService.verifyPassword(body)
     }
+
+    @Post('user-add-profile')
+    @UseGuards(AuthGuard('jwt'))
+    @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+    async addProfile(@Body() body: { userId: number; groupId: number; companyId: number; isActive: string }) {
+        const result = await this.userService.addProfile(body);
+        return { encrypted: encryptResponse(result) };
+    }
 }
