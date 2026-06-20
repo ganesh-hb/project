@@ -35,7 +35,7 @@ export class CompanyEntity {
     dialCode!:number;
 
     @Column()
-    phone!:number;
+    phone!:string;
 
     @Column()
     country!:string;

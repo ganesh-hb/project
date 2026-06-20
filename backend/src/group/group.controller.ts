@@ -16,20 +16,8 @@ export class GroupController {
     @Post('group-add')
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File){
-            if (groupFile) {
-                let allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
-
-                if (!allowedTypes.includes(groupFile.mimetype)){
-                    return {
-                        status: 0,
-                        message: "invalid File type"
-                    }
-                }
-            }else{
-              return "File required!!!"
-            }
             let param = body
-            return await this.groupService.startInsertGroup(param,groupFile)
+            return await this.groupService.startInsertGroup(param)
     }
 
 
@@ -37,22 +25,7 @@ export class GroupController {
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async updateGroup(@Body() body: GroupUpdateDto, @UploadedFile() groupFile: Express.Multer.File) {
         try {
-            if (groupFile) {
-                let allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
-
-                if (!allowedTypes.includes(groupFile.mimetype)) {
-                    return {
-                        status: 0,
-                        message: "invalid File type"
-                    }
-                }
-                return await this.groupService.startUpdate(body,groupFile)
-            }else{
-                return {
-                    status : 0,
-                    message :"file should not be empty "
-                }
-            }
+           return await this.groupService.startUpdate(body)
      
         } catch (err) {
             return err

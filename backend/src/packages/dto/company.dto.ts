@@ -40,8 +40,7 @@ export class CompanyDto {
     dialCode?: number;
 
     @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => Number(value))
+    @IsString()
     phone?: number;
 
     @IsOptional()

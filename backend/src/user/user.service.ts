@@ -141,11 +141,6 @@ export class UserService {
 
 async startUpdate(params: any, userFile?: any, req?: any) {
     if (req?.scopedCompanyIds?.length) {
-        const assignment = await this.ucgEntity.findOne({
-            where: {
-                userId: params.userId,
-            },
-        });
 
         const belongsToCompany = await this.ucgEntity
             .createQueryBuilder('ucg')
@@ -255,9 +250,9 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 return { success: 0, message: 'Enter valid Email and password' };
             }
 
-            const isSuperAdmin = user.userCompanyGroups?.some(
-                (ucg) => ucg.group?.groupName === 'superAdmin',
-            );
+            // const isSuperAdmin = user.userCompanyGroups?.some(
+            //     (ucg) => ucg.group?.groupName === 'superAdmin',
+            // );
 
             const payload = {
                 userId: user.userId,
@@ -394,30 +389,23 @@ async getUser(query: any, req?: any) {
             if (!body.email || !body.password || !body.newpass || !body.confirmpass) {
                 return { success: 0, message: 'Required fields missing' };
             }
-
-            const user = await this.userEntity.findOne({
-                where: { email: body.email },
-            });
-
-            if (!user) return { success: 0, message: 'User not found' };
-
-            const isMatch = await bcrypt.compare(body.password, user.password);
-            if (!isMatch) return { success: 0, message: 'Current password is incorrect' };
-
             if (body.newpass !== body.confirmpass) {
                 return { success: 0, message: 'Password mismatch' };
             }
+            const user = await this.userEntity.findOne({ where: { email: body.email } });
+            if (!user) return { success: 0, message: 'User not found' };
 
-            const samePassword = await bcrypt.compare(body.newpass, user.password);
-            if (samePassword) {
-                return { success: 0, message: 'New password should not be same as old password' };
-            }
+            const [isMatch, isSame] = await Promise.all([
+                bcrypt.compare(body.password, user.password),
+                bcrypt.compare(body.newpass, user.password),
+            ]);
+            if (!isMatch) return { success: 0, message: 'Current password is incorrect' };
+            if (isSame) return { success: 0, message: 'New password should not be same as old password' };
 
             await this.userEntity.update(
                 { userId: user.userId },
                 { password: await bcrypt.hash(body.newpass, 10) },
             );
-
             return { success: 1, message: 'Password updated successfully' };
         } catch (error) {
             return { success: 0, message: 'Something went wrong', error };
@@ -501,11 +489,11 @@ async getUser(query: any, req?: any) {
             return { success: 0, message: 'Something went wrong' };
         }
     }
-
     async verifyPassword(body: any) {
         try {
             const user = await this.userEntity.findOne({ where: { email: body.email } });
-            const isMatch = await bcrypt.compare(body.password, user!.password);
+            if (!user) return { success: 0, message: 'User not found' };
+            const isMatch = await bcrypt.compare(body.password, user.password);
             return isMatch
                 ? { success: 1, message: 'Password matched successfully', isMatch }
                 : { success: 0, message: 'Password mismatch', isMatch };
@@ -534,6 +522,7 @@ async getUser(query: any, req?: any) {
             companyId: Number(companyId),
             is_parent: Number(userId), 
         });
+        await this.ucgEntity.save(row); 
         return { success: 1, message: 'Profile added successfully' };
     } catch (err: any) {
         return { success: 0, message: err.message };

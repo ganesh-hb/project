@@ -52,8 +52,6 @@ export class GroupUpdateDto {
     @IsEnum(isStatus)
     status!: string;
 
-    @IsOptional()
-    groupFile: any;
 }
 
 

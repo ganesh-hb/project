@@ -12,7 +12,7 @@ export function proxy(request) {
 }
 
 export const config = {
-    matcher: ['/contact', '/', '/users', '/user:path*', '/', '/reset-pass'],
+    matcher: ['/contact', '/', '/users', '/user:path*', '/', '/reset-pass', '/company-add'],
 
 }
 

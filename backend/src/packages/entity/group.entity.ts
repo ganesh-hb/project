@@ -20,9 +20,6 @@ export class GroupEntity {
     groupCode!: string;
 
     @Column({ nullable: true })
-    groupFile!: string;
-
-    @Column({ nullable: true })
     addedBy!: number;
 
     @Column()

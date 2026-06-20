@@ -16,6 +16,7 @@ export class CompanyController {
     @Post('company-add')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async insertCompany(@Req() req, @Body() body: CompanyDto, @UploadedFile() companyFile: Express.Multer.File){
+        console.log(body,'############################ company controller')
             if (companyFile) {
                 let allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
 

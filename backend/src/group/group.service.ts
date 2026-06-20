@@ -25,15 +25,15 @@ export class GroupService {
     protected ucgEntity?: Repository<UserCompanyGroupEntity>;
 
 
-    async startInsertGroup(params: any, groupFile: any) {
-        const res = await this.insertGroup(params, groupFile);
+    async startInsertGroup(params: any) {
+        const res = await this.insertGroup(params);
         if (res.success === 1) {
-            return this.finishSuccess(res, params, groupFile);
+            return this.finishSuccess(res, params);
         }
         return this.finishFailure(res);
     }
 
-    async insertGroup(params: any, groupFile: any) {
+    async insertGroup(params: any) {
         const queryParams: any = {};
         let resultData: any = {};
 
@@ -41,7 +41,6 @@ export class GroupService {
             if (params.groupName)  queryParams.groupName  = params.groupName;
             if (params.groupCode)  queryParams.groupCode  = params.groupCode;
             if (params.status)     queryParams.status     = params.status;
-            if (groupFile)         queryParams.groupFile  = groupFile.filename;
 
             const result = await this.groupEntity!.insert(queryParams);
             const insertData = result?.raw?.insertId;
@@ -58,7 +57,7 @@ export class GroupService {
         return resultData;
     }
 
-    async finishSuccess(res: any, params: any, groupFile: any) {
+    async finishSuccess(res: any, params: any) {
         const output: any = {
             settings: {
                 id: res?.data?.insertData,
@@ -68,8 +67,6 @@ export class GroupService {
             },
         };
 
-        const fid: number = parseInt(output.settings.id);
-        await this.fileTransfer.fileTransfer2(groupFile.filename, fid, fid);
         return output;
     }
 
@@ -78,15 +75,15 @@ export class GroupService {
     }
 
 
-    async startUpdate(params: any, groupFile: any) {
-        const res = await this.updateGroup(params, groupFile);
+    async startUpdate(params: any) {
+        const res = await this.updateGroup(params);
         if (res.success === 1) {
             return this.updateSuccess(res, params);
         }
         return this.finishFailure(res);
     }
 
-    async updateGroup(params: any, groupFile: any) {
+    async updateGroup(params: any) {
         const queryParams: any = {};
 
         if (!params.groupId) {
@@ -97,7 +94,6 @@ export class GroupService {
             if (params.groupName) queryParams.groupName = params.groupName;
             if (params.groupCode) queryParams.groupCode = params.groupCode;
             if (params.status)    queryParams.status    = params.status;
-            if (groupFile)        queryParams.groupFile = groupFile.filename;
 
             queryParams.updatedDate = () => 'NOW()';
 
@@ -105,14 +101,6 @@ export class GroupService {
                 { groupId: params.groupId },
                 queryParams,
             );
-
-            if (groupFile) {
-                await this.fileTransfer.fileTransfer2(
-                    groupFile.filename,
-                    params.groupId,
-                    params.groupId,
-                );
-            }
 
             return {
                 success: 1,

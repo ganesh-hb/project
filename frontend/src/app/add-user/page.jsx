@@ -12,6 +12,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import Header from "@/components/Header";
 import { AddFormSchema } from "@/components/Zod";
+import { authHeaders } from "../lib/auth";
 
 const MIN_AGE_MS = 18 * 365 * 24 * 60 * 61 * 1000;
 
@@ -97,7 +98,10 @@ export default function AddUserPage() {
             try {
                 const res = await fetch("http://localhost:4000/company/company-list", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify({}),
                 });
                 const data = await res.json();
@@ -201,9 +205,11 @@ export default function AddUserPage() {
 
             const response = await fetch("http://localhost:3000/relayapi", {
                 method: "POST",
-                headers: { endpoint: "user-add" },
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                    endpoint: "user-add", module: "user"
+                },
                 body: payload,
-                module: 'user',
             });
 
             if (response.ok) {
