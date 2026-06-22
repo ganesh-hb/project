@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from 'src/packages/config/multer.config';
 import { CompanyService } from './company.service';
 import { CompanyDto, CompanyUpdateDto, getCompanyListDto } from 'src/packages/dto/company.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 
 @Controller('company')
@@ -14,9 +15,9 @@ export class CompanyController {
     }
 
     @Post('company-add')
+    @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async insertCompany(@Req() req, @Body() body: CompanyDto, @UploadedFile() companyFile: Express.Multer.File){
-        console.log(body,'############################ company controller')
             if (companyFile) {
                 let allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
 
@@ -62,9 +63,10 @@ export class CompanyController {
 
 
     @Post('company-list')
+    @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async getCompanys(@Body() body:getCompanyListDto) {
-    return await this.companyService.getCompanys(body)
+    return await this.companyService.getCompanies(body)
   } 
 
     @Get("company-details/:id")

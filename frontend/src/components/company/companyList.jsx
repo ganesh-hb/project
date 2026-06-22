@@ -119,10 +119,10 @@ export default function CompanyList() {
                                     {companies.map((company, index) => (
                                         <tr
                                             key={company.companyId || index}
-                                            className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
+                                            className="border-b border-gray-100 hover:bg-gray-50 transition"
                                         >
                                             <td className="px-5 py-4 text-gray-500 text-sm">{index + 1}</td>
-                                            <td className="px-5 py-4 font-medium text-blue-600 hover:underline">
+                                            <td className="px-5 py-4 font-medium text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/company/${company.companyId}`)}>
                                                 {company.companyName}
                                             </td>
                                             <td className="px-5 py-4 text-gray-600">{company.email || "-"}</td>

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from 'src/packages/config/multer.config';
 import { GroupService } from './group.service';
 import { getGroupListDto, GroupDto, GroupUpdateDto } from 'src/packages/dto/group.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 
 @Controller('group')
@@ -14,6 +15,7 @@ export class GroupController {
     }
 
     @Post('group-add')
+     @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File){
             let param = body
@@ -34,6 +36,7 @@ export class GroupController {
 
 
     @Post('group-list')
+    @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async getGroups(@Body() body:getGroupListDto) {
     return await this.groupService.getGroups(body)

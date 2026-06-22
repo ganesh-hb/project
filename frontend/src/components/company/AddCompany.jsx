@@ -129,7 +129,7 @@ export default function AddCompany() {
             <nav className="p-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                 <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                 <span className="text-gray-400">{">>"}</span>
-                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/companies")}>Companies</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/company-list")}>Companies</span>
                 <span className="text-gray-400">{">>"}</span>
                 <span className="text-gray-800 cursor-pointer">Add Company</span>
             </nav>

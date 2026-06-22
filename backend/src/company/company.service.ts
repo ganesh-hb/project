@@ -126,7 +126,7 @@ async insertCompany(params: any, companyFile: any) {
         return { status: result, data: params };
     }
 
-   async getCompanys(param: any) {
+   async getCompanies(param: any) {
         let return_data: any = {};
         try {
             const queryBuilder = this.companyEntity.createQueryBuilder('company');

@@ -130,6 +130,9 @@ export default function Header({ onSearch, page }) {
             document.cookie = "loggedIn=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
         document.cookie =
             document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+        localStorage.removeItem("accessToken")
+        localStorage.removeItem("token")
+        localStorage.removeItem("userInfo")
 
         router.refresh();
     };
