@@ -3,16 +3,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
+import CompanyUpdate from "./CompanyUpdate";
 
 export default function CompanyDetails({ id }) {
     const router = useRouter();
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("summary");
+    const [showEdit, setShowEdit] = useState(false);
 
     useEffect(() => {
         fetchCompany();
-    }, []);
+    }, [showEdit]);
 
     const fetchCompany = async () => {
         setLoading(true);
@@ -26,6 +28,7 @@ export default function CompanyDetails({ id }) {
                 },
             });
             const data = await res.json();
+            console.log(data)
             setCompany(data);
         } catch (err) {
             console.error(err);
@@ -64,6 +67,10 @@ export default function CompanyDetails({ id }) {
         );
     }
 
+    if (showEdit) {
+        return <CompanyUpdate id={id} onBack={() => setShowEdit(false)} />;
+    }
+
     const assignments = Array.isArray(company.assignments) ? company.assignments : [];
     const imageUrl = `http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`;
 
@@ -72,7 +79,6 @@ export default function CompanyDetails({ id }) {
             <Header page="company-details" />
 
             <div className="p-6">
-                {/* Breadcrumb */}
                 <nav className="mb-4 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
@@ -81,13 +87,12 @@ export default function CompanyDetails({ id }) {
                     <span className="text-gray-800">Details</span>
                 </nav>
 
-                {/* Header row */}
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Company Details</h1>
                     <div className="flex items-center gap-4">
                         <button
                             className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700"
-                        // onClick={() => router.push(`/company-update/${company.companyId}`)}
+                            onClick={() => setShowEdit(true)}
                         >
                             Edit Company
                         </button>
@@ -101,7 +106,6 @@ export default function CompanyDetails({ id }) {
                 </div>
 
                 <div className="grid grid-cols-12 gap-6">
-                    {/* Sidebar */}
                     <div className="col-span-12 lg:col-span-3">
                         <div className="rounded-2xl bg-white p-5 shadow-sm">
                             <div className="border-b pb-5">
@@ -128,13 +132,10 @@ export default function CompanyDetails({ id }) {
                         </div>
                     </div>
 
-                    {/* Main content */}
                     <div className="col-span-12 lg:col-span-9">
 
-                        {/* SUMMARY TAB */}
                         {activeTab === "summary" && (
                             <div className="grid gap-6 lg:grid-cols-2">
-                                {/* Company card */}
                                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                                     <div className="flex items-center gap-4 border-b pb-5">
                                         <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-md">
@@ -143,7 +144,7 @@ export default function CompanyDetails({ id }) {
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-semibold text-gray-800">{company.companyName}</h2>
-                                            <span className={statusBadge(company.status)} >{company.status}</span>
+                                            <span className={statusBadge(company.status)}>{company.status}</span>
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-4">
@@ -154,9 +155,7 @@ export default function CompanyDetails({ id }) {
                                     </div>
                                 </div>
 
-                                {/* Right column */}
                                 <div className="space-y-6">
-                                    {/* Contact */}
                                     <div className="rounded-2xl bg-white p-6 shadow-sm">
                                         <h3 className="mb-5 text-lg font-semibold text-gray-800">Contact Info</h3>
                                         <div className="space-y-4">
@@ -164,8 +163,6 @@ export default function CompanyDetails({ id }) {
                                             <div><p className="text-sm text-gray-500">Phone</p><p className="font-medium text-gray-800">{company.dialCode ? `+${company.dialCode} ` : ""}{company.phone || "N/A"}</p></div>
                                         </div>
                                     </div>
-
-                                    {/* Address */}
                                     <div className="rounded-2xl bg-white p-6 shadow-sm">
                                         <h3 className="mb-5 text-lg font-semibold text-gray-800">Address</h3>
                                         <div className="space-y-4">
@@ -176,7 +173,6 @@ export default function CompanyDetails({ id }) {
                                     </div>
                                 </div>
 
-                                {/* Owner Info — full width */}
                                 <div className="rounded-2xl bg-white p-6 shadow-sm lg:col-span-2">
                                     <h3 className="mb-5 text-lg font-semibold text-gray-800">Owner Information</h3>
                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -188,7 +184,6 @@ export default function CompanyDetails({ id }) {
                             </div>
                         )}
 
-                        {/* USERS TAB */}
                         {activeTab === "users" && (
                             <div className="rounded-2xl bg-white p-6 shadow-sm">
                                 <h3 className="mb-6 text-xl font-semibold text-gray-800">Users in this Company</h3>
@@ -211,16 +206,14 @@ export default function CompanyDetails({ id }) {
                                             <tbody>
                                                 {assignments.map((a, i) => (
                                                     <tr
-                                                        key={a.userId || i}
+                                                        key={i}
                                                         className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
                                                         onClick={() => router.push(`/user/${a.userId}`)}
                                                     >
                                                         <td className="px-5 py-4 text-gray-500 text-sm">{i + 1}</td>
                                                         <td className="px-5 py-4 font-medium text-blue-600 hover:underline">{a.userName || "N/A"}</td>
                                                         <td className="px-5 py-4 text-gray-600">{a.userEmail || "N/A"}</td>
-                                                        <td className="px-5 py-4 text-gray-600">
-                                                            {a.groupName ? a.groupName.replace(/([A-Z])/g, " $1").trim() : "N/A"}
-                                                        </td>
+                                                        <td className="px-5 py-4 text-gray-600">{a.groupName ? a.groupName.replace(/([A-Z])/g, " $1").trim() : "N/A"}</td>
                                                         <td className="px-5 py-4">
                                                             <span className={a.is_parent === 0
                                                                 ? "rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700"
@@ -240,6 +233,6 @@ export default function CompanyDetails({ id }) {
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

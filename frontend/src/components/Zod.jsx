@@ -94,3 +94,29 @@ export const AddFormSchema = z.object({
             return ACCEPTED_IMAGE_TYPES.includes(file.type);
         }, ".jpg, .jpeg, .png and .webp files are accepted."),
 });
+
+export const CompanyUpdateSchema = z.object({
+    companyName: z.string().min(2, "Company name must be at least 2 characters"),
+    companyCode: z.string().min(2, "Company code must be at least 2 characters"),
+    companyLocation: z.string(),
+    status: z.enum(["active", "inactive", "pending", "block"], {
+        errorMap: () => ({ message: "Select a valid status" }),
+    }),
+    email: z.string()
+        .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid email"),
+    website: z.string(),
+    dialCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
+    phone: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
+    country: z.string(),
+    state: z.string(),
+    postalCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
+    AddressLineOne: z.string(),
+    ownerName: z.string(),
+    ownerEmail: z.string()
+        .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid owner email"),
+    ownerPhone: z.string(),
+    companyFile: z.any()
+        .optional()
+        .refine((file) => !file || file.size <= 5 * 1024 * 1024, "Max file size is 5MB.")
+        .refine((file) => !file || ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type), "Only JPG/PNG/WEBP files accepted."),
+});

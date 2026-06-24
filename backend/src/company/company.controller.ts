@@ -35,29 +35,20 @@ export class CompanyController {
     }
 
 
-    @Put('company-update') 
+    @Put('company-update')
+    @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async updateCompany(@Body() body: CompanyUpdateDto, @UploadedFile() companyFile: Express.Multer.File) {
         try {
             if (companyFile) {
-                let allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
-
+                const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
                 if (!allowedTypes.includes(companyFile.mimetype)) {
-                    return {
-                        status: 0,
-                        message: "invalid File type"
-                    }
-                }
-                return await this.companyService.startUpdate(body,companyFile)
-            }else{
-                return {
-                    status : 0,
-                    message :"file should not be empty "
+                    return { status: 0, message: "invalid File type" };
                 }
             }
-     
+            return await this.companyService.startUpdate(body, companyFile || null);
         } catch (err) {
-            return err
+            return err;
         }
     }
 

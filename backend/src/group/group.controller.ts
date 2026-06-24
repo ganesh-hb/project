@@ -23,14 +23,13 @@ export class GroupController {
     }
 
 
-    @Put('group-update') 
-    @UseInterceptors(FileInterceptor('groupFile', multerConfig))
-    async updateGroup(@Body() body: GroupUpdateDto, @UploadedFile() groupFile: Express.Multer.File) {
+    @Put('group-update')
+    @UseGuards(AuthGuard('jwt'))
+    async updateGroup(@Body() body: GroupUpdateDto) {
         try {
-           return await this.groupService.startUpdate(body)
-     
+            return await this.groupService.startUpdate(body);
         } catch (err) {
-            return err
+            return err;
         }
     }
 

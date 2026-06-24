@@ -117,6 +117,7 @@ export default function GroupList() {
                                         <tr
                                             key={group.groupId || index}
                                             className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
+                                            onClick={() => router.push(`/group/${group.groupId}`)}
                                         >
                                             <td className="px-5 py-4 text-gray-500 text-sm">{index + 1}</td>
                                             <td className="px-5 py-4 font-medium text-blue-600 hover:underline">

@@ -1,14 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { useRouter } from "next/navigation";
-import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
+import { authHeaders } from "@/app/lib/auth";
 import { CompanyUpdateSchema } from "../Zod";
 
-
-export default function AddCompany() {
-    const router = useRouter();
+export default function CompanyUpdate({ id, onBack }) {
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+    const [errors, setErrors] = useState({});
+    const [companyFile, setCompanyFile] = useState(null);
+    const [preview, setPreview] = useState("");
 
     const [formData, setFormData] = useState({
         companyName: "",
@@ -28,15 +30,49 @@ export default function AddCompany() {
         ownerPhone: "",
     });
 
-    const [companyFile, setCompanyFile] = useState(null);
-    const [preview, setPreview] = useState("");
-    const [errors, setErrors] = useState({});
-    const [loading, setLoading] = useState(false);
+    useEffect(() => {
+        fetchCompany();
+    }, []);
 
-    const gotoPages = (e, url) => {
-        e.stopPropagation();
-        e.preventDefault();
-        router.push(url);
+    const fetchCompany = async () => {
+        setFetching(true);
+        try {
+            const res = await fetch("/relayapi", {
+                method: "GET",
+                headers: {
+                    ...authHeaders(),
+                    endpoint: `company-details/${id}`,
+                    module: "company",
+                },
+            });
+            const data = await res.json();
+            if (data?.companyId) {
+                setFormData({
+                    companyName: data.companyName || "",
+                    companyCode: data.companyCode || "",
+                    companyLocation: data.companyLocation || "",
+                    status: data.status || "active",
+                    email: data.email || "",
+                    website: data.website || "",
+                    dialCode: data.dialCode || "",
+                    phone: data.phone || "",
+                    country: data.country || "",
+                    state: data.state || "",
+                    postalCode: data.postalCode || "",
+                    AddressLineOne: data.AddressLineOne || "",
+                    ownerName: data.ownerName || "",
+                    ownerEmail: data.ownerEmail || "",
+                    ownerPhone: data.ownerPhone || "",
+                });
+                if (data.companyFile) {
+                    setPreview(`http://localhost:4000/upload/company/${data.companyId}/${data.companyFile}`);
+                }
+            }
+        } catch (err) {
+            toast.error("Failed to load company data.", { position: "top-right" });
+        } finally {
+            setFetching(false);
+        }
     };
 
     const handleChange = (e) => {
@@ -56,7 +92,11 @@ export default function AddCompany() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const result = CompanyUpdateSchema.safeParse({ ...formData, companyFile });
+        const result = CompanyUpdateSchema.safeParse({
+            ...formData,
+            companyFile: companyFile || undefined,
+        });
+
         if (!result.success) {
             const fieldErrors = {};
             result.error.issues.forEach((err) => {
@@ -69,6 +109,7 @@ export default function AddCompany() {
         setLoading(true);
         try {
             const payload = new FormData();
+            payload.append("companyId", String(id));
             Object.entries(formData).forEach(([key, value]) => {
                 if (value !== "" && value !== null && value !== undefined) {
                     payload.append(key, String(value));
@@ -76,24 +117,22 @@ export default function AddCompany() {
             });
             if (companyFile) payload.append("companyFile", companyFile);
 
-            // console.log(...payload)
-
-            const response = await fetch("/relayapi", {
-                method: "POST",
+            const response = await fetch("http://localhost:3000/relayapi", {
+                method: "PUT",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                    endpoint: "company-add",
+                    endpoint: "company-update",
                     module: "company",
                 },
                 body: payload,
             });
 
             const data = await response.json();
-            if (response.ok && data?.settings?.success === 1) {
-                toast.success("Company created successfully", { position: "top-right" });
-                setTimeout(() => router.push("/company-list"), 1000);
+            if (response.ok) {
+                toast.success("Company updated successfully", { position: "top-right" });
+                setTimeout(() => onBack(), 1000);
             } else {
-                toast.error(data?.message || "Failed to create company.", { position: "top-right" });
+                toast.error(data?.message || "Failed to update company.", { position: "top-right" });
             }
         } catch (err) {
             toast.error(`${err}`, { position: "top-right" });
@@ -106,23 +145,28 @@ export default function AddCompany() {
     const labelClass = "mb-2 block text-sm font-medium text-gray-700";
     const errorClass = "mt-1 text-sm text-red-500";
 
+    if (fetching) {
+        return (
+            <div className="min-h-screen bg-[#f5f6f8]">
+                <Header page="company-update" />
+                <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen w-full bg-[#f5f6f8] text-black">
-            <Header page="company-add" />
+            <Header page="company-update" />
 
             <nav className="p-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
-                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
-                <span className="text-gray-400">{">>"}</span>
-                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/company-list")}>Companies</span>
-                <span className="text-gray-400">{">>"}</span>
-                <span className="text-gray-800 cursor-pointer">Add Company</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={() => onBack()}>← Back to Details</span>
             </nav>
 
             <div className="px-6">
                 <div className="mb-8 flex items-center justify-between">
-                    <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add Company</h1>
+                    <h1 className="mt-1 text-3xl font-semibold text-gray-800">Edit Company</h1>
                     <button
-                        onClick={() => router.push("/company-list")}
+                        onClick={() => onBack()}
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
                     >
                         ← Back
@@ -163,7 +207,8 @@ export default function AddCompany() {
                                 <div>
                                     <label className={labelClass}>Location</label>
                                     <input type="text" name="companyLocation" value={formData.companyLocation} onChange={handleChange} placeholder="Enter company location" className={inputClass} />
-                                    {errors.companyLocation && <p className={errorClass}>{errors.companyLocation}</p>}   </div>
+                                    {errors.companyLocation && <p className={errorClass}>{errors.companyLocation}</p>}
+                                </div>
 
                                 <div>
                                     <label className={labelClass}>Email</label>
@@ -174,11 +219,11 @@ export default function AddCompany() {
                                 <div>
                                     <label className={labelClass}>Website</label>
                                     <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={inputClass} />
-                                    {errors.website && <p className={errorClass}>{errors.website}</p>}     </div>
+                                    {errors.website && <p className={errorClass}>{errors.website}</p>}
+                                </div>
 
-                                {/* Logo */}
                                 <div className="lg:col-span-2">
-                                    <label className={labelClass}>Company Logo <span className="text-red-500">*</span></label>
+                                    <label className={labelClass}>Company Logo</label>
                                     <input type="file" accept="image/*" onChange={handleImage} className={inputClass} />
                                     {errors.companyFile && <p className={errorClass}>{errors.companyFile}</p>}
                                     {preview && (
@@ -187,6 +232,7 @@ export default function AddCompany() {
                                         </div>
                                     )}
                                 </div>
+
                             </div>
                         </div>
 
@@ -194,16 +240,16 @@ export default function AddCompany() {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Contact Information</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
                                 <div>
                                     <label className={labelClass}>Dial Code</label>
                                     <input type="number" name="dialCode" value={formData.dialCode} onChange={handleChange} placeholder="e.g. 91" className={inputClass} />
-                                    {errors.dialCode && <p className={errorClass}>{errors.dialCode}</p>}      </div>
-
+                                    {errors.dialCode && <p className={errorClass}>{errors.dialCode}</p>}
+                                </div>
                                 <div>
                                     <label className={labelClass}>Phone</label>
                                     <input type="number" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className={inputClass} />
-                                    {errors.phone && <p className={errorClass}>{errors.phone}</p>}      </div>
+                                    {errors.phone && <p className={errorClass}>{errors.phone}</p>}
+                                </div>
                             </div>
                         </div>
 
@@ -211,26 +257,26 @@ export default function AddCompany() {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Address</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
                                 <div className="lg:col-span-2">
                                     <label className={labelClass}>Address Line</label>
                                     <input type="text" name="AddressLineOne" value={formData.AddressLineOne} onChange={handleChange} placeholder="Street address" className={inputClass} />
-                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}     </div>
-
+                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
+                                </div>
                                 <div>
                                     <label className={labelClass}>Country</label>
                                     <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Country" className={inputClass} />
-                                    {errors.country && <p className={errorClass}>{errors.country}</p>}     </div>
-
+                                    {errors.country && <p className={errorClass}>{errors.country}</p>}
+                                </div>
                                 <div>
                                     <label className={labelClass}>State</label>
                                     <input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="State" className={inputClass} />
-                                    {errors.state && <p className={errorClass}>{errors.state}</p>}      </div>
-
+                                    {errors.state && <p className={errorClass}>{errors.state}</p>}
+                                </div>
                                 <div>
                                     <label className={labelClass}>Postal Code</label>
                                     <input type="number" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Postal / ZIP code" className={inputClass} />
-                                    {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}      </div>
+                                    {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}
+                                </div>
                             </div>
                         </div>
 
@@ -238,34 +284,40 @@ export default function AddCompany() {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Owner Information</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
                                 <div>
                                     <label className={labelClass}>Owner Name</label>
                                     <input type="text" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Owner full name" className={inputClass} />
-                                    {errors.ownerName && <p className={errorClass}>{errors.ownerName}</p>}      </div>
-
+                                    {errors.ownerName && <p className={errorClass}>{errors.ownerName}</p>}
+                                </div>
                                 <div>
                                     <label className={labelClass}>Owner Email</label>
                                     <input type="email" name="ownerEmail" value={formData.ownerEmail} onChange={handleChange} placeholder="owner@email.com" className={inputClass} />
                                     {errors.ownerEmail && <p className={errorClass}>{errors.ownerEmail}</p>}
                                 </div>
-
                                 <div>
                                     <label className={labelClass}>Owner Phone</label>
                                     <input type="text" name="ownerPhone" value={formData.ownerPhone} onChange={handleChange} placeholder="Owner phone number" className={inputClass} />
-                                    {errors.ownerPhone && <p className={errorClass}>{errors.ownerPhone}</p>}   </div>
+                                    {errors.ownerPhone && <p className={errorClass}>{errors.ownerPhone}</p>}
+                                </div>
                             </div>
                         </div>
 
                     </div>
 
-                    <div className="mt-8 mb-10 flex justify-end">
+                    <div className="mt-8 mb-10 flex justify-end gap-4">
+                        <button
+                            type="button"
+                            onClick={() => onBack()}
+                            className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition"
+                        >
+                            Cancel
+                        </button>
                         <button
                             type="submit"
                             disabled={loading}
                             className="rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
                         >
-                            {loading ? "Creating..." : "Add Company"}
+                            {loading ? "Updating..." : "Update Company"}
                         </button>
                     </div>
                 </form>

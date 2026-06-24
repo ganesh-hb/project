@@ -86,7 +86,7 @@ async insertCompany(params: any, companyFile: any) {
         return this.finishFailure(res);
     }
 
-  async updateCompany(params: any, companyFile: any) {
+    async updateCompany(params: any, companyFile: any) {
     const queryParams: any = {};
 
     if (!params.companyId) return { success: 0, message: 'companyId is mandatory' };
@@ -111,13 +111,13 @@ async insertCompany(params: any, companyFile: any) {
 
         queryParams.updatedDate = () => 'NOW()';
 
-        const result = await this.companyEntity.update({ companyId: params.companyId }, queryParams);
+        await this.companyEntity.update({ companyId: params.companyId }, queryParams);
 
         if (companyFile) {
             await this.fileTransfer.fileTransfer3(companyFile.filename, params.companyId, params.companyId);
         }
 
-        return { success: 1, message: 'Updated successfully', data: { affected: result.affected } };
+        return { success: 1, message: 'Updated successfully' };
     } catch (err: any) {
         return { success: 0, message: err?.message };
     }

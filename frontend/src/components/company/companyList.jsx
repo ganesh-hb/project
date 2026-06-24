@@ -74,7 +74,7 @@ export default function CompanyList() {
             <Header page="companies" />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
-                <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
+                <nav className="mb-6 p-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">Companies</span>

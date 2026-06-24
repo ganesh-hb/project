@@ -8,28 +8,27 @@ export default function SiteMap() {
         {
             title: "Dashboards",
             items: ["Sitemap"],
-            redirectTo: 'http://localhost:3000/sitemap'
+            redirectTo: '/'
         },
         {
             title: "Users",
-            items: [
-                "User List",
-            ],
-            redirectTo: 'http://localhost:3000/users'
+            items: ["User List"],
+            redirectTo: '/users'
         },
         {
             title: "Companies",
-            items: [
-                "Company List",
-            ],
-            redirectTo: 'http://localhost:3000/company-list'
+            items: ["Company List"],
+            redirectTo: '/company-list'
         },
         {
             title: "Groups",
-            items: [
-                "Group List",
-            ],
-            redirectTo: 'http://localhost:3000/group-list'
+            items: ["Group List"],
+            redirectTo: '/group-list'
+        },
+        {
+            title: "Settings",
+            items: ["Capabilities"],
+            redirectTo: '/capabilities'
         },
     ];
     const router = useRouter()
