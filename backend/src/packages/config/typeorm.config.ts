@@ -1,10 +1,11 @@
 import { TypeOrmModuleOptions } from "@nestjs/typeorm";
-import { join } from "path";
-import "dotenv/config"
-import { UserEntity  } from "src/packages/entity/user.entity";
+import "dotenv/config";
+import { UserEntity } from "src/packages/entity/user.entity";
 import { GroupEntity } from "../entity/group.entity";
 import { CompanyEntity } from "../entity/company.entity";
 import { UserCompanyGroupEntity } from "../entity/user.company.group.entity";
+import { PermissionEntity, GroupPermissionEntity } from "../entity/capability.entity";
+
 export const typeOrmConfig: TypeOrmModuleOptions = {
     type: process.env.DB_CLIENT as "mysql" ?? "mysql",
     host: process.env.DB_HOST ?? "localhost",
@@ -13,14 +14,15 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     password: process.env.DB_PASS ?? "root",
     database: process.env.DB_NAME ?? "project",
     entities: [
-        UserEntity,GroupEntity,CompanyEntity,UserCompanyGroupEntity
-    ],  
+        UserEntity,
+        GroupEntity,
+        CompanyEntity,
+        UserCompanyGroupEntity,
+        PermissionEntity,
+        GroupPermissionEntity,
+    ],
     synchronize: true,
     migrationsRun: false,
     logging: false,
     migrations: [__dirname + "/migrations/*.ts"],
 };
-
-
-//  join(__dirname, "*.entity{.ts,.js}"),
-

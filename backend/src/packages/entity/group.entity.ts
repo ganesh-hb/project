@@ -7,6 +7,7 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 import { UserCompanyGroupEntity } from './user.company.group.entity';
+import { GroupPermissionEntity } from './capability.entity';
 
 @Entity('group')
 export class GroupEntity {
@@ -30,6 +31,9 @@ export class GroupEntity {
 
     @UpdateDateColumn()
     updatedDate!: Date;
+
+    @OneToMany(() => GroupPermissionEntity, (gp) => gp.group)
+    groupPermissions!: GroupPermissionEntity[];
 
     /** All user+company assignments that use this group/role */
     @OneToMany(

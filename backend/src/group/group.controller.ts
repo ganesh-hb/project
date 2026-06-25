@@ -1,27 +1,23 @@
 import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
+import { FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from 'src/packages/config/multer.config';
 import { GroupService } from './group.service';
 import { getGroupListDto, GroupDto, GroupUpdateDto } from 'src/packages/dto/group.dto';
 import { AuthGuard } from '@nestjs/passport';
 
-
 @Controller('group')
 export class GroupController {
-  constructor(private readonly groupService:GroupService){}
+    constructor(private readonly groupService: GroupService) {}
+
     @Get()
-    async hello(){
-      return "hello"
-    }
+    async hello() { return 'hello'; }
 
     @Post('group-add')
-     @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'))
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
-    async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File){
-            let param = body
-            return await this.groupService.startInsertGroup(param)
+    async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File) {
+        return await this.groupService.startInsertGroup(body);
     }
-
 
     @Put('group-update')
     @UseGuards(AuthGuard('jwt'))
@@ -33,18 +29,35 @@ export class GroupController {
         }
     }
 
-
     @Post('group-list')
     @UseGuards(AuthGuard('jwt'))
-    @UseInterceptors(FileInterceptor('groupFile', multerConfig))
-    async getGroups(@Body() body:getGroupListDto) {
-    return await this.groupService.getGroups(body)
-  }
-
-
-    @Get("group-details/:id")
-    async getGroup(@Param('id') param) {
-        return await this.groupService.getGroup(param)
+    async getGroups(@Body() body: getGroupListDto) {
+        return await this.groupService.getGroups(body);
     }
+
+    @Get('group-details/:id')
+    @UseGuards(AuthGuard('jwt'))
+    async getGroup(@Param('id') param) {
+        return await this.groupService.getGroup(param);
+    }
+
+    @Get('permissions-all')
+    @UseGuards(AuthGuard('jwt'))
+    async getAllPermissions() {
+        return await this.groupService.getAllPermissions();
+    }
+
+    @Get('group-permissions/:groupId')
+    @UseGuards(AuthGuard('jwt'))
+    async getGroupPermissions(@Param('groupId') groupId: string) {
+        return await this.groupService.getGroupPermissions(Number(groupId));
+    }
+
+    @Post('group-permissions-save')
+    @UseGuards(AuthGuard('jwt'))
+    async saveGroupPermissions(@Body() body: { groupId: number; permissions: string[] }) {
+        return await this.groupService.saveGroupPermissions(Number(body.groupId), body.permissions);
+    }
+
 
 }

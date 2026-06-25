@@ -11,13 +11,18 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { UserModule } from './user/user.module';
 
 @Module({
-   imports: [TypeOrmModule.forRoot(typeOrmConfig), ConfigModule.forRoot({
-   isGlobal: true}),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'upload'),
-      serveRoot: '/upload',
-    }),UserModule,GroupModule,CompanyModule],
-   controllers: [AppController],
-   providers: [AppService],
+    imports: [
+        TypeOrmModule.forRoot(typeOrmConfig),
+        ConfigModule.forRoot({ isGlobal: true }),
+        ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'upload'),
+            serveRoot: '/upload',
+        }),
+        UserModule,
+        GroupModule,
+        CompanyModule,
+    ],
+    controllers: [AppController],
+    providers: [AppService],
 })
 export class AppModule {}

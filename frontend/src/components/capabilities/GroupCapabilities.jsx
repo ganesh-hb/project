@@ -109,7 +109,7 @@ export default function GroupCapabilities({ id }) {
 
         setLoading(true);
         try {
-            const response = await fetch("/relayapi", {
+            await fetch("/relayapi", {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
@@ -117,19 +117,29 @@ export default function GroupCapabilities({ id }) {
                     endpoint: "group-update",
                     module: "group",
                 },
+                body: JSON.stringify({ groupId, ...formData }),
+            });
+
+            const permRes = await fetch("/relayapi", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                    "Content-Type": "application/json",
+                    endpoint: "group-permissions-save",
+                    module: "group",
+                },
                 body: JSON.stringify({
                     groupId,
-                    ...formData,
                     permissions: ALL_PERMS.filter((p) => checked[p]),
                 }),
             });
 
-            if (response.ok) {
-                toast.success("Capabilities updated successfully", { position: "top-right" });
+            const permData = await permRes.json();
+            if (permData?.success === 1) {
+                toast.success("Capabilities saved successfully", { position: "top-right" });
                 setTimeout(() => router.push("/capabilities"), 1000);
             } else {
-                const data = await response.json();
-                toast.error(data?.message || "Update failed.", { position: "top-right" });
+                toast.error(permData?.message || "Failed to save permissions.", { position: "top-right" });
             }
         } catch (err) {
             toast.error(`${err}`, { position: "top-right" });
