@@ -18,6 +18,7 @@ import { columns } from "./Column";
 import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin, isCompanyAdmin, authHeaders } from "../app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
+import AppPagination from "./ui/AppPagination";
 
 function formatRoles(assignments) {
     if (!Array.isArray(assignments) || assignments.length === 0) return "N/A";
@@ -49,12 +50,12 @@ export default function UsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [searchValue, setSearchValue] = useState("");
-    const limits = process.env.NEXT_PUBLIC_USERS_LIST_LIMIT;
-    const totalPages = process.env.NEXT_PUBLIC_USERS_LIST_PAGES;
-
+    const LIMIT = 8;
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [viewMode, setViewMode] = useState("grid");
     const [count, setCount] = useState(1);
-    const currentPage = parseInt(count) || 1;
+
 
     const superAdmin = isSuperAdmin(isLogin);
     const companyAdmin = isCompanyAdmin(isLogin);
@@ -68,7 +69,7 @@ export default function UsersPage() {
         setError("");
 
         try {
-            let body = { page, limit: limits };
+            let body = { page, limit: LIMIT };
 
             if (searchParams.filters && searchParams.filters.length > 0) {
                 body.condition = searchParams.condition || "All";
@@ -116,6 +117,7 @@ export default function UsersPage() {
                         assignments: Array.isArray(user.assignments) ? user.assignments : [],
                     }))
             );
+            setTotalPages(Math.ceil((data?.total || 1) / LIMIT));
         } catch (err) {
             toast.error(`${err}`, { position: "top-right" });
             setError(err.message);
@@ -142,11 +144,10 @@ export default function UsersPage() {
         route.push(`http://localhost:3000${url}`);
     };
 
-    const goToPage = (e, page) => {
-        e.preventDefault();
+    const goToPage = (page) => {
         if (page < 1 || page > totalPages) return;
-        setCount(page);
-        fetchData(page, searchValue);
+        setCurrentPage(page);
+        fetchData(page);
     };
 
     return (
@@ -303,7 +304,6 @@ export default function UsersPage() {
                         </div>
                     )}
 
-                    {/* ── List view ─────────────────────────────────────────── */}
                     {!loading && !error && viewMode === "list" && (
                         <div className="w-full bg-white rounded-2xl border border-gray-200 overflow-hidden">
                             <div className="w-full overflow-x-auto">
@@ -384,64 +384,14 @@ export default function UsersPage() {
                         </div>
                     )}
 
-                    {/* ── Data Table view ───────────────────────────────────── */}
                     {!loading && !error && viewMode === "table" && (
                         <DataTable columns={columns} data={users} />
                     )}
                 </div>
             </div>
 
-            {/* Pagination */}
             <div className="fixed bottom-0 right-0 p-4">
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                href="#"
-                                onClick={(e) => goToPage(e, currentPage - 1)}
-                                className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                            />
-                        </PaginationItem>
-                        <PaginationItem>
-                            <PaginationLink
-                                href="#"
-                                isActive={currentPage === 1}
-                                onClick={(e) => goToPage(e, 1)}
-                            >
-                                1
-                            </PaginationLink>
-                        </PaginationItem>
-                        {currentPage > 2 && <PaginationEllipsis />}
-                        {currentPage !== 1 && currentPage !== totalPages && (
-                            <PaginationItem>
-                                <PaginationLink href="#" isActive>
-                                    {currentPage}
-                                </PaginationLink>
-                            </PaginationItem>
-                        )}
-                        {currentPage < totalPages - 1 && <PaginationEllipsis />}
-                        <PaginationItem>
-                            <PaginationLink
-                                href="#"
-                                isActive={currentPage === totalPages}
-                                onClick={(e) => goToPage(e, totalPages)}
-                            >
-                                {totalPages}
-                            </PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem>
-                            <PaginationNext
-                                href="#"
-                                onClick={(e) => goToPage(e, currentPage + 1)}
-                                className={
-                                    currentPage >= totalPages
-                                        ? "pointer-events-none opacity-50"
-                                        : "cursor-pointer"
-                                }
-                            />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
+                <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
             </div>
         </div>
     );

@@ -8,6 +8,7 @@ import { loginContext } from "../hooks/LoginContext";
 import Header from "../Header";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
+import AppPagination from "../ui/AppPagination";
 
 export default function CompanyList() {
     const router = useRouter();
@@ -16,10 +17,9 @@ export default function CompanyList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [count, setCount] = useState(1);
-    const limits = process.env.NEXT_PUBLIC_USERS_LIST_LIMIT || 10;
-    const totalPages = 1;
-    const currentPage = parseInt(count) || 1;
-
+    const LIMIT = 10;
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     useEffect(() => {
         fetchData(1);
     }, []);
@@ -36,7 +36,7 @@ export default function CompanyList() {
                     module: "company",
                     service: "company",
                 },
-                body: JSON.stringify({ page, limit: limits }),
+                body: JSON.stringify({ page, limit: LIMIT }),
             });
 
             if (response.status === 401 || response.status === 403) {
@@ -48,6 +48,7 @@ export default function CompanyList() {
             const payload = await response.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             setCompanies(data?.data ?? []);
+            setTotalPages(Math.ceil((data?.total || 1) / LIMIT));
         } catch (err) {
             toast.error(`${err}`, { position: "top-right" });
             setError(err.message);
@@ -56,10 +57,9 @@ export default function CompanyList() {
         }
     }
 
-    const goToPage = (e, page) => {
-        e.preventDefault();
+    const goToPage = (page) => {
         if (page < 1 || page > totalPages) return;
-        setCount(page);
+        setCurrentPage(page);
         fetchData(page);
     };
 
@@ -155,33 +155,7 @@ export default function CompanyList() {
             </div>
 
             <div className="fixed bottom-0 right-0 p-4">
-                <Pagination>
-                    <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious href="#" onClick={(e) => goToPage(e, currentPage - 1)}
-                                className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                        </PaginationItem>
-                        <PaginationItem>
-                            <PaginationLink href="#" isActive={currentPage === 1} onClick={(e) => goToPage(e, 1)}>1</PaginationLink>
-                        </PaginationItem>
-                        {currentPage > 2 && <PaginationEllipsis />}
-                        {currentPage !== 1 && currentPage !== totalPages && (
-                            <PaginationItem>
-                                <PaginationLink href="#" isActive>{currentPage}</PaginationLink>
-                            </PaginationItem>
-                        )}
-                        {currentPage < totalPages - 1 && <PaginationEllipsis />}
-                        <PaginationItem>
-                            <PaginationLink href="#" isActive={currentPage === totalPages} onClick={(e) => goToPage(e, totalPages)}>
-                                {totalPages}
-                            </PaginationLink>
-                        </PaginationItem>
-                        <PaginationItem>
-                            <PaginationNext href="#" onClick={(e) => goToPage(e, currentPage + 1)}
-                                className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
-                        </PaginationItem>
-                    </PaginationContent>
-                </Pagination>
+                <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
             </div>
         </div>
     );

@@ -79,15 +79,20 @@ export default function AddUserPage() {
     useEffect(() => {
         const fetchGroups = async () => {
             try {
-                const res = await fetch("http://localhost:4000/group/group-list", {
+                const res = await fetch("http://localhost:3000/relayapi", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({}),
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                        "Content-Type": "application/json",
+                        endpoint: "group-list",
+                        module: "group",
+                    },
+                    body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();
-                setGroups(data.groups || data.data || data || []);
+                setGroups(Array.isArray(data?.data) ? data.data : []);
             } catch (err) {
-                toast.error("Failed to fetch groups:" + err, { position: "top-right" });
+                toast.error(`${err}`, { position: "top-right" });
             }
         };
         fetchGroups();
@@ -96,18 +101,20 @@ export default function AddUserPage() {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const res = await fetch("http://localhost:4000/company/company-list", {
+                const res = await fetch("http://localhost:3000/relayapi", {
                     method: "POST",
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        endpoint: "company-list",
+                        module: "company",
                     },
-                    body: JSON.stringify({}),
+                    body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();
-                setCompanies(data.companies || data.data || data || []);
+                setCompanies(Array.isArray(data?.data) ? data.data : []);
             } catch (err) {
-                toast.error("Failed to fetch companies:" + err, { position: "top-right" });
+                toast.error(`${err}`, { position: "top-right" });
             }
         };
         fetchCompanies();

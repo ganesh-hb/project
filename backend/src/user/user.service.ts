@@ -325,8 +325,8 @@ async getUsers(param: any, req?: any) {
                 is_parent: ucg.is_parent,
             })) ?? [],
         }));
-
-        return_data = { success: 1, message: 'List fetched successfully', data: formattedData };
+        const total = await this.userEntity.count();
+        return_data = { success: 1, message: 'List fetched successfully', total, data: formattedData };
     } catch (err: any) {
         return_data = { success: 0, message: err.message };
     }
