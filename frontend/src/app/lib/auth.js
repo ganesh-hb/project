@@ -48,3 +48,21 @@ export function authHeaders(extra = {}) {
     };
 }
 
+export function getPermissions() {
+    if (typeof window === "undefined") return [];
+    try {
+        const raw = localStorage.getItem("permissions");
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+}
+
+export function can(permission) {
+    return getPermissions().includes(permission);
+}
+
+export function canAny(...perms) {
+    return perms.some((p) => getPermissions().includes(p));
+}
+

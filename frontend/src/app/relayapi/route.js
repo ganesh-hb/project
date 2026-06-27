@@ -83,7 +83,6 @@ export async function POST(request) {
         } else {
             body = await request.formData();
         }
-
         const res = await fetch(`${base}/${endpoint}`, { method: "POST", headers: fetchHeaders, body });
         const data = await parseResponse(res);
         return NextResponse.json(data, { status: res.status });

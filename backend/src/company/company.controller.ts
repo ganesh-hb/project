@@ -4,6 +4,7 @@ import { multerConfig } from 'src/packages/config/multer.config';
 import { CompanyService } from './company.service';
 import { CompanyDto, CompanyUpdateDto, getCompanyListDto } from 'src/packages/dto/company.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionsGuard, RequirePermission } from 'src/utilities/permissions.guard';
 
 
 @Controller('company')
@@ -16,6 +17,8 @@ export class CompanyController {
 
     @Post('company-add')
     @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('companyAdd')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async insertCompany(@Req() req, @Body() body: CompanyDto, @UploadedFile() companyFile: Express.Multer.File){
             if (companyFile) {
@@ -37,6 +40,8 @@ export class CompanyController {
 
     @Put('company-update')
     @UseGuards(AuthGuard('jwt'))
+     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('companyUpdate')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async updateCompany(@Body() body: CompanyUpdateDto, @UploadedFile() companyFile: Express.Multer.File) {
         try {
@@ -55,6 +60,8 @@ export class CompanyController {
 
     @Post('company-list')
     @UseGuards(AuthGuard('jwt'))
+     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('companyList')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async getCompanys(@Body() body:getCompanyListDto) {
     return await this.companyService.getCompanies(body)

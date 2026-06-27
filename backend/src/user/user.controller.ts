@@ -27,6 +27,7 @@ import {
 import { encryptResponse } from 'src/utilities/crypto';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/utilities/roles.decorator';
+import { PermissionsGuard, RequirePermission } from 'src/utilities/permissions.guard';
 
 @Controller('user')
 export class UserController {
@@ -38,7 +39,8 @@ export class UserController {
     }
 
     @Post('user-add')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('userAdd')
     @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async insertUser(
@@ -73,9 +75,11 @@ export class UserController {
         return await this.userService.startForgotPass(body);
     }
 
+
     @Put('user-update')
     @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
-      @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('userUpdate')
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async updateUser(
         @Body() body: userUpdateDto,
@@ -105,19 +109,18 @@ export class UserController {
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async login(@Body() body: login) {
         const result = await this.userService.login(body);
-        // console.log(result)
         return {
         encrypted: encryptResponse(result),
 };
     }
 
     @Post('user-list')
-    @UseGuards(AuthGuard('jwt'))
-    @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('userList')
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async getUsers(@Body() body: getUserListDto) {
     const result = await this.userService.getUsers(body);
-    // console.log(encryptResponse(result))
+    console.log(result,"############### user list controller")
     return {
         encrypted: encryptResponse(result),
     };

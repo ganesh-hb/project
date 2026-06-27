@@ -12,6 +12,7 @@ import { Mailer } from 'src/utilities/mailer';
 import bcrypt from 'bcrypt';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { JwtService } from '@nestjs/jwt';
+import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
 
 @Injectable()
 export class UserService {
@@ -31,6 +32,9 @@ export class UserService {
 
         @InjectRepository(UserCompanyGroupEntity)
         private readonly ucgEntity: Repository<UserCompanyGroupEntity>,
+
+        @InjectRepository(GroupPermissionEntity)
+        private readonly groupPermissionEntity: Repository<GroupPermissionEntity>,
 
         private readonly jwtService: JwtService,
     ) {}
@@ -224,14 +228,9 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 return { success: 0, message: 'Email and password are required' };
             }
 
-            const user = await this.userEntity
+        const user = await this.userEntity
             .createQueryBuilder('user')
-            .leftJoinAndSelect(
-                'user.userCompanyGroups',
-                'ucg',
-                'ucg.is_parent = :isParent',
-                { isParent: 0 },
-            )
+            .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
             .leftJoinAndSelect('ucg.company', 'company')
             .leftJoinAndSelect('ucg.group', 'group')
             .where('user.email = :email', { email: body.email })
@@ -259,24 +258,34 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 email: user.email,
             };
 
-            const token = this.jwtService.sign(payload);
+            const token = this.jwtService.sign({ userId: user.userId, email: user.email });
+            const primary = user.userCompanyGroups?.[0];
+            const groupId = primary?.groupId;
+
+            const groupPerms = groupId
+                ? await this.groupPermissionEntity.find({
+                    where: { groupId },
+                    relations: ['permission'],
+                })
+                : [];
+
+            const permissions = groupPerms.map((gp) => gp.permission?.permissionName).filter(Boolean);
 
             return {
                 success: 1,
                 message: 'success',
                 token,
-                accessToken: token, 
+                accessToken: token,
                 user: {
                     userId: user.userId,
                     name: user.name,
                     email: user.email,
-                    primaryProfile: user.userCompanyGroups?.[0]
-                    ? {
-                        companyName: user.userCompanyGroups[0].company?.companyName,
-                        groupName: user.userCompanyGroups[0].group?.groupName,
-                        is_parent: user.userCompanyGroups[0].is_parent,
-                    }
-                    : null,
+                    primaryProfile: primary ? {
+                        companyName: primary.company?.companyName,
+                        groupName: primary.group?.groupName,
+                        is_parent: primary.is_parent,
+                    } : null,
+                    permissions,
                 },
             };
         } catch (error: any) {
@@ -293,10 +302,7 @@ async getUsers(param: any, req?: any) {
     try {
         let queryBuilder = this.userEntity
             .createQueryBuilder('user')
-            .leftJoinAndSelect(
-                'user.userCompanyGroups', 'ucg',
-                'ucg.is_parent = :isParent', { isParent: 0 }
-            )
+            .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
             .leftJoinAndSelect('ucg.company', 'company')
             .leftJoinAndSelect('ucg.group', 'group');
 
@@ -313,19 +319,37 @@ async getUsers(param: any, req?: any) {
         queryBuilder.skip(skip).take(limit);
 
         const data = await queryBuilder.getMany();
-
-        const formattedData = data.map((user) => ({
-            ...user,
-            assignments: user.userCompanyGroups?.map((ucg) => ({
-                id: ucg.id,
-                companyId: ucg.companyId,
-                companyName: ucg.company?.companyName,
-                groupId: ucg.groupId,
-                groupName: ucg.group?.groupName,
-                is_parent: ucg.is_parent,
-            })) ?? [],
-        }));
         const total = await this.userEntity.count();
+
+        const formattedData = data.map((user) => {
+            const allAssignments = user.userCompanyGroups ?? [];
+
+            // Primary = is_parent=0, fallback to first
+            const primary =
+                allAssignments.find((u) => u.is_parent === 0) ??
+                allAssignments[0] ??
+                null;
+
+            return {
+                userId: user.userId,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                status: user.status,
+                userFile: user.userFile,
+                age: user.age,
+                // Single primary assignment shown in list view
+                assignments: primary ? [{
+                    id: primary.id,
+                    companyId: primary.companyId,
+                    companyName: primary.company?.companyName,
+                    groupId: primary.groupId,
+                    groupName: primary.group?.groupName,
+                    is_parent: primary.is_parent,
+                }] : [],
+            };
+        });
+
         return_data = { success: 1, message: 'List fetched successfully', total, data: formattedData };
     } catch (err: any) {
         return_data = { success: 0, message: err.message };

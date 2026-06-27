@@ -54,6 +54,7 @@ export default function UsersPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [viewMode, setViewMode] = useState("grid");
+    const { can, canAny } = useContext(loginContext);
     const [count, setCount] = useState(1);
 
 
@@ -95,13 +96,13 @@ export default function UsersPage() {
             if (!response.ok) {
                 toast.error("Failed to fetch users", { position: "top-right" });
             }
-
-
             const payload = await response.json();
+
 
             const data = payload.encrypted
                 ? decryptResponse(payload.encrypted)
                 : payload;
+
 
             setUsers(
                 Array.isArray(data)
@@ -188,12 +189,16 @@ export default function UsersPage() {
                         </h1>
 
                         <div className="flex flex-wrap items-center gap-3">
-                            <button
-                                onClick={() => router.push("/add-user")}
-                                className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
-                            >
-                                <span>+</span> Add User
-                            </button>
+                            {can("userAdd") && (
+                                <button
+                                    onClick={() => router.push("/add-user")}
+                                    className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+                                >
+                                    <span>+</span> Add User
+                                </button>
+
+                            )}
+
 
                             <div className="flex border rounded-md overflow-hidden bg-white">
                                 {["grid", "list", "table"].map((mode) => (

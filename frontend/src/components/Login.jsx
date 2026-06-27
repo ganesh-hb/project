@@ -128,10 +128,9 @@ export default function LoginPage() {
                 if (jwt) {
                     localStorage.setItem("accessToken", jwt);
                 }
-
                 localStorage.setItem("userInfo", JSON.stringify(data.user));
+                localStorage.setItem("permissions", JSON.stringify(data.user?.permissions || []));
                 setLogin(data.user);
-
                 toast.success(`Welcome ${data.user?.name}`, { position: "top-right" });
 
                 document.cookie = `session=yes`;

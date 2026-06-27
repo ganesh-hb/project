@@ -4,6 +4,7 @@ import { multerConfig } from 'src/packages/config/multer.config';
 import { GroupService } from './group.service';
 import { getGroupListDto, GroupDto, GroupUpdateDto } from 'src/packages/dto/group.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionsGuard, RequirePermission } from 'src/utilities/permissions.guard';
 
 @Controller('group')
 export class GroupController {
@@ -14,6 +15,8 @@ export class GroupController {
 
     @Post('group-add')
     @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('groupAdd')
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File) {
         return await this.groupService.startInsertGroup(body);
@@ -21,6 +24,8 @@ export class GroupController {
 
     @Put('group-update')
     @UseGuards(AuthGuard('jwt'))
+     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('groupUpdate')
     async updateGroup(@Body() body: GroupUpdateDto) {
         try {
             return await this.groupService.startUpdate(body);
@@ -31,6 +36,8 @@ export class GroupController {
 
     @Post('group-list')
     @UseGuards(AuthGuard('jwt'))
+        @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('groupList')
     async getGroups(@Body() body: getGroupListDto) {
         return await this.groupService.getGroups(body);
     }

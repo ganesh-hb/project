@@ -6,6 +6,7 @@ export const loginContext = createContext();
 export default function LoginContext({ children }) {
     const [isLogin, setLogin] = useState(null);
     const [activeAssignment, setActiveAssignment] = useState(null);
+    const [permissions, setPermissions] = useState([]);
 
     useEffect(() => {
         async function restoreSession() {
@@ -14,7 +15,10 @@ export default function LoginContext({ children }) {
                 try {
                     const parsed = JSON.parse(storedUserInfo);
                     setLogin(parsed);
-                    // Restore active assignment: prefer stored, else primary, else first
+
+                    const storedPerms = localStorage.getItem("permissions");
+                    setPermissions(storedPerms ? JSON.parse(storedPerms) : parsed.permissions || []);
+
                     const storedAssignment = localStorage.getItem("activeAssignment");
                     if (storedAssignment) {
                         setActiveAssignment(JSON.parse(storedAssignment));
@@ -29,6 +33,7 @@ export default function LoginContext({ children }) {
                 } catch {
                     localStorage.removeItem("userInfo");
                     localStorage.removeItem("activeAssignment");
+                    localStorage.removeItem("permissions");
                 }
             }
 
@@ -71,15 +76,25 @@ export default function LoginContext({ children }) {
     function logout() {
         setLogin(null);
         setActiveAssignment(null);
+        setPermissions([]);
         localStorage.removeItem("accessToken");
         localStorage.removeItem("userInfo");
         localStorage.removeItem("activeAssignment");
+        localStorage.removeItem("permissions");
         document.cookie = "session=; Max-Age=0";
         document.cookie = "loggedIn=; Max-Age=0";
     }
 
+    function can(permission) {
+        return permissions.includes(permission);
+    }
+
+    function canAny(...perms) {
+        return perms.some((p) => permissions.includes(p));
+    }
+
     return (
-        <loginContext.Provider value={{ isLogin, setLogin, activeAssignment, switchProfile, logout }}>
+        <loginContext.Provider value={{ isLogin, setLogin, activeAssignment, switchProfile, logout, permissions, can, canAny }}>
             {children}
         </loginContext.Provider>
     );

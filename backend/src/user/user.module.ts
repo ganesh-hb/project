@@ -16,6 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from 'src/utilities/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { RolesGuard } from 'src/utilities/roles.guard';
+import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RolesGuard } from 'src/utilities/roles.guard';
       GroupEntity,
       CompanyEntity,
       UserCompanyGroupEntity,
+      GroupPermissionEntity
     ]),
 
     PassportModule.register({ defaultStrategy: 'jwt' }),

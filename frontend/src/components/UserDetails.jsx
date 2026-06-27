@@ -9,6 +9,7 @@ import { authHeaders } from "@/app/lib/auth";
 
 export default function UserDetailsPage({ id }) {
     const [showEdit, setShowEdit] = useState(false);
+    const { can, canAny } = useContext(loginContext);
     const [activeTab, setActiveTab] = useState("summary");
     const [user, setUser] = useState({});
     const [groups, setGroups] = useState([]);
