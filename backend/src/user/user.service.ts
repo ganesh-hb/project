@@ -388,6 +388,11 @@ async getUser(query: any, req?: any) {
             is_parent: ucg.is_parent,
         });
 
+        const primary =
+    allAssignments.find((u) => u.is_parent === 0) ??
+    allAssignments[0] ??
+    null;
+
         return {
             userId: user.userId,
             name: user.name,
@@ -400,6 +405,11 @@ async getUser(query: any, req?: any) {
             userFile: user.userFile,
             createdAt: user.createdAt,
             updatedDate: user.updatedDate,
+            primaryProfile: primary ? {
+                companyName: primary.company?.companyName ?? null,
+                groupName: primary.group?.groupName ?? null,
+                is_parent: primary.is_parent,
+            } : null,
             activeAssignment: activeAssignment ? mapAssignment(activeAssignment) : null,
             assignments: allAssignments.map(mapAssignment),
         };
@@ -552,4 +562,74 @@ async getUser(query: any, req?: any) {
         return { success: 0, message: err.message };
     }
 }
+
+async loginAs(targetUserId: number, requestingUserId: number) {
+    try {
+        const requester = await this.userEntity.findOne({
+            where: { userId: requestingUserId },
+            relations: ['userCompanyGroups', 'userCompanyGroups.group'],
+        });
+
+        const isSuperAdmin = requester?.userCompanyGroups?.some(
+            (ucg) => ucg.group?.groupName === 'superAdmin'
+        );
+        if (!isSuperAdmin) {
+            return { success: 0, message: 'Only superAdmin can use login as' };
+        }
+
+        const target = await this.userEntity
+            .createQueryBuilder('user')
+            .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
+            .leftJoinAndSelect('ucg.company', 'company')
+            .leftJoinAndSelect('ucg.group', 'group')
+            .where('user.userId = :userId', { userId: targetUserId })
+            .getOne();
+
+        if (!target) return { success: 0, message: 'Target user not found' };
+
+        const primary =
+            target.userCompanyGroups?.find((u) => u.is_parent === 0) ??
+            target.userCompanyGroups?.[0] ??
+            null;
+
+        const groupId = primary?.groupId;
+
+        const groupPerms = groupId
+            ? await this.groupPermissionEntity.find({
+                where: { groupId },
+                relations: ['permission'],
+            })
+            : [];
+
+        const permissions = groupPerms
+            .map((gp) => gp.permission?.permissionName)
+            .filter(Boolean);
+
+        const impersonationToken = this.jwtService.sign({
+            userId: target.userId,
+            email: target.email,
+            impersonatedBy: requestingUserId,
+            isImpersonation: true,
+        });
+
+        return {
+        success: 1,
+        impersonationToken,
+        user: {
+            userId: target.userId,
+            name: target.name,
+            email: target.email,
+            primaryProfile: primary ? {
+                companyName: primary.company?.companyName,
+                groupName: primary.group?.groupName,
+                is_parent: primary.is_parent,
+            } : null,
+            permissions,
+        },
+    };
+    } catch (err: any) {
+        return { success: 0, message: err.message };
+    }
+}
+
 }

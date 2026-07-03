@@ -21,7 +21,8 @@ async function parseResponse(res) {
 export async function GET(request) {
     try {
         const endpoint = request.headers.get("endpoint");
-        const token = request.headers.get("authorization");
+        const impersonationToken = request.headers.get("x-impersonation-token");
+        const token = impersonationToken || request.headers.get("authorization");
         const base = getServiceBase(request);
         const profileId = request.headers.get("x-profile-id");
         const qs = profileId ? `?profileId=${profileId}` : "";
@@ -42,7 +43,8 @@ export async function PUT(request) {
     try {
         const endpoint = request.headers.get("endpoint");
         const contentType = request.headers.get("content-type") || "";
-        const token = request.headers.get("authorization");
+        const impersonationToken = request.headers.get("x-impersonation-token");
+        const token = impersonationToken || request.headers.get("authorization");
         const base = getServiceBase(request);
 
         let body;
@@ -69,7 +71,8 @@ export async function POST(request) {
     try {
         const endpoint = request.headers.get("endpoint");
         const contentType = request.headers.get("content-type") || "";
-        const token = request.headers.get("authorization");
+        const impersonationToken = request.headers.get("x-impersonation-token");
+        const token = impersonationToken || request.headers.get("authorization");
         const base = getServiceBase(request);
 
         let body;

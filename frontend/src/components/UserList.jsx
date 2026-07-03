@@ -3,15 +3,6 @@ import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import Header from "./Header";
 import { userListContext } from "./hooks/UserListContext";
-import {
-    Pagination,
-    PaginationContent,
-    PaginationEllipsis,
-    PaginationItem,
-    PaginationLink,
-    PaginationNext,
-    PaginationPrevious,
-} from "./ui/pagination";
 import { toast } from "react-toastify";
 import { DataTable } from "./data-table";
 import { columns } from "./Column";
@@ -37,16 +28,6 @@ export default function UsersPage() {
     const { users, setUsers } = useContext(userListContext);
     const { isLogin } = useContext(loginContext);
 
-    const formattedGroupName =
-        isLogin?.assignments?.length
-            ? [...new Set(
-                isLogin.assignments
-                    .map(a => a.groupName)
-                    .filter(Boolean)
-            )]
-                .join(', ')
-            : 'N/A';
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [searchValue, setSearchValue] = useState("");
@@ -54,12 +35,23 @@ export default function UsersPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [viewMode, setViewMode] = useState("grid");
-    const { can, canAny } = useContext(loginContext);
     const [count, setCount] = useState(1);
 
 
-    const superAdmin = isSuperAdmin(isLogin);
-    const companyAdmin = isCompanyAdmin(isLogin);
+    const [superAdmin, setSuperAdmin] = useState(false);
+    const [companyAdmin, setCompanyAdmin] = useState(false);
+
+    useEffect(() => {
+        const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        setSuperAdmin(isSuperAdmin(isLogin || storedUser));
+        setCompanyAdmin(isCompanyAdmin(isLogin || storedUser));
+    }, [isLogin]);
+
+    useEffect(() => {
+        console.log("isLogin:", isLogin);
+        console.log("primaryProfile:", isLogin?.primaryProfile);
+        console.log("groupName:", isLogin?.primaryProfile?.groupName);
+    }, [isLogin]);
 
     useEffect(() => {
         fetchData(1, {});
@@ -150,6 +142,19 @@ export default function UsersPage() {
         setCurrentPage(page);
         fetchData(page);
     };
+    const { impersonating, loginAs, stopImpersonating, can } = useContext(loginContext);
+
+    const handleLoginAs = async (e, user) => {
+        e.stopPropagation();
+        const success = await loginAs(user.user_userId);
+        if (success) {
+            toast.success(`Now acting as ${user.user_name}`, { position: "top-right" });
+            window.location.href = "/users";
+        } else {
+            toast.error("Failed to switch user", { position: "top-right" });
+        }
+    };
+
 
     return (
         <div className="w-full min-h-screen bg-[#f5f6fa] overflow-x-hidden">
@@ -266,16 +271,19 @@ export default function UsersPage() {
                                             >
                                                 {user.user_status}
                                             </div>
-                                            {formattedGroupName == 'superAdmin' && (
-                                                <button className="ms-52 rounded-lg bg-[#3563e9] px-3 py-1 font-medium text-white transition-colors hover:bg-blue-700 active:bg-blue-800">
+                                            {superAdmin && !impersonating && user.user_userId !== isLogin?.userId && (
+                                                <button
+                                                    onClick={(e) => handleLoginAs(e, user)}
+                                                    className="mt-2 inline-block rounded-full px-3 py-1 cursor-pointer bg-blue-200 float-right"
+                                                >
                                                     Login As
                                                 </button>
+
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Roles derived from assignments */}
-                                    <div className="text-sm text-gray-600 pt-3 pb-3 border-y border-gray-200">
+                                    <div className="text-sm text-gray-600 pt-3 pb-3 border-y border-gray-200 py-1">
                                         <span className="text-[#71717b] text-xs uppercase tracking-wide">
                                             Role
                                         </span>

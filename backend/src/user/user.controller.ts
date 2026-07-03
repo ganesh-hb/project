@@ -164,4 +164,14 @@ export class UserController {
         const result = await this.userService.addProfile(body);
         return { encrypted: encryptResponse(result) };
     }
+
+    @Post('user-login-as')
+    @UseGuards(AuthGuard('jwt'))
+    async loginAs(@Body() body: { targetUserId: number }, @Req() req) {
+        const result = await this.userService.loginAs(
+            Number(body.targetUserId),
+            req.user.userId,
+        );
+        return { encrypted: encryptResponse(result) };
+    }
 }

@@ -48,6 +48,7 @@ export default function Header({ onSearch, page }) {
     const [showSidePanel, setShowSidePanel] = useState(false);
     const [filterCondition, setFilterCondition] = useState("All");
     const [position, setPosition] = React.useState("grid")
+    const { impersonating, stopImpersonating } = useContext(loginContext);
 
     const [filterRows, setFilterRows] = useState([
         {
@@ -295,6 +296,7 @@ export default function Header({ onSearch, page }) {
     return (
         <>
             <header className="h-[72px] w-full border-b border-gray-200 bg-white px-6 flex items-center justify-between relative z-40">
+
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-3">
                         <div className="h-11 w-11 rounded-lg bg-blue-100 flex items-center justify-center cursor-pointer" onClick={(e) => {
@@ -613,14 +615,29 @@ export default function Header({ onSearch, page }) {
                                     </span>
                                 </button>
 
-                                <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-red-50">
-                                    <span
-                                        className="text-sm font-medium text-red-500 cursor-pointer"
-                                        onClick={(e) => gotoLogout(e)}
+                                {impersonating ? (
+                                    <button
+                                        className="flex w-full items-center gap-4 px-5 py-4 hover:bg-blue-50"
+                                        onClick={() => {
+                                            stopImpersonating();
+                                            setOpenProfile(false);
+                                            window.location.href = "/users";
+                                        }}
                                     >
-                                        Logout
-                                    </span>
-                                </button>
+                                        <span className="text-sm font-medium text-blue-600 cursor-pointer">
+                                            ← Back to Session
+                                        </span>
+                                    </button>
+                                ) : (
+                                    <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-red-50">
+                                        <span
+                                            className="text-sm font-medium text-red-500 cursor-pointer"
+                                            onClick={(e) => gotoLogout(e)}
+                                        >
+                                            Logout
+                                        </span>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

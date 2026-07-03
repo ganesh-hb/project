@@ -17,17 +17,18 @@ export function getAccessToken() {
 
 export function isSuperAdmin(userInfo) {
     if (!userInfo) return false;
-    const groups = Array.isArray(userInfo.groupName)
-        ? userInfo.groupName
-        : [userInfo.groupName];
+    const groupName = userInfo?.primaryProfile?.groupName || userInfo?.groupName;
+    if (!groupName) return false;
+    const groups = Array.isArray(groupName) ? groupName : [groupName];
+    console.log(groups.includes("superAdmin"), "##################### superadminCheck")
     return groups.includes("superAdmin");
 }
 
 export function isCompanyAdmin(userInfo) {
     if (!userInfo) return false;
-    const groups = Array.isArray(userInfo.groupName)
-        ? userInfo.groupName
-        : [userInfo.groupName];
+    const groupName = userInfo?.primaryProfile?.groupName || userInfo?.groupName;
+    if (!groupName) return false;
+    const groups = Array.isArray(groupName) ? groupName : [groupName];
     return groups.includes("companyAdmin");
 }
 
@@ -40,7 +41,7 @@ export function canSeeAllCompaniesAndGroups(userInfo) {
 }
 
 export function authHeaders(extra = {}) {
-    const token = getAccessToken();
+    const token = getImpersonationToken() || getAccessToken();
     return {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -64,5 +65,24 @@ export function can(permission) {
 
 export function canAny(...perms) {
     return perms.some((p) => getPermissions().includes(p));
+}
+
+export function isImpersonating() {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("impersonationToken");
+}
+
+export function getImpersonationToken() {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("impersonationToken");
+}
+
+export function impersonationHeaders(extra = {}) {
+    const token = getImpersonationToken() || getAccessToken();
+    return {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...extra,
+    };
 }
 

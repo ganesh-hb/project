@@ -4,12 +4,9 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginContext } from "./hooks/LoginContext";
 import { userLoginSchema } from "./Zod";
-import Swal from "sweetalert2";
 import { toast } from "react-toastify";
-import { Group } from "lucide-react";
 import CryptoJS from "crypto-js";
 import { decryptResponse } from "@/app/lib/crypto";
-
 
 const CRYPTO_SECRET = process.env.NEXT_PUBLIC_CRYPTO_SECRET || "hiddenbrainspune";
 
@@ -59,10 +56,7 @@ export default function LoginPage() {
         const updated = { ...formData, [e.target.id]: e.target.value };
         setFormData(updated);
         setErrors({ ...errors, [e.target.id]: "" });
-
-        if (rememberMe) {
-            saveEncryptedCredentials(updated);
-        }
+        if (rememberMe) saveEncryptedCredentials(updated);
     };
 
     function saveEncryptedCredentials(data) {
@@ -76,7 +70,6 @@ export default function LoginPage() {
     const handleRememberMe = (e) => {
         const checked = e.target.checked;
         setRememberMe(checked);
-
         if (checked) {
             saveEncryptedCredentials(formData);
         } else {
@@ -102,32 +95,25 @@ export default function LoginPage() {
                 return;
             }
 
-            // Save encrypted credentials if remember-me is ticked
-            if (rememberMe) {
-                saveEncryptedCredentials(formData);
-            }
+            if (rememberMe) saveEncryptedCredentials(formData);
 
             const response = await fetch("/relayapi", {
                 method: "POST",
                 headers: {
                     endpoint: "user-login",
                     "Content-Type": "application/json",
-                    module: "user"
+                    module: "user",
                 },
                 body: JSON.stringify(formData),
             });
 
             const payload = await response.json();
-
-            const data = payload.encrypted
-                ? decryptResponse(payload.encrypted)
-                : payload;
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
 
             if (response.ok && data.success === 1 && data.user?.userId) {
                 const jwt = data.accessToken || data.token;
-                if (jwt) {
-                    localStorage.setItem("accessToken", jwt);
-                }
+                localStorage.setItem("accessToken", jwt);
+                if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
                 localStorage.setItem("userInfo", JSON.stringify(data.user));
                 localStorage.setItem("permissions", JSON.stringify(data.user?.permissions || []));
                 setLogin(data.user);
@@ -216,10 +202,8 @@ export default function LoginPage() {
                                 />
                                 <span className="ps-2">Remember Me</span>
                             </label>
-                            <a
-                                href="/forgot-password"
-                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-                            >
+
+                            <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                                 Forgot Password?
                             </a>
                         </div>
@@ -231,16 +215,13 @@ export default function LoginPage() {
                             {loading ? "Logging in..." : "Login"}
                         </button>
                         {message && (
-                            <p
-                                className={`text-center font-medium ${message === "success" ? "text-green-500" : "text-red-500"
-                                    }`}
-                            >
+                            <p className={`text-center font-medium ${message === "success" ? "text-green-500" : "text-red-500"}`}>
                                 {message}
                             </p>
                         )}
                     </form>
                 </div>
-            </div>
+            </div >
             <div className="bg-blue-200 flex justify-center items-center h-screen">
                 <img
                     src={process.env.NEXT_PUBLIC_LOGO_RIGHT}
@@ -248,8 +229,6 @@ export default function LoginPage() {
                     alt="Login Illustration"
                 />
             </div>
-        </div>
+        </div >
     );
 }
-
-
