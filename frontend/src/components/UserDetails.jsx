@@ -170,10 +170,10 @@ export default function UserDetailsPage({ id }) {
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Details</h1>
                     <div className="flex items-center gap-4">
-                        <button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700" onClick={() => setShowEdit(true)}>
+                        <button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer" onClick={() => setShowEdit(true)}>
                             Edit User
                         </button>
-                        <button className="px-8 h-12 rounded-md bg-gray-500 text-white font-medium hover:bg-gray-600 transition" onClick={gotoBack}>
+                        <button className="px-8 h-12 rounded-md bg-gray-500 text-white font-medium hover:bg-gray-600 transition cursor-pointer" onClick={gotoBack}>
                             Back
                         </button>
                     </div>
@@ -189,17 +189,17 @@ export default function UserDetailsPage({ id }) {
                             <div className="mt-6 space-y-3">
                                 <button
                                     onClick={() => setActiveTab("summary")}
-                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "summary" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition cursor-pointer ${activeTab === "summary" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                                 >
                                     Summary
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("profiles")}
-                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "profiles" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition cursor-pointer ${activeTab === "profiles" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                                 >
                                     Other Profiles
                                     {assignments.length > 0 && (
-                                        <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{assignments.length}</span>
+                                        <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 cursor-pointer">{assignments.length}</span>
                                     )}
                                 </button>
                             </div>

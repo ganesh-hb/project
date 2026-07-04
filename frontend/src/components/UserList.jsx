@@ -197,7 +197,7 @@ export default function UsersPage() {
                             {can("userAdd") && (
                                 <button
                                     onClick={() => router.push("/add-user")}
-                                    className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors"
+                                    className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors cursor-pointer"
                                 >
                                     <span>+</span> Add User
                                 </button>
@@ -205,12 +205,12 @@ export default function UsersPage() {
                             )}
 
 
-                            <div className="flex border rounded-md overflow-hidden bg-white">
+                            <div className="flex border rounded-md overflow-hidden bg-white ">
                                 {["grid", "list", "table"].map((mode) => (
                                     <button
                                         key={mode}
                                         onClick={() => setViewMode(mode)}
-                                        className={`px-4 py-2 text-sm font-medium transition capitalize ${viewMode === mode
+                                        className={`px-4 py-2 text-sm font-medium transition capitalize cursor-pointer ${viewMode === mode
                                             ? "bg-[#1d6fdc] text-white"
                                             : "bg-white text-gray-600 hover:bg-gray-100"
                                             }`}

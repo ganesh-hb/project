@@ -175,12 +175,18 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 return { success: 0, message: 'User not found' };
             }
 
-            if (params.name)   user.name   = params.name;
-            if (params.email)  user.email  = params.email;
-            if (params.age)    user.age    = params.age;
-            if (params.phone)  user.phone  = params.phone;
-            if (params.status) user.status = params.status;
-            if (userFile)      user.userFile = userFile.filename;
+            if (params.name)           user.name           = params.name;
+            if (params.email)          user.email          = params.email;
+            if (params.age)            user.age            = params.age;
+            if (params.phone)          user.phone          = params.phone;
+            if (params.status)         user.status         = params.status;
+            if (userFile)              user.userFile       = userFile.filename;
+            if (params.country)        user.country        = params.country;
+            if (params.state)          user.state          = params.state;
+            if (params.postalCode)     user.postalCode     = Number(params.postalCode);
+            if (params.AddressLineOne) user.AddressLineOne = params.AddressLineOne;
+            if (params.alternatePhone) user.alternatePhone = params.alternatePhone;
+            
             user.updatedDate = new Date();
 
             await this.userEntity.save(user);

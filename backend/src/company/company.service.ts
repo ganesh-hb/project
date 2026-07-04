@@ -7,6 +7,8 @@ import { FileTransfer } from 'src/utilities/file.transfer';
 import { Filter } from 'src/utilities/filter';
 import { Mailer } from 'src/utilities/mailer';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
+import { CurrencyEntity } from 'src/packages/entity/currency.entity';
+import { CompanyCurrencyEntity } from 'src/packages/entity/company.currency.entity';
 
 @Injectable()
 export class CompanyService {
@@ -23,6 +25,12 @@ export class CompanyService {
 
     @InjectRepository(UserCompanyGroupEntity)
     protected ucgEntity!: Repository<UserCompanyGroupEntity>;
+
+    @InjectRepository(CurrencyEntity)
+    protected currencyEntity!: Repository<CurrencyEntity>;
+
+    @InjectRepository(CompanyCurrencyEntity)
+    protected companyCurrencyEntity!: Repository<CompanyCurrencyEntity>;
 
    async startInsertCompany(params: any, companyFile: any) {
         const res = await this.insertCompany(params, companyFile);
@@ -53,7 +61,13 @@ async insertCompany(params: any, companyFile: any) {
         if (companyFile)            queryParams.companyFile     = companyFile.filename;
 
         const result = await this.companyEntity.insert(queryParams);
-        return { success: 1, message: 'Inserted successfully', data: { insertData: result?.raw?.insertId } };
+        const insertId = result?.raw?.insertId;
+
+        if (params.curId && insertId) {
+            await this.companyCurrencyEntity.insert({ companyId: insertId, curId: Number(params.curId) });
+        }
+
+        return { success: 1, message: 'Inserted successfully', data: { insertData: insertId } };
     } catch (err: any) {
         return { success: 0, message: err?.message };
     }
@@ -114,7 +128,16 @@ async insertCompany(params: any, companyFile: any) {
         await this.companyEntity.update({ companyId: params.companyId }, queryParams);
 
         if (companyFile) {
-            await this.fileTransfer.fileTransfer3(companyFile.filename, params.companyId, params.companyId);
+                    await this.fileTransfer.fileTransfer3(companyFile.filename, params.companyId, params.companyId);
+                }
+
+        if (params.curId) {
+            const existing = await this.companyCurrencyEntity.findOne({ where: { companyId: params.companyId } });
+            if (existing) {
+                await this.companyCurrencyEntity.update({ companyId: params.companyId }, { curId: Number(params.curId) });
+            } else {
+                await this.companyCurrencyEntity.insert({ companyId: params.companyId, curId: Number(params.curId) });
+            }
         }
 
         return { success: 1, message: 'Updated successfully' };
@@ -173,14 +196,17 @@ async insertCompany(params: any, companyFile: any) {
                 throw new NotFoundException('Company not found');
             }
 
-            // Fetch all mapping rows for this company, joining user and group
-            const assignments = await this.ucgEntity.find({
-                where: { companyId: Number(query) },
-                relations: ['user', 'group'],
-            });
+            const [assignments, currencyMapping, allCurrencies] = await Promise.all([
+                this.ucgEntity.find({ where: { companyId: Number(query) }, relations: ['user', 'group'] }),
+                this.companyCurrencyEntity.findOne({ where: { companyId: Number(query) }, relations: ['currency'] }),
+                this.currencyEntity.find({ order: { name: 'ASC' } }),
+            ]);
 
             return {
                 ...company,
+                currency: currencyMapping?.currency ?? null,
+                curId: currencyMapping?.curId ?? null,
+                allCurrencies,
                 assignments: assignments.map((ucg) => ({
                     userId: ucg.userId,
                     userName: ucg.user?.name,
@@ -193,6 +219,10 @@ async insertCompany(params: any, companyFile: any) {
         } catch (err) {
             return err;
         }
+    }
+
+    async getCurrencies() {
+        return this.currencyEntity.find({ order: { name: 'ASC' } });
     }
 
 

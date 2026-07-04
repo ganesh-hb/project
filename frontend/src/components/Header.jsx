@@ -14,6 +14,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { authHeaders } from "@/app/lib/auth";
+import ProfilePanel from "./ProfilePanel";
 
 export default function Header({ onSearch, page }) {
     const router = useRouter();
@@ -49,6 +50,7 @@ export default function Header({ onSearch, page }) {
     const [filterCondition, setFilterCondition] = useState("All");
     const [position, setPosition] = React.useState("grid")
     const { impersonating, stopImpersonating } = useContext(loginContext);
+    const [showProfilePanel, setShowProfilePanel] = useState(false);
 
     const [filterRows, setFilterRows] = useState([
         {
@@ -341,7 +343,7 @@ export default function Header({ onSearch, page }) {
                             ref={searchPopupRef}
                         >
                             <button
-                                className="text-lg hover:text-blue-600"
+                                className="text-lg hover:text-blue-600 cursor-pointer"
                                 onClick={() =>
                                     setShowSearchPopup(!showSearchPopup)
                                 }
@@ -482,14 +484,14 @@ export default function Header({ onSearch, page }) {
                                     <div className="flex justify-between">
                                         <button
                                             onClick={handlePopupReset}
-                                            className="border border-gray-300 text-gray-600 px-4 py-1.5 rounded text-sm hover:bg-gray-50"
+                                            className="cursor-pointer border border-gray-300 text-gray-600 px-4 py-1.5 rounded text-sm hover:bg-gray-50"
                                         >
                                             Reset
                                         </button>
 
                                         <button
                                             onClick={handleFind}
-                                            className="bg-blue-600 text-white px-6 py-1.5 rounded text-sm hover:bg-blue-700"
+                                            className="cursor-pointer bg-blue-600 text-white px-6 py-1.5 rounded text-sm hover:bg-blue-700"
                                         >
                                             Find
                                         </button>
@@ -507,7 +509,7 @@ export default function Header({ onSearch, page }) {
                         </button>
 
                         <button
-                            className={`text-lg hover:text-blue-600 ${showSidePanel ? "text-blue-600" : ""}`}
+                            className={`text-lg hover:text-blue-600 cursor-pointer ${showSidePanel ? "text-blue-600" : ""}`}
                             onClick={() =>
                                 setShowSidePanel(!showSidePanel)
                             }
@@ -592,10 +594,11 @@ export default function Header({ onSearch, page }) {
 
                         {openProfile && (
                             <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-                                <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b">
-                                    <span className="text-sm font-medium text-gray-700">
-                                        Profile
-                                    </span>
+                                <button
+                                    className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b"
+                                    onClick={() => { setShowProfilePanel(true); setOpenProfile(false); }}
+                                >
+                                    <span className="text-sm font-medium text-gray-700 cursor-pointer">Profile</span>
                                 </button>
 
                                 <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b">
@@ -606,7 +609,7 @@ export default function Header({ onSearch, page }) {
 
                                 <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b">
                                     <span
-                                        className="text-sm font-medium text-gray-700"
+                                        className="text-sm font-medium text-gray-700 cursor-pointer"
                                         onClick={(e) => {
                                             gotoChangePass(e);
                                         }}
@@ -667,7 +670,7 @@ export default function Header({ onSearch, page }) {
 
                     <button
                         onClick={() => setShowSidePanel(false)}
-                        className="text-white hover:text-blue-200 text-xl"
+                        className="text-white hover:text-blue-200 text-xl cursor-pointer"
                     >
                         ✕
                     </button>
@@ -781,12 +784,15 @@ export default function Header({ onSearch, page }) {
 
                     <button
                         onClick={handleSidePanelReset}
-                        className="mt-2 w-full border border-gray-300 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50"
+                        className="mt-2 w-full border border-gray-300 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer"
                     >
                         Reset Filters
                     </button>
                 </div>
             </div>
+            {showProfilePanel && (
+                <ProfilePanel onClose={() => setShowProfilePanel(false)} />
+            )}
         </>
     );
 }

@@ -78,7 +78,7 @@ export default function GroupDetails({ id }) {
                     <h1 className="text-3xl font-semibold text-gray-800">{group.groupName}</h1>
                     <button
                         onClick={() => setShowEdit(true)}
-                        className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700"
+                        className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer"
                     >
                         Edit Group
                     </button>

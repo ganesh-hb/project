@@ -182,7 +182,7 @@ export default function GroupCapabilities({ id }) {
 
                     <button
                         onClick={() => router.push("/capabilities")}
-                        className="rounded-lg bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                        className="rounded-lg bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
                     </button>
@@ -225,13 +225,13 @@ export default function GroupCapabilities({ id }) {
                                     <thead>
                                         <tr className="border-b-2 border-gray-200">
                                             <th className="w-8 py-3 text-left">
-                                                <input type="checkbox" checked={isAllOn} onChange={toggleAll} className="w-4 h-4 accent-blue-600" />
+                                                <input type="checkbox" checked={isAllOn} onChange={toggleAll} className="w-4 h-4 accent-blue-600 cursor-pointer" />
                                             </th>
                                             <th className="py-3 text-left text-gray-500 font-semibold w-36 pl-2">Module</th>
                                             {COL_HEADERS.map((h, ci) => (
                                                 <th key={h} className="py-3 text-center px-6">
                                                     <div className="flex flex-col items-center gap-1.5">
-                                                        <input type="checkbox" checked={isColAllOn(ci)} onChange={() => toggleColumn(ci)} className="w-4 h-4 accent-blue-600" />
+                                                        <input type="checkbox" checked={isColAllOn(ci)} onChange={() => toggleColumn(ci)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
                                                         <span className="text-gray-500 font-semibold">{h}</span>
                                                     </div>
                                                 </th>
@@ -242,12 +242,12 @@ export default function GroupCapabilities({ id }) {
                                         {MODULES.map((mod) => (
                                             <tr key={mod.key} className="border-b border-gray-100 hover:bg-gray-50">
                                                 <td className="py-3.5">
-                                                    <input type="checkbox" checked={isModuleAllOn(mod.permissions)} onChange={() => toggleModule(mod.permissions)} className="w-4 h-4 accent-blue-600" />
+                                                    <input type="checkbox" checked={isModuleAllOn(mod.permissions)} onChange={() => toggleModule(mod.permissions)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
                                                 </td>
                                                 <td className="py-3.5 pl-2 font-medium text-gray-700">{mod.label}</td>
                                                 {mod.permissions.map((perm) => (
                                                     <td key={perm} className="py-3.5 text-center px-6">
-                                                        <input type="checkbox" checked={!!checked[perm]} onChange={() => togglePerm(perm)} className="w-4 h-4 accent-blue-600" />
+                                                        <input type="checkbox" checked={!!checked[perm]} onChange={() => togglePerm(perm)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
                                                     </td>
                                                 ))}
                                             </tr>
@@ -260,10 +260,10 @@ export default function GroupCapabilities({ id }) {
                     </div>
 
                     <div className="mt-6 flex justify-end gap-4">
-                        <button type="button" onClick={() => router.push("/capabilities")} className="rounded-lg bg-gray-200 px-8 py-2.5 font-medium text-gray-700 hover:bg-gray-300 transition">
+                        <button type="button" onClick={() => router.push("/capabilities")} className="rounded-lg bg-gray-200 px-8 py-2.5 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer">
                             Cancel
                         </button>
-                        <button type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-8 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition">
+                        <button type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-8 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition cursor-pointer">
                             {loading ? "Saving..." : "Save Capabilities"}
                         </button>
                     </div>

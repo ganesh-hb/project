@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
@@ -44,6 +44,18 @@ export default function AddCompany() {
         setErrors((prev) => ({ ...prev, [name]: "" }));
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
+
+    const [currencies, setCurrencies] = useState([]);
+
+    useEffect(() => {
+        fetch("/relayapi", {
+            method: "GET",
+            headers: { ...authHeaders(), endpoint: "currency-list", module: "company" },
+        })
+            .then((r) => r.json())
+            .then((data) => setCurrencies(Array.isArray(data) ? data : []))
+            .catch(() => { });
+    }, []);
 
     const handleImage = (e) => {
         const file = e?.target?.files[0];
@@ -123,7 +135,7 @@ export default function AddCompany() {
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add Company</h1>
                     <button
                         onClick={() => router.push("/company-list")}
-                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
                     </button>
@@ -257,13 +269,26 @@ export default function AddCompany() {
                             </div>
                         </div>
 
+                        <div>
+                            <label className={labelClass}>Currency</label>
+                            <select name="curId" value={formData.curId} onChange={handleChange} className={inputClass}>
+                                <option value="" >Select currency</option>
+                                {currencies.map((c) => (
+                                    <option key={c.curId} value={c.curId}>
+                                        {c.name} ({c.code}) {c.symbol}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.curId && <p className={errorClass}>{errors.curId}</p>}
+                        </div>
+
                     </div>
 
                     <div className="mt-8 mb-10 flex justify-end">
                         <button
                             type="submit"
                             disabled={loading}
-                            className="rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
+                            className="cursor-pointer rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
                         >
                             {loading ? "Creating..." : "Add Company"}
                         </button>

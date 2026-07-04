@@ -11,6 +11,7 @@ export default function CompanyUpdate({ id, onBack }) {
     const [errors, setErrors] = useState({});
     const [companyFile, setCompanyFile] = useState(null);
     const [preview, setPreview] = useState("");
+    const [currencies, setCurrencies] = useState([]);
 
     const [formData, setFormData] = useState({
         companyName: "",
@@ -27,6 +28,7 @@ export default function CompanyUpdate({ id, onBack }) {
         AddressLineOne: "",
         ownerName: "",
         ownerEmail: "",
+        curId: "",
         ownerPhone: "",
     });
 
@@ -63,7 +65,10 @@ export default function CompanyUpdate({ id, onBack }) {
                     ownerName: data.ownerName || "",
                     ownerEmail: data.ownerEmail || "",
                     ownerPhone: data.ownerPhone || "",
+                    curId: data.curId || "",
                 });
+
+                setCurrencies(data.allCurrencies || []);
                 if (data.companyFile) {
                     setPreview(`http://localhost:4000/upload/company/${data.companyId}/${data.companyFile}`);
                 }
@@ -167,7 +172,7 @@ export default function CompanyUpdate({ id, onBack }) {
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Edit Company</h1>
                     <button
                         onClick={() => onBack()}
-                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
                     </button>
@@ -231,6 +236,19 @@ export default function CompanyUpdate({ id, onBack }) {
                                             <img src={preview} alt="preview" className="h-24 w-24 rounded-xl object-cover border" />
                                         </div>
                                     )}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Currency</label>
+                                    <select name="curId" value={formData.curId} onChange={handleChange} className={inputClass}>
+                                        <option value="">Select currency</option>
+                                        {currencies.map((c) => (
+                                            <option key={c.curId} value={c.curId}>
+                                                {c.name} ({c.code}) {c.symbol}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.curId && <p className={errorClass}>{errors.curId}</p>}
                                 </div>
 
                             </div>
@@ -302,20 +320,22 @@ export default function CompanyUpdate({ id, onBack }) {
                             </div>
                         </div>
 
+
+
                     </div>
 
                     <div className="mt-8 mb-10 flex justify-end gap-4">
                         <button
                             type="button"
                             onClick={() => onBack()}
-                            className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition"
+                            className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
+                            className="rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition cursor-pointer"
                         >
                             {loading ? "Updating..." : "Update Company"}
                         </button>

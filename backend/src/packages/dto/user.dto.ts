@@ -146,6 +146,26 @@ export class userUpdateDto {
     @IsInt()
     @Transform(({ value }) => Number(value))
     is_parent?: number;
+
+    @IsOptional()
+    @IsString()
+    country?: string;
+
+    @IsOptional()
+    @IsString()
+    state?: string;
+
+    @IsOptional()
+    @Transform(({ value }) => Number(value))
+    postalCode?: number;
+
+    @IsOptional()
+    @IsString()
+    AddressLineOne?: string;
+
+    @IsOptional()
+    @IsString()
+    alternatePhone?: string;
 }
 
 export class UserPassDto {

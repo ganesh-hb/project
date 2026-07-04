@@ -40,6 +40,21 @@ export class UserEntity {
     dialCode!: string;
 
     @Column({ nullable: true })
+    country!: string;
+
+    @Column({ nullable: true })
+    state!: string;
+
+    @Column({ nullable: true })
+    postalCode!: number;
+
+    @Column({ nullable: true })
+    AddressLineOne!: string;
+
+    @Column({ nullable: true })
+    alternatePhone!: string;
+
+    @Column({ nullable: true })
     createdBy!: number;
 
     @Column({ nullable: true })

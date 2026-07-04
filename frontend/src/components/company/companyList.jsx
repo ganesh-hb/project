@@ -84,7 +84,7 @@ export default function CompanyList() {
                     <h1 className="text-2xl font-semibold text-gray-800">Companies</h1>
                     <button
                         onClick={() => router.push("/add-company")}
-                        className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
+                        className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
                     >
                         <span>+</span> Add Company
                     </button>

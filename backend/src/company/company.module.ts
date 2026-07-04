@@ -10,6 +10,8 @@ import { Filter } from 'src/utilities/filter';
 import { Mailer } from 'src/utilities/mailer';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { CurrencyEntity } from 'src/packages/entity/currency.entity';
+import { CompanyCurrencyEntity } from 'src/packages/entity/company.currency.entity';
 
 @Module({
     imports: [
@@ -17,6 +19,8 @@ import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
             CompanyEntity,
             UserCompanyGroupEntity,
             GroupPermissionEntity,
+            CurrencyEntity,
+            CompanyCurrencyEntity,
         ]),
     ],
     controllers: [CompanyController],

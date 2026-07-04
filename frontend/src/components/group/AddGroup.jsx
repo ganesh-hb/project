@@ -89,10 +89,10 @@ export default function AddGroup() {
 
             <div className="px-6">
                 <div className="mb-8 flex items-center justify-between">
-                    <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add Group</h1>
+                    <h1 className="mt-1 text-3xl font-semibold text-gray-800 ">Add Group</h1>
                     <button
                         onClick={() => router.push("/group-list")}
-                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
                     </button>
@@ -133,7 +133,7 @@ export default function AddGroup() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
+                            className="rounded-xl bg-blue-600 px-8 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition cursor-pointer"
                         >
                             {loading ? "Creating..." : "Add Group"}
                         </button>

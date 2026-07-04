@@ -91,13 +91,13 @@ export default function CompanyDetails({ id }) {
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Company Details</h1>
                     <div className="flex items-center gap-4">
                         <button
-                            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700"
+                            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer"
                             onClick={() => setShowEdit(true)}
                         >
                             Edit Company
                         </button>
                         <button
-                            className="h-12 rounded-md bg-gray-500 px-8 font-medium text-white hover:bg-gray-600 transition"
+                            className="h-12 rounded-md bg-gray-500 px-8 font-medium text-white hover:bg-gray-600 transition cursor-pointer"
                             onClick={() => router.back()}
                         >
                             Back

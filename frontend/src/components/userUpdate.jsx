@@ -58,6 +58,10 @@ export default function EditUserPage({ user, onBack }) {
         isActive: "true",
         userFile: null,
         alternatePhone: "",
+        country: "",
+        state: "",
+        postalCode: "",
+        AddressLineOne: "",
     });
 
     // Flat single company + group selection
@@ -82,16 +86,13 @@ export default function EditUserPage({ user, onBack }) {
     useEffect(() => {
         const fetchGroups = async () => {
             try {
-                const res = await fetch("http://localhost:4000/group/group-list", {
+                const res = await fetch("/relayapi", {
                     method: "POST",
-                    headers: {
-                        ...authHeaders(),
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({}),
+                    headers: { ...authHeaders(), endpoint: "group-list", module: "group" },
+                    body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();
-                setGroups(data.groups || data.data || data || []);
+                setGroups(data.data || []);
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });
             }
@@ -102,16 +103,13 @@ export default function EditUserPage({ user, onBack }) {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const res = await fetch("http://localhost:4000/company/company-list", {
+                const res = await fetch("/relayapi", {
                     method: "POST",
-                    headers: {
-                        ...authHeaders(),
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({}),
+                    headers: { ...authHeaders(), endpoint: "company-list", module: "company" },
+                    body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();
-                setCompanies(data.companies || data.data || data || []);
+                setCompanies(data.data || []);
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });
             }
@@ -142,11 +140,25 @@ export default function EditUserPage({ user, onBack }) {
                 user.user_isActive !== undefined ? String(user.user_isActive) : "true",
             userFile: null,
             alternatePhone: user.user_alternatePhone || "",
+            country: user.user_country || "",
+            state: user.user_state || "",
+            postalCode: user.user_postalCode || "",
+            AddressLineOne: user.user_AddressLineOne || "",
         });
 
         setPreview(
             `http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`
         );
+
+        const primary =
+            user.assignments?.find((a) => a.is_parent === 0) ??
+            user.assignments?.[0] ??
+            null;
+
+        if (primary) {
+            if (primary.groupId) setGroupId(String(primary.groupId));
+            if (primary.companyId) setCompanyId(String(primary.companyId));
+        }
 
     }, [user]);
 
@@ -183,7 +195,6 @@ export default function EditUserPage({ user, onBack }) {
         e.preventDefault();
         const result = UpdateFormSchema.safeParse(formData);
 
-        // Validate company + group
         let hasSelectionError = false;
         const selectionErrors = { companyId: "", groupId: "" };
         if (!companyId) {
@@ -230,6 +241,10 @@ export default function EditUserPage({ user, onBack }) {
             payload.append("isActive", formData.isActive);
             payload.append("companyId", companyId);
             payload.append("groupId", groupId);
+            if (formData.country) payload.append("country", formData.country);
+            if (formData.state) payload.append("state", formData.state);
+            if (formData.postalCode) payload.append("postalCode", formData.postalCode);
+            if (formData.AddressLineOne) payload.append("AddressLineOne", formData.AddressLineOne);
 
             if (formData.userFile) {
                 payload.append("userFile", formData.userFile);
@@ -468,6 +483,61 @@ export default function EditUserPage({ user, onBack }) {
                                 )}
                             </div>
 
+                            {/* Address Section */}
+                            <div className="w-full lg:col-span-2">
+                                <h3 className="mb-4 text-sm font-semibold text-gray-500 uppercase tracking-wide border-b pb-2">
+                                    Address
+                                </h3>
+                            </div>
+
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">Address Line</label>
+                                <input
+                                    type="text"
+                                    name="AddressLineOne"
+                                    value={formData.AddressLineOne}
+                                    onChange={handleChange}
+                                    placeholder="Street address"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">Country</label>
+                                <input
+                                    type="text"
+                                    name="country"
+                                    value={formData.country}
+                                    onChange={handleChange}
+                                    placeholder="Country"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">State</label>
+                                <input
+                                    type="text"
+                                    name="state"
+                                    value={formData.state}
+                                    onChange={handleChange}
+                                    placeholder="State"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">Postal Code</label>
+                                <input
+                                    type="number"
+                                    name="postalCode"
+                                    value={formData.postalCode}
+                                    onChange={handleChange}
+                                    placeholder="Postal / ZIP code"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                            </div>
+
                             {/* Profile Image */}
                             <div className="w-full lg:col-span-2">
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -491,6 +561,8 @@ export default function EditUserPage({ user, onBack }) {
                                     </div>
                                 )}
                             </div>
+
+
                         </div>
 
                         <div className="mt-8 flex justify-end">

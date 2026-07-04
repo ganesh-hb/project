@@ -13,6 +13,11 @@ export class CompanyDto {
     @Length(2, 100)
     companyName!: string;
 
+    @IsOptional()
+    @IsInt()
+    @Transform(({ value }) => Number(value))
+    curId?: number;
+
     @IsString()
     @Length(2, 20)
     companyCode!: string;
@@ -82,6 +87,11 @@ export class CompanyUpdateDto {
     @Transform(({ value }) => Number(value))
     companyId!: number;
 
+    @IsOptional()
+    @IsInt()
+    @Transform(({ value }) => Number(value))
+    curId?: number;
+    
     @IsOptional()
     @IsString()
     @Length(2, 100)

@@ -72,4 +72,10 @@ export class CompanyController {
         return await this.companyService.getCompany(param)
     }
 
+    @Get('currency-list')
+    @UseGuards(AuthGuard('jwt'))
+    async getCurrencies() {
+        return this.companyService.getCurrencies();
+    }
+
 }
