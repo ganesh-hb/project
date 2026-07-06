@@ -5,7 +5,7 @@ export const userLoginSchema = z.object({
         .min(1, "Email is required"),
 
     password: z.string()
-        .min(4, "Password must be at least 8 characters")
+        .min(1, "Password is required")
         .max(100, "Password must be at most 100 characters")
         .regex(
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
@@ -57,7 +57,7 @@ export const UpdateFormSchema = z.object({
 
 export const AddFormSchema = z.object({
     email: z.string()
-        .min(1, "Email is required")
+        .min(2, "Email is required")
         .email("Invalid email, enter valid email"),
 
     name: z.string()
@@ -76,12 +76,23 @@ export const AddFormSchema = z.object({
         .max(5, "Enter valid phone number")
     ,
 
+    password: z
+        .string()
+        .min(1, "Password is required")
+        .min(8, "Password must be at least 8 characters long")
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]*$/,
+            "Password must contain uppercase, lowercase, number, and special character"
+        ),
     alternatePhone: z.string()
         .optional()
         .or(z.literal(""))
         .refine((val) => !val || /^[6-9]\d{9}$/.test(val), {
             message: "Invalid phone number",
         }),
+
+    groupId: z.string().min(1, "Please select a role"),
+    companyId: z.string().min(1, "Please select a company"),
 
     userFile: z.any()
         .refine((file) => !!file, "Profile image is required.")
@@ -103,7 +114,7 @@ export const CompanyUpdateSchema = z.object({
         errorMap: () => ({ message: "Select a valid status" }),
     }),
     email: z.string()
-        .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid email"),
+        .refine((val) => !val || /^[^\s@]+@[^p}</\s@]+\.[^\s@]+$/.test(val), "Enter a valid email"),
     website: z.string(),
     dialCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
     phone: z.union([z.coerce.number(), z.literal(""), z.undefined()]),

@@ -46,7 +46,7 @@ export class UserEntity {
     state!: string;
 
     @Column({ nullable: true })
-    postalCode!: number;
+    postalCode?: number;
 
     @Column({ nullable: true })
     AddressLineOne!: string;

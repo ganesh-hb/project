@@ -58,10 +58,6 @@ export default function EditUserPage({ user, onBack }) {
         isActive: "true",
         userFile: null,
         alternatePhone: "",
-        country: "",
-        state: "",
-        postalCode: "",
-        AddressLineOne: "",
     });
 
     // Flat single company + group selection
@@ -140,10 +136,6 @@ export default function EditUserPage({ user, onBack }) {
                 user.user_isActive !== undefined ? String(user.user_isActive) : "true",
             userFile: null,
             alternatePhone: user.user_alternatePhone || "",
-            country: user.user_country || "",
-            state: user.user_state || "",
-            postalCode: user.user_postalCode || "",
-            AddressLineOne: user.user_AddressLineOne || "",
         });
 
         setPreview(
@@ -241,11 +233,6 @@ export default function EditUserPage({ user, onBack }) {
             payload.append("isActive", formData.isActive);
             payload.append("companyId", companyId);
             payload.append("groupId", groupId);
-            if (formData.country) payload.append("country", formData.country);
-            if (formData.state) payload.append("state", formData.state);
-            if (formData.postalCode) payload.append("postalCode", formData.postalCode);
-            if (formData.AddressLineOne) payload.append("AddressLineOne", formData.AddressLineOne);
-
             if (formData.userFile) {
                 payload.append("userFile", formData.userFile);
             }
@@ -481,61 +468,6 @@ export default function EditUserPage({ user, onBack }) {
                                 {errors.companyId && (
                                     <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>
                                 )}
-                            </div>
-
-                            {/* Address Section */}
-                            <div className="w-full lg:col-span-2">
-                                <h3 className="mb-4 text-sm font-semibold text-gray-500 uppercase tracking-wide border-b pb-2">
-                                    Address
-                                </h3>
-                            </div>
-
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Address Line</label>
-                                <input
-                                    type="text"
-                                    name="AddressLineOne"
-                                    value={formData.AddressLineOne}
-                                    onChange={handleChange}
-                                    placeholder="Street address"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                            </div>
-
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Country</label>
-                                <input
-                                    type="text"
-                                    name="country"
-                                    value={formData.country}
-                                    onChange={handleChange}
-                                    placeholder="Country"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                            </div>
-
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">State</label>
-                                <input
-                                    type="text"
-                                    name="state"
-                                    value={formData.state}
-                                    onChange={handleChange}
-                                    placeholder="State"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                            </div>
-
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">Postal Code</label>
-                                <input
-                                    type="number"
-                                    name="postalCode"
-                                    value={formData.postalCode}
-                                    onChange={handleChange}
-                                    placeholder="Postal / ZIP code"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
                             </div>
 
                             {/* Profile Image */}

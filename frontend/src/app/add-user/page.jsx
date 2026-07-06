@@ -54,6 +54,8 @@ export default function AddUserPage() {
         dob: dayjs(Date.now() - MIN_AGE_MS),
         isActive: "true",
         userFile: null,
+        companyId: "",
+        groupId: "",
         alternatePhone: "",
     });
 
@@ -71,6 +73,7 @@ export default function AddUserPage() {
         age: "",
         phone: "",
         userFile: "",
+        password: "",
         alternatePhone: "",
         companyId: "",
         groupId: "",
@@ -152,22 +155,8 @@ export default function AddUserPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const result = AddFormSchema.safeParse(formData);
+        console.log(result)
 
-        // Validate company + group selection
-        let hasSelectionError = false;
-        const selectionErrors = { companyId: "", groupId: "" };
-        if (!companyId) {
-            selectionErrors.companyId = "Please select a company.";
-            hasSelectionError = true;
-        }
-        if (!groupId) {
-            selectionErrors.groupId = "Please select a role.";
-            hasSelectionError = true;
-        }
-        if (hasSelectionError) {
-            setErrors((prev) => ({ ...prev, ...selectionErrors }));
-            return;
-        }
 
         try {
             if (!result.success) {
@@ -175,19 +164,25 @@ export default function AddUserPage() {
                     email: "",
                     name: "",
                     age: "",
+                    password: "",
                     phone: "",
                     userFile: "",
                     alternatePhone: "",
                     companyId: "",
                     groupId: "",
                 };
+
                 result.error.issues.forEach((err) => {
-                    if (err.path[0]) fieldErrors[err.path[0]] = err.message;
+                    const field = err.path[0];
+                    if (field && !fieldErrors[field]) {
+                        fieldErrors[field] = err.message;
+                    }
                 });
+
                 setErrors(fieldErrors);
+
                 return;
             }
-
             const payload = new FormData();
             payload.append("name", formData.name);
             payload.append("email", formData.email);
@@ -196,10 +191,8 @@ export default function AddUserPage() {
             payload.append("status", formData.status);
             payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
             payload.append("password", formData.password);
-
-            // Send companyId, groupId and is_parent as flat fields
-            payload.append("companyId", companyId);
-            payload.append("groupId", groupId);
+            payload.append("companyId", formData.companyId);
+            payload.append("groupId", formData.groupId);
             payload.append("is_parent", "0"); // always primary on add
 
             if (itiRef.current) {
@@ -315,6 +308,7 @@ export default function AddUserPage() {
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                 />
+                                {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
                             </div>
 
                             {/* DOB */}
@@ -391,11 +385,11 @@ export default function AddUserPage() {
                                     Role <span className="text-red-500 text-[16px]">*</span>
                                 </label>
                                 <select
-                                    value={groupId}
                                     onChange={(e) => {
-                                        setGroupId(e.target.value);
+                                        setFormData((prev) => ({ ...prev, groupId: e.target.value }));
                                         setErrors((prev) => ({ ...prev, groupId: "" }));
                                     }}
+                                    value={formData.groupId}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                 >
                                     <option value="">Select role</option>
@@ -416,11 +410,11 @@ export default function AddUserPage() {
                                     Company <span className="text-red-500 text-[16px]">*</span>
                                 </label>
                                 <select
-                                    value={companyId}
                                     onChange={(e) => {
-                                        setCompanyId(e.target.value);
+                                        setFormData((prev) => ({ ...prev, companyId: e.target.value }));
                                         setErrors((prev) => ({ ...prev, companyId: "" }));
                                     }}
+                                    value={formData.companyId}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                 >
                                     <option value="">Select company</option>
