@@ -791,7 +791,9 @@ export default function Header({ onSearch, page }) {
                 </div>
             </div>
             {showProfilePanel && (
-                <ProfilePanel onClose={() => setShowProfilePanel(false)} />
+                <div className="fixed inset-0 z-50 bg-[#f5f6f8] overflow-y-auto" style={{ top: 0, left: 0, right: 0, bottom: 0, position: "fixed" }}>
+                    <ProfilePanel onClose={() => setShowProfilePanel(false)} />
+                </div>
             )}
         </>
     );

@@ -14,7 +14,7 @@ import Header from "@/components/Header";
 import { AddFormSchema } from "@/components/Zod";
 import { authHeaders } from "../lib/auth";
 
-const MIN_AGE_MS = 18 * 365 * 24 * 60 * 61 * 1000;
+const MIN_AGE_MS = 18 * 365 * 24 * 60 * 60 * 1000;
 
 export default function AddUserPage() {
     const router = useRouter();
@@ -59,13 +59,10 @@ export default function AddUserPage() {
         alternatePhone: "",
     });
 
-    // Single company + group selection (flat, not an array)
-    const [companyId, setCompanyId] = useState("");
-    const [groupId, setGroupId] = useState("");
-
     const [preview, setPreview] = useState("");
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
+    const [showPassword, setShowPassword] = useState(false);
 
     const [errors, setErrors] = useState({
         email: "",
@@ -301,13 +298,26 @@ export default function AddUserPage() {
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Password <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                                    >
+                                        <img
+                                            src={showPassword ? "/password/hidden.png" : "/password/eye.png"}
+                                            alt=""
+                                            className="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition mt-5"
+                                        />
+                                    </button>
+                                </div>
                                 {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
                             </div>
 
@@ -338,6 +348,7 @@ export default function AddUserPage() {
                                     type="tel"
                                     ref={phoneRef}
                                     name="phone"
+                                    maxLength="10"
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                 />
                                 {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
@@ -369,6 +380,7 @@ export default function AddUserPage() {
                                 <input
                                     type="text"
                                     name="alternatePhone"
+                                    maxLength="10"
                                     value={formData.alternatePhone}
                                     onChange={handleChange}
                                     placeholder="Enter alternate number"
@@ -454,18 +466,17 @@ export default function AddUserPage() {
                                 )}
                             </div>
                         </div>
-
-                        <div className="mt-8 flex justify-end">
+                        <div className="mt-10 flex justify-center">
                             <button
                                 type="submit"
-                                className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+                                className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
                             >
-                                Add User
+                                Submit
                             </button>
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

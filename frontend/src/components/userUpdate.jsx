@@ -255,7 +255,7 @@ export default function EditUserPage({ user, onBack }) {
                 toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
             } else {
                 if (response.ok) {
-                    toast.success("Updating user was successful", { position: "top-right" });
+                    toast.success("User profile updated successfully", { position: "top-right" });
                     setTimeout(() => onBack(), 1000);
                 } else {
                     toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
@@ -378,6 +378,7 @@ export default function EditUserPage({ user, onBack }) {
                                     type="tel"
                                     ref={phoneRef}
                                     name="phone"
+                                    maxLength="10"
                                     value={formData.phone}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
@@ -409,8 +410,9 @@ export default function EditUserPage({ user, onBack }) {
                                     Alternate Phone Number
                                 </label>
                                 <input
-                                    type="text"
+                                    type="tel"
                                     name="alternatePhone"
+                                    maxLength="10"
                                     value={formData.alternatePhone}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
@@ -497,12 +499,12 @@ export default function EditUserPage({ user, onBack }) {
 
                         </div>
 
-                        <div className="mt-8 flex justify-end">
+                        <div className="mt-10 flex justify-center">
                             <button
                                 type="submit"
-                                className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+                                className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
                             >
-                                Update User
+                                Submit
                             </button>
                         </div>
                     </form>

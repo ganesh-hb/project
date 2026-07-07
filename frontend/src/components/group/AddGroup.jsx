@@ -129,7 +129,7 @@ export default function AddGroup() {
                         </div>
                     </div>
 
-                    <div className="mt-8 mb-10 flex justify-end">
+                    <div class="mt-8 mb-10 flex justify-center gap-4">
                         <button
                             type="submit"
                             disabled={loading}

@@ -90,6 +90,7 @@ export class GroupService {
 
             const [skip, limit] = (await this.filter?.calcPages(param, this.groupEntity)) as [number, number];
             queryBuilder!.skip(skip).take(limit);
+            queryBuilder!.andWhere('group.groupName != :name', { name: 'superAdmin' });
             const [data, total] = await queryBuilder!.getManyAndCount();
 
             return_data = { success: 1, message: 'List fetched successfully', total, data };

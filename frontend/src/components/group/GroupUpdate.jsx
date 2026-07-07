@@ -160,7 +160,7 @@ export default function GroupUpdate({ id, onBack }) {
 
                         </div>
 
-                        <div className="mt-8 mb-10 flex justify-end gap-4">
+                        <div className="mt-8 mb-10 flex justify-center gap-4">
                             <button
                                 type="button"
                                 onClick={() => onBack()}

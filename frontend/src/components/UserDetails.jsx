@@ -22,6 +22,7 @@ export default function UserDetailsPage({ id }) {
     const router = useRouter();
     const route = useRouter();
     const { switchProfile } = useContext(loginContext);
+    const [imgPreview, setImgPreview] = useState(false);
 
     const gotoPages = (e, url) => {
         e.preventDefault();
@@ -226,7 +227,31 @@ export default function UserDetailsPage({ id }) {
                                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                                     <div className="flex items-center gap-4 border-b pb-5">
                                         <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md">
-                                            <img src={imageurl} alt="userImage" className="h-full w-full object-cover" />
+                                            <img
+                                                src={imageurl}
+                                                alt="userImage"
+                                                className="h-full w-full object-cover cursor-pointer"
+                                                onClick={() => setImgPreview(true)}
+                                            />
+                                            {imgPreview && (
+                                                <div
+                                                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+                                                    onClick={() => setImgPreview(false)}
+                                                >
+                                                    <div
+                                                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <button
+                                                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
+                                                            onClick={() => setImgPreview(false)}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                        <img src={imageurl} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-semibold capitalize text-gray-800">{userData.user_name}</h2>

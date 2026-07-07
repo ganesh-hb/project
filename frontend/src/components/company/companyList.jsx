@@ -135,7 +135,7 @@ export default function CompanyList() {
                                                             ? "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700"
                                                             : "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700"
                                                 }>
-                                                    {company.status || "Unknown"}
+                                                    {company.status.charAt(0).toUpperCase() + company.status.slice(1).toLowerCase() || "Unknown"}
                                                 </span>
                                             </td>
                                         </tr>

@@ -89,7 +89,10 @@ export default function LoginPage() {
             if (!result.success) {
                 const fieldErrors = { email: "", password: "" };
                 result.error.issues.forEach((err) => {
-                    fieldErrors[err.path[0]] = err.message;
+                    const field = err.path[0];
+                    if (field && !fieldErrors[field]) {
+                        fieldErrors[field] = err.message;
+                    }
                 });
                 setErrors(fieldErrors);
                 return;

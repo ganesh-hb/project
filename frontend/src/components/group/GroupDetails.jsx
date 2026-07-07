@@ -91,7 +91,7 @@ export default function GroupDetails({ id }) {
                         <div><span className="font-medium text-gray-500">Group Code:</span> {group.groupCode || "-"}</div>
                         <div>
                             <span className="font-medium text-gray-500">Status:</span>{" "}
-                            <span className={statusBadge(group.status)}>{group.status || "Unknown"}</span>
+                            <span className={statusBadge(group.status)}>{group.status.charAt(0).toUpperCase() + group.status.slice(1) || "Unknown"}</span>
                         </div>
                     </div>
                 </div>

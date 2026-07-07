@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { CompanyUpdateSchema } from "../Zod";
+import { City, Country, State } from "country-state-city";
 
 
 export default function AddCompany() {
@@ -21,8 +22,7 @@ export default function AddCompany() {
         phone: "",
         country: "",
         state: "",
-        postalCode: "",
-        AddressLineOne: "",
+        city: "",
         ownerName: "",
         ownerEmail: "",
         ownerPhone: "",
@@ -32,6 +32,30 @@ export default function AddCompany() {
     const [preview, setPreview] = useState("");
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+
+    const [countries] = useState(Country.getAllCountries());
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+
+    useEffect(() => {
+        if (formData.country) {
+            setStates(State.getStatesOfCountry(formData.country));
+            setFormData((prev) => ({ ...prev, state: "", city: "" }));
+            setCities([]);
+        } else {
+            setStates([]);
+            setCities([]);
+        }
+    }, [formData.country]);
+
+    useEffect(() => {
+        if (formData.country && formData.state) {
+            setCities(City.getCitiesOfState(formData.country, formData.state));
+            setFormData((prev) => ({ ...prev, city: "" }));
+        } else {
+            setCities([]);
+        }
+    }, [formData.state, formData.country]);
 
     const gotoPages = (e, url) => {
         e.stopPropagation();
@@ -224,24 +248,59 @@ export default function AddCompany() {
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Address</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-                                <div className="lg:col-span-2">
-                                    <label className={labelClass}>Address Line</label>
-                                    <input type="text" name="AddressLineOne" value={formData.AddressLineOne} onChange={handleChange} placeholder="Street address" className={inputClass} />
-                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}     </div>
-
                                 <div>
                                     <label className={labelClass}>Country</label>
-                                    <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Country" className={inputClass} />
-                                    {errors.country && <p className={errorClass}>{errors.country}</p>}     </div>
+                                    <select
+                                        name="country"
+                                        value={formData.country}
+                                        onChange={handleChange}
+                                        className={inputClass}
+                                    >
+                                        <option value="">Select Country</option>
+                                        {countries.map((c) => (
+                                            <option key={c.isoCode} value={c.isoCode}>
+                                                {c.flag} {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.country && <p className={errorClass}>{errors.country}</p>}
+                                </div>
 
                                 <div>
                                     <label className={labelClass}>State</label>
-                                    <input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="State" className={inputClass} />
-                                    {errors.state && <p className={errorClass}>{errors.state}</p>}      </div>
+                                    <select
+                                        name="state"
+                                        value={formData.state}
+                                        onChange={handleChange}
+                                        disabled={!formData.country}
+                                        className={`${inputClass} disabled:bg-gray-100`}
+                                    >
+                                        <option value="">Select State</option>
+                                        {states.map((s) => (
+                                            <option key={s.isoCode} value={s.isoCode}>
+                                                {s.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.state && <p className={errorClass}>{errors.state}</p>}
+                                </div>
 
                                 <div>
-                                    <label className={labelClass}>Postal Code</label>
-                                    <input type="number" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Postal / ZIP code" className={inputClass} />
+                                    <label className={labelClass}>City</label>
+                                    <select
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleChange}
+                                        disabled={!formData.state}
+                                        className={`${inputClass} disabled:bg-gray-100`}
+                                    >
+                                        <option value="">Select City</option>
+                                        {cities.map((city) => (
+                                            <option key={city.name} value={city.name}>
+                                                {city.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}      </div>
                             </div>
                         </div>
@@ -284,7 +343,7 @@ export default function AddCompany() {
 
                     </div>
 
-                    <div className="mt-8 mb-10 flex justify-end">
+                    <div className="mt-8 mb-10 flex justify-center"> {/* Changed justify-end to justify-center */}
                         <button
                             type="submit"
                             disabled={loading}
@@ -294,7 +353,7 @@ export default function AddCompany() {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

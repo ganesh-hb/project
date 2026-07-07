@@ -109,25 +109,35 @@ export const AddFormSchema = z.object({
 export const CompanyUpdateSchema = z.object({
     companyName: z.string().min(2, "Company name must be at least 2 characters"),
     companyCode: z.string().min(2, "Company code must be at least 2 characters"),
-    companyLocation: z.string(),
+    companyLocation: z.string().min(2, "Location is required"),
     status: z.enum(["active", "inactive", "pending", "block"], {
         errorMap: () => ({ message: "Select a valid status" }),
     }),
     email: z.string()
-        .refine((val) => !val || /^[^\s@]+@[^p}</\s@]+\.[^\s@]+$/.test(val), "Enter a valid email"),
-    website: z.string(),
+        .min(2, "Email is required")
+        .email("Invalid email, enter valid email"),
+    website: z.string().min(2, "Website is required"),
     dialCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
-    phone: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
+    phone: z
+        .string({ required_error: "Phone number is required" })
+        .min(1, { message: "Phone number is required" })
+        .max(10, { message: "Enter valid Phone number" })
+        .regex(/^\d+$/, { message: "Enter valid Phone number" }),
     country: z.string(),
     state: z.string(),
-    postalCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
-    AddressLineOne: z.string(),
-    ownerName: z.string(),
-    ownerEmail: z.string()
+    city: z.string(),
+    ownerName: z.string().min(2, "Owner Name is required"),
+    ownerEmail: z.string().min(2, "Ownwer Email is required")
         .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid owner email"),
-    ownerPhone: z.string(),
+    ownerPhone: z.string().min(2, "Owner phone is required"),
     companyFile: z.any()
         .optional()
-        .refine((file) => !file || file.size <= 5 * 1024 * 1024, "Max file size is 5MB.")
-        .refine((file) => !file || ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.type), "Only JPG/PNG/WEBP files accepted."),
+        .refine((file) => {
+            if (!file) return true;
+            return file.size <= MAX_FILE_SIZE;
+        }, "Max file size is 5MB.")
+        .refine((file) => {
+            if (!file) return true;
+            return ACCEPTED_IMAGE_TYPES.includes(file.type);
+        }, ".jpg, .jpeg, .png and .webp files are accepted."),
 });

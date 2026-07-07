@@ -134,7 +134,7 @@ export default function GroupList() {
                                                             ? "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700"
                                                             : "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700"
                                                 }>
-                                                    {group.status || "Unknown"}
+                                                    {group.status.charAt(0).toUpperCase() + group.status.slice(1) || "Unknown"}
                                                 </span>
                                             </td>
                                         </tr>

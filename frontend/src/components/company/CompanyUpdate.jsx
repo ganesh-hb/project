@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import Header from "../Header";
 import { authHeaders } from "@/app/lib/auth";
 import { CompanyUpdateSchema } from "../Zod";
+import { City, Country, State } from "country-state-city";
 
 export default function CompanyUpdate({ id, onBack }) {
     const [loading, setLoading] = useState(false);
@@ -12,6 +13,10 @@ export default function CompanyUpdate({ id, onBack }) {
     const [companyFile, setCompanyFile] = useState(null);
     const [preview, setPreview] = useState("");
     const [currencies, setCurrencies] = useState([]);
+
+    const [countries] = useState(Country.getAllCountries());
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
 
     const [formData, setFormData] = useState({
         companyName: "",
@@ -24,6 +29,7 @@ export default function CompanyUpdate({ id, onBack }) {
         phone: "",
         country: "",
         state: "",
+        city: "",
         postalCode: "",
         AddressLineOne: "",
         ownerName: "",
@@ -31,6 +37,24 @@ export default function CompanyUpdate({ id, onBack }) {
         curId: "",
         ownerPhone: "",
     });
+
+    useEffect(() => {
+        if (formData.country) {
+            setStates(State.getStatesOfCountry(formData.country));
+            setCities([]);
+        } else {
+            setStates([]);
+            setCities([]);
+        }
+    }, [formData.country]);
+
+    useEffect(() => {
+        if (formData.country && formData.state) {
+            setCities(City.getCitiesOfState(formData.country, formData.state));
+        } else {
+            setCities([]);
+        }
+    }, [formData.state, formData.country]);
 
     useEffect(() => {
         fetchCompany();
@@ -58,8 +82,9 @@ export default function CompanyUpdate({ id, onBack }) {
                     website: data.website || "",
                     dialCode: data.dialCode || "",
                     phone: data.phone || "",
-                    country: data.country || "",
-                    state: data.state || "",
+                    country: "",
+                    state: "",
+                    city: data.city || "",
                     postalCode: data.postalCode || "",
                     AddressLineOne: data.AddressLineOne || "",
                     ownerName: data.ownerName || "",
@@ -69,8 +94,28 @@ export default function CompanyUpdate({ id, onBack }) {
                 });
 
                 setCurrencies(data.allCurrencies || []);
+
                 if (data.companyFile) {
                     setPreview(`http://localhost:4000/upload/company/${data.companyId}/${data.companyFile}`);
+                }
+
+                if (data.country) {
+                    const allCountries = Country.getAllCountries();
+                    const matchedCountry = allCountries.find(
+                        (c) => c.name === data.country || c.isoCode === data.country
+                    );
+                    if (matchedCountry) {
+                        setFormData((prev) => ({ ...prev, country: matchedCountry.isoCode }));
+                        if (data.state) {
+                            const allStates = State.getStatesOfCountry(matchedCountry.isoCode);
+                            const matchedState = allStates.find(
+                                (s) => s.name === data.state || s.isoCode === data.state
+                            );
+                            if (matchedState) {
+                                setFormData((prev) => ({ ...prev, state: matchedState.isoCode }));
+                            }
+                        }
+                    }
                 }
             }
         } catch (err) {
@@ -115,11 +160,18 @@ export default function CompanyUpdate({ id, onBack }) {
         try {
             const payload = new FormData();
             payload.append("companyId", String(id));
+
             Object.entries(formData).forEach(([key, value]) => {
+                if (["country", "state"].includes(key)) return;
                 if (value !== "" && value !== null && value !== undefined) {
                     payload.append(key, String(value));
                 }
             });
+
+            const countryName = Country.getAllCountries().find(c => c.isoCode === formData.country)?.name || formData.country;
+            const stateName = State.getStatesOfCountry(formData.country).find(s => s.isoCode === formData.state)?.name || formData.state;
+            if (countryName) payload.append("country", countryName);
+            if (stateName) payload.append("state", stateName);
             if (companyFile) payload.append("companyFile", companyFile);
 
             const response = await fetch("http://localhost:3000/relayapi", {
@@ -275,26 +327,74 @@ export default function CompanyUpdate({ id, onBack }) {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Address</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+
                                 <div className="lg:col-span-2">
                                     <label className={labelClass}>Address Line</label>
                                     <input type="text" name="AddressLineOne" value={formData.AddressLineOne} onChange={handleChange} placeholder="Street address" className={inputClass} />
                                     {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
                                 </div>
+
                                 <div>
                                     <label className={labelClass}>Country</label>
-                                    <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Country" className={inputClass} />
+                                    <select
+                                        name="country"
+                                        value={formData.country}
+                                        onChange={handleChange}
+                                        className={inputClass}
+                                    >
+                                        <option value="">Select Country</option>
+                                        {countries.map((c) => (
+                                            <option key={c.isoCode} value={c.isoCode}>
+                                                {c.flag} {c.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.country && <p className={errorClass}>{errors.country}</p>}
                                 </div>
+
                                 <div>
                                     <label className={labelClass}>State</label>
-                                    <input type="text" name="state" value={formData.state} onChange={handleChange} placeholder="State" className={inputClass} />
+                                    <select
+                                        name="state"
+                                        value={formData.state}
+                                        onChange={handleChange}
+                                        disabled={!formData.country}
+                                        className={`${inputClass} disabled:bg-gray-100`}
+                                    >
+                                        <option value="">Select State</option>
+                                        {states.map((s) => (
+                                            <option key={s.isoCode} value={s.isoCode}>
+                                                {s.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                     {errors.state && <p className={errorClass}>{errors.state}</p>}
                                 </div>
+
+                                <div>
+                                    <label className={labelClass}>City</label>
+                                    <select
+                                        name="city"
+                                        value={formData.city}
+                                        onChange={handleChange}
+                                        disabled={!formData.state}
+                                        className={`${inputClass} disabled:bg-gray-100`}
+                                    >
+                                        <option value="">Select City</option>
+                                        {cities.map((city) => (
+                                            <option key={city.name} value={city.name}>
+                                                {city.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <div>
                                     <label className={labelClass}>Postal Code</label>
                                     <input type="number" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Postal / ZIP code" className={inputClass} />
                                     {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}
                                 </div>
+
                             </div>
                         </div>
 
@@ -320,11 +420,9 @@ export default function CompanyUpdate({ id, onBack }) {
                             </div>
                         </div>
 
-
-
                     </div>
 
-                    <div className="mt-8 mb-10 flex justify-end gap-4">
+                    <div className="mt-8 mb-10 flex justify-center gap-4">
                         <button
                             type="button"
                             onClick={() => onBack()}
