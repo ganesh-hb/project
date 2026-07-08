@@ -20,7 +20,6 @@ export function isSuperAdmin(userInfo) {
     const groupName = userInfo?.primaryProfile?.groupName || userInfo?.groupName;
     if (!groupName) return false;
     const groups = Array.isArray(groupName) ? groupName : [groupName];
-    console.log(groups.includes("superAdmin"), "##################### superadminCheck")
     return groups.includes("superAdmin");
 }
 

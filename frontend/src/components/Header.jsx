@@ -18,14 +18,13 @@ import ProfilePanel from "./ProfilePanel";
 
 export default function Header({ onSearch, page }) {
     const router = useRouter();
-    const { isLogin, setLogin } = useContext(loginContext);
+    const { isLogin, setLogin, displayUser } = useContext(loginContext);
 
     // console.log(isLogin, "################################ is login header")
-
     const formattedGroupName =
-        isLogin?.assignments?.length
+        displayUser?.assignments?.length
             ? [...new Set(
-                isLogin.assignments
+                displayUser.assignments
                     .map(a => a.groupName)
                     .filter(Boolean)
             )]
@@ -34,9 +33,9 @@ export default function Header({ onSearch, page }) {
             : 'N/A';
 
     const formattedCompanyName =
-        isLogin?.assignments?.length
+        displayUser?.assignments?.length
             ? [...new Set(
-                isLogin.assignments
+                displayUser.assignments
                     .map(a => a.companyName)
                     .filter(Boolean)
             )].join(', ')
@@ -124,7 +123,7 @@ export default function Header({ onSearch, page }) {
         };
     }, []);
 
-    let image = `http://localhost:4000/upload/${isLogin?.userId}/${isLogin?.userFile}`;
+    let image = `http://localhost:4000/upload/${displayUser?.userId}/${displayUser?.userFile}`;
 
     const gotoLogout = (e) => {
         e.preventDefault();
@@ -568,7 +567,7 @@ export default function Header({ onSearch, page }) {
                         >
                             <img
                                 src={
-                                    !isLogin?.userFile
+                                    !displayUser?.userFile
                                         ? "https://i.pravatar.cc/150?img=12"
                                         : image
                                 }
@@ -578,9 +577,8 @@ export default function Header({ onSearch, page }) {
 
                             <div className="leading-tight">
                                 <h4 className="text-sm font-semibold text-gray-800">
-                                    {isLogin?.name || "guest"}
+                                    {displayUser?.name || "guest"}
                                 </h4>
-
                                 <p className="text-xs text-gray-500">
                                     {formattedGroupName || "N/A"}{" "}|{" "}
                                     {formattedCompanyName || "N/A"}

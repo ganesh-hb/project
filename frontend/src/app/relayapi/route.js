@@ -53,7 +53,6 @@ export async function PUT(request) {
         if (contentType.includes("application/json")) {
             const json = await request.json();
             body = JSON.stringify(json);
-            console.log(body)
             fetchHeaders["Content-Type"] = "application/json";
         } else {
             body = await request.formData();

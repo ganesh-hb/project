@@ -38,7 +38,7 @@ function RoleCell({ row }) {
     return (
         <div className="flex flex-wrap gap-1">
             {roles.map((r) => (
-                <span key={r} className="bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 text-xs font-medium">
+                <span key={r} className="rounded-full px-2 py-0.5 text-sm font-medium">
                     {r.replace(/([A-Z])/g, " $1").trim()}
                 </span>
             ))}
@@ -53,7 +53,7 @@ function CompanyCell({ row }) {
     return (
         <div className="flex flex-wrap gap-1">
             {companies.map((c) => (
-                <span key={c} className="bg-orange-100 text-orange-700 rounded-full px-2 py-0.5 text-xs font-medium">
+                <span key={c} className="rounded-full px-2 py-0.5 text-sm font-medium">
                     {c}
                 </span>
             ))}

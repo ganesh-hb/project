@@ -33,12 +33,11 @@ export default function ResetPassword() {
             newErrors.password = 'Password must be at least 6 characters';
             valid = false;
         }
-
         if (!formData.confirmPass) {
             newErrors.confirmPass = 'Please confirm your password';
             valid = false;
         } else if (formData.password !== formData.confirmPass) {
-            newErrors.confirmPass = 'Passwords do not match';
+            newErrors.confirmPass = 'Passwords does not match';
             valid = false;
         }
 

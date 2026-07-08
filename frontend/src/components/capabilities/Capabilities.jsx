@@ -1,14 +1,35 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authHeaders } from "@/app/lib/auth";
+import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
 import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
+import { loginContext } from "../hooks/LoginContext";
 
 export default function CapabilitiesList() {
     const router = useRouter();
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const { isLogin } = useContext(loginContext);
+    const [superAdmin, setSuperAdmin] = useState(false);
+
+    useEffect(() => {
+        const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        setSuperAdmin(isSuperAdmin(isLogin || storedUser));
+        if (superAdmin === false) {
+            // router.replace("/");
+        }
+    }, [isLogin]);
+    // const { superAdmin } = useContext(loginContext);
+
+    // useEffect(() => {
+    //     if (superAdmin === false) {
+    //         router.replace("/");
+    //     }
+    // }, [superAdmin]);
+
+    // if (!superAdmin) return null;
 
     useEffect(() => { fetchGroups(); }, []);
 

@@ -104,15 +104,11 @@ export class GroupService {
         try {
             const groupId = Number(query);
 
-            const [group, assignments, groupPerms] = await Promise.all([
+            const [group, assignments] = await Promise.all([
                 this.groupEntity!.findOne({ where: { groupId } }),
                 this.ucgEntity!.find({
                     where: { groupId },
                     relations: ['user', 'company'],
-                }),
-                this.groupPermissionEntity!.find({
-                    where: { groupId },
-                    relations: ['permission'],
                 }),
             ]);
 
@@ -120,7 +116,6 @@ export class GroupService {
 
             return {
                 ...group,
-                permissions: groupPerms.map((gp) => gp.permission?.permissionName).filter(Boolean),
                 assignments: assignments.map((ucg) => ({
                     userId: ucg.userId,
                     userName: ucg.user?.name,

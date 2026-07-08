@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 import { authHeaders } from "@/app/lib/auth";
 
 export const loginContext = createContext();
@@ -111,8 +111,21 @@ export default function LoginContext({ children }) {
                 localStorage.setItem("impersonationToken", data.impersonationToken);
                 localStorage.setItem("impersonatedUser", JSON.stringify(data.user));
                 localStorage.setItem("impersonatedPermissions", JSON.stringify(data.user?.permissions || []));
+
+                // Preserve the real session's active profile so we can restore it later
+                if (activeAssignment) {
+                    localStorage.setItem("originalActiveAssignment", JSON.stringify(activeAssignment));
+                }
+
                 setImpersonating(data.user);
                 setPermissions(data.user?.permissions || []);
+
+                const impersonatedAssignment = data.user?.primaryProfile || null;
+                setActiveAssignment(impersonatedAssignment);
+                if (impersonatedAssignment) {
+                    localStorage.setItem("activeAssignment", JSON.stringify(impersonatedAssignment));
+                }
+
                 return true;
             }
             return false;
@@ -126,10 +139,27 @@ export default function LoginContext({ children }) {
         localStorage.removeItem("impersonatedUser");
         localStorage.removeItem("impersonatedPermissions");
         setImpersonating(null);
-        // Restore original superAdmin permissions
+
         const original = localStorage.getItem("permissions");
         setPermissions(original ? JSON.parse(original) : []);
+
+        const originalAssignment = localStorage.getItem("originalActiveAssignment");
+        if (originalAssignment) {
+            setActiveAssignment(JSON.parse(originalAssignment));
+            localStorage.setItem("activeAssignment", originalAssignment);
+            localStorage.removeItem("originalActiveAssignment");
+        }
     }
+
+    const displayUser = useMemo(() => {
+        if (impersonating) {
+            return {
+                ...impersonating,
+                assignments: impersonating.primaryProfile ? [impersonating.primaryProfile] : [],
+            };
+        }
+        return isLogin;
+    }, [impersonating, isLogin]);
 
     function switchProfile(assignment) {
         setActiveAssignment(assignment);
@@ -162,7 +192,7 @@ export default function LoginContext({ children }) {
 
     return (
         <loginContext.Provider value={{
-            isLogin, setLogin,
+            isLogin, setLogin, displayUser,
             activeAssignment, switchProfile,
             permissions, can, canAny,
             impersonating, loginAs, stopImpersonating,

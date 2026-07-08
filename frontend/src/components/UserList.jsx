@@ -48,12 +48,6 @@ export default function UsersPage() {
     }, [isLogin]);
 
     useEffect(() => {
-        console.log("isLogin:", isLogin);
-        console.log("primaryProfile:", isLogin?.primaryProfile);
-        console.log("groupName:", isLogin?.primaryProfile?.groupName);
-    }, [isLogin]);
-
-    useEffect(() => {
         fetchData(1, {});
     }, []);
 
@@ -80,8 +74,7 @@ export default function UsersPage() {
             });
 
             if (response.status === 401 || response.status === 403) {
-                toast.error("You don't have permission to view this list", { position: "top-right" });
-                setError("Access denied.");
+                router.push("/forbidden");
                 return;
             }
 

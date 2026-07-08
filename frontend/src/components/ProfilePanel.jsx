@@ -3,15 +3,15 @@ import { useContext, useState } from "react";
 import { loginContext } from "./hooks/LoginContext";
 
 export default function ProfilePage({ onClose }) {
-    const { isLogin, activeAssignment, permissions } = useContext(loginContext);
+    const { isLogin, displayUser, activeAssignment, permissions } = useContext(loginContext);
     const [activeTab, setActiveTab] = useState("summary");
 
     if (!isLogin) return null;
 
-    const assignments = Array.isArray(isLogin.assignments) ? isLogin.assignments : [];
+    const assignments = Array.isArray(displayUser.assignments) ? displayUser.assignments : [];
     const selectedAssignment = activeAssignment || assignments.find(a => a.is_parent === 0) || assignments[0] || null;
 
-    const imageurl = `http://localhost:4000/upload/${isLogin.userId}/${isLogin.userFile}`;
+    const imageurl = `http://localhost:4000/upload/${displayUser.userId}/${displayUser.userFile}`;
 
     const formattedGroupName = selectedAssignment?.groupName
         ? selectedAssignment.groupName.replace(/([A-Z])/g, " $1").trim()

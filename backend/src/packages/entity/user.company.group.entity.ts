@@ -44,7 +44,7 @@ export class UserCompanyGroupEntity {
     @ManyToOne(() => CompanyEntity, (company) => company.userCompanyGroups, {
         onDelete: 'CASCADE',
     })
-    @JoinColumn({ name: 'companyId' })
+    @JoinColumn({ name: 'companyId' })  
     company!: CompanyEntity;
 
     @ManyToOne(() => GroupEntity, (group) => group.userCompanyGroups, {

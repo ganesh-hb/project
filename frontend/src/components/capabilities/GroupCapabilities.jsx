@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { authHeaders } from "@/app/lib/auth";
+import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
 import Header from "../Header";
+import { loginContext } from "../hooks/LoginContext";
 
 const MODULES = [
     {
@@ -27,9 +28,11 @@ const COL_HEADERS = ["List", "View", "Add", "Update"];
 const ALL_PERMS = MODULES.flatMap((m) => m.permissions);
 
 export default function GroupCapabilities({ id }) {
+    const { isLogin } = useContext(loginContext);
     const router = useRouter();
     const groupId = Number(Array.isArray(id) ? id[0] : id);
 
+    const [superAdmin, setSuperAdmin] = useState(null);
     const [fetching, setFetching] = useState(true);
     const [loading, setLoading] = useState(false);
     const [group, setGroup] = useState(null);
@@ -37,30 +40,59 @@ export default function GroupCapabilities({ id }) {
     const [errors, setErrors] = useState({});
     const [checked, setChecked] = useState(() => Object.fromEntries(ALL_PERMS.map((p) => [p, false])));
 
-    useEffect(() => { fetchGroup(); }, []);
+    useEffect(() => {
+        if (isLogin) {
+            setSuperAdmin(isSuperAdmin(isLogin));
+        }
+    }, [isLogin]);
+
+    useEffect(() => {
+        if (superAdmin === false) {
+            // router.replace("/");
+        }
+    }, [superAdmin]);
+
+    useEffect(() => {
+        if (superAdmin === true) {
+            fetchGroup();
+        }
+    }, [superAdmin]);
 
     const fetchGroup = async () => {
         setFetching(true);
         try {
-            const res = await fetch("/relayapi", {
-                method: "GET",
-                headers: {
-                    ...authHeaders(),
-                    endpoint: `group-details/${groupId}`,
-                    module: "group",
-                },
-            });
-            const data = await res.json();
-            if (data?.groupId) {
-                setGroup(data);
+            const [resGroup, resPerms] = await Promise.all([
+                fetch("/relayapi", {
+                    method: "GET",
+                    headers: {
+                        ...authHeaders(),
+                        endpoint: `group-details/${groupId}`,
+                        module: "group",
+                    },
+                }),
+                fetch("/relayapi", {
+                    method: "GET",
+                    headers: {
+                        ...authHeaders(),
+                        endpoint: `group-permissions/${groupId}`,
+                        module: "group",
+                    },
+                })
+            ]);
+
+            const groupData = await resGroup.json();
+            const permsData = await resPerms.json();
+
+            if (groupData?.groupId) {
+                setGroup(groupData);
                 setFormData({
-                    groupName: data.groupName || "",
-                    groupCode: data.groupCode || "",
-                    status: data.status || "active",
+                    groupName: groupData.groupName || "",
+                    groupCode: groupData.groupCode || "",
+                    status: groupData.status || "active",
                 });
                 const init = Object.fromEntries(ALL_PERMS.map((p) => [p, false]));
-                if (Array.isArray(data.permissions)) {
-                    data.permissions.forEach((p) => { if (p in init) init[p] = true; });
+                if (permsData?.success === 1 && Array.isArray(permsData.permissions)) {
+                    permsData.permissions.forEach((p) => { if (p in init) init[p] = true; });
                 }
                 setChecked(init);
             }
@@ -155,6 +187,10 @@ export default function GroupCapabilities({ id }) {
     const isModuleAllOn = (perms) => perms.every((p) => checked[p]);
     const isColAllOn = (ci) => MODULES.map((m) => m.permissions[ci]).every((p) => checked[p]);
     const isAllOn = ALL_PERMS.every((p) => checked[p]);
+
+    if (!isLogin || superAdmin !== true) {
+        return null;
+    }
 
     if (fetching) {
         return (

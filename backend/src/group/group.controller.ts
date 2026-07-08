@@ -5,6 +5,9 @@ import { GroupService } from './group.service';
 import { getGroupListDto, GroupDto, GroupUpdateDto } from 'src/packages/dto/group.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionsGuard, RequirePermission } from 'src/utilities/permissions.guard';
+import { RolesGuard } from 'src/utilities/roles.guard';
+import { Roles } from 'src/utilities/roles.decorator';
+
 
 @Controller('group')
 export class GroupController {
@@ -48,23 +51,25 @@ export class GroupController {
         return await this.groupService.getGroup(param);
     }
 
-    @Get('permissions-all')
-    @UseGuards(AuthGuard('jwt'))
+@Get('permissions-all')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('superAdmin')
     async getAllPermissions() {
         return await this.groupService.getAllPermissions();
     }
 
     @Get('group-permissions/:groupId')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('superAdmin')
     async getGroupPermissions(@Param('groupId') groupId: string) {
         return await this.groupService.getGroupPermissions(Number(groupId));
     }
 
     @Post('group-permissions-save')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('superAdmin')
     async saveGroupPermissions(@Body() body: { groupId: number; permissions: string[] }) {
         return await this.groupService.saveGroupPermissions(Number(body.groupId), body.permissions);
     }
-
 
 }

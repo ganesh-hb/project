@@ -180,6 +180,7 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             if (params.age)            user.age            = params.age;
             if (params.phone)          user.phone          = params.phone;
             if (params.status)         user.status         = params.status;
+            if (params.updatedBy)       user.updatedBy      = params.updatedBy
             if (userFile)              user.userFile       = userFile.filename;
             
             user.updatedDate = new Date();
@@ -619,6 +620,7 @@ async loginAs(targetUserId: number, requestingUserId: number) {
             userId: target.userId,
             name: target.name,
             email: target.email,
+            userFile: target.userFile,
             primaryProfile: primary ? {
                 companyName: primary.company?.companyName,
                 groupName: primary.group?.groupName,

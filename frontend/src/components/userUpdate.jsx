@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { UpdateFormSchema } from "./Zod";
@@ -12,6 +12,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { authHeaders } from "@/app/lib/auth";
+import { loginContext } from "./hooks/LoginContext";
 
 const MIN_AGE_MS = 18 * 365 * 24 * 60 * 61 * 1000;
 
@@ -67,6 +68,7 @@ export default function EditUserPage({ user, onBack }) {
     const [preview, setPreview] = useState("");
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
+    const { isLogin } = useContext(loginContext);
 
     const [errors, setErrors] = useState({
         email: "",
@@ -232,6 +234,7 @@ export default function EditUserPage({ user, onBack }) {
             payload.append("userId", formData.userId);
             payload.append("isActive", formData.isActive);
             payload.append("companyId", companyId);
+            payload.append("updatedBy", isLogin?.userId || null)
             payload.append("groupId", groupId);
             if (formData.userFile) {
                 payload.append("userFile", formData.userFile);

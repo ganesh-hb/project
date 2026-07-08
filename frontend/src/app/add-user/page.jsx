@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,7 @@ import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import Header from "@/components/Header";
 import { AddFormSchema } from "@/components/Zod";
 import { authHeaders } from "../lib/auth";
+import { loginContext } from "@/components/hooks/LoginContext";
 
 const MIN_AGE_MS = 18 * 365 * 24 * 60 * 60 * 1000;
 
@@ -63,7 +64,7 @@ export default function AddUserPage() {
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
-
+    const { isLogin } = useContext(loginContext);
     const [errors, setErrors] = useState({
         email: "",
         name: "",
@@ -190,6 +191,7 @@ export default function AddUserPage() {
             payload.append("password", formData.password);
             payload.append("companyId", formData.companyId);
             payload.append("groupId", formData.groupId);
+            payload.append("createdBy", isLogin?.userId || null)
             payload.append("is_parent", "0"); // always primary on add
 
             if (itiRef.current) {

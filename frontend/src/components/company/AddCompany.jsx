@@ -125,6 +125,10 @@ export default function AddCompany() {
             });
 
             const data = await response.json();
+            if (response.status === 401 || response.status === 403) {
+                router.push("/forbidden");
+                return;
+            }
             if (response.ok && data?.settings?.success === 1) {
                 toast.success("Company created successfully", { position: "top-right" });
                 setTimeout(() => router.push("/company-list"), 1000);

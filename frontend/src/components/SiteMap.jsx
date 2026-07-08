@@ -2,8 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import Header from "./Header";
+import { useContext, useEffect, useState } from "react";
+import { loginContext } from "./hooks/LoginContext";
+import { isSuperAdmin } from "@/app/lib/auth";
 
 export default function SiteMap() {
+    const { isLogin } = useContext(loginContext);
+    const [superAdmin, setSuperAdmin] = useState(false);
+
+    useEffect(() => {
+        const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        setSuperAdmin(isSuperAdmin(isLogin || storedUser));
+    }, [isLogin]);
     const dashboardSections = [
         {
             title: "Dashboards",
@@ -25,11 +35,11 @@ export default function SiteMap() {
             items: ["Group List"],
             redirectTo: '/group-list'
         },
-        {
+        ...(superAdmin ? [{
             title: "Settings",
             items: ["Capabilities"],
             redirectTo: '/capabilities'
-        },
+        }] : []),
     ];
     const router = useRouter()
     const gotoPage = (e, item) => {
