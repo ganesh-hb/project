@@ -22,8 +22,23 @@ export const UpdateFormSchema = z.object({
         .email("Invalid email, enter valid email"),
 
     name: z.string()
-        .min(1, "Name is required")
-        .max(50, "Name must be at most 50 characters"),
+        .min(1, "UserName is required")
+        .max(10, "UserName must be at most 10 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "UserName cannot contain special characters"),
+
+
+    firstName: z.string()
+        .min(1, "First name is required")
+        .max(50, "First name must be at most 50 characters"),
+
+    middleName: z.string()
+        .max(50, "Middle name must be at most 50 characters")
+        .optional()
+        .or(z.literal("")),
+
+    surname: z.string()
+        .min(1, "Last name is required")
+        .max(50, "Last name must be at most 50 characters"),
 
     age: z
         .coerce
@@ -61,8 +76,21 @@ export const AddFormSchema = z.object({
         .email("Invalid email, enter valid email"),
 
     name: z.string()
-        .min(1, "Name is required")
-        .max(50, "Name must be at most 50 characters"),
+        .min(1, "UserName is required")
+        .max(10, "UserName must be at most 50 characters"),
+
+    firstName: z.string()
+        .min(1, "First name is required")
+        .max(50, "First name must be at most 50 characters"),
+
+    middleName: z.string()
+        .max(50, "Middle name must be at most 50 characters")
+        .optional()
+        .or(z.literal("")),
+
+    surname: z.string()
+        .min(1, "Last name is required")
+        .max(50, "Last name must be at most 50 characters"),
 
     age: z
         .coerce

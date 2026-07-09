@@ -49,6 +49,10 @@ export default function EditUserPage({ user, onBack }) {
 
     const [formData, setFormData] = useState({
         name: "",
+        firstName: "",
+        middleName: "",
+        surname: "",
+        email: "",
         email: "",
         age: "",
         phone: "",
@@ -73,6 +77,9 @@ export default function EditUserPage({ user, onBack }) {
     const [errors, setErrors] = useState({
         email: "",
         name: "",
+        firstName: "",
+        middleName: "",
+        surname: "",
         age: "",
         phone: "",
         userFile: "",
@@ -127,6 +134,9 @@ export default function EditUserPage({ user, onBack }) {
 
         setFormData({
             name: user.user_name || "",
+            firstName: user.firstName || "",
+            middleName: user.middleName || "",
+            surname: user.surname || "",
             email: user.user_email || "",
             age: calculatedAge,
             phone: user.user_phone || "",
@@ -209,6 +219,9 @@ export default function EditUserPage({ user, onBack }) {
                 const fieldErrors = {
                     email: "",
                     name: "",
+                    firstName: "",
+                    middleName: "",
+                    surname: "",
                     age: "",
                     phone: "",
                     userFile: "",
@@ -225,6 +238,9 @@ export default function EditUserPage({ user, onBack }) {
 
             const payload = new FormData();
             payload.append("name", formData.name);
+            payload.append("firstName", formData.firstName);
+            payload.append("middleName", formData.middleName);
+            payload.append("surname", formData.surname);
             payload.append("email", formData.email);
             payload.append("age", formData.age);
             payload.append("tel", formData.tel);
@@ -327,11 +343,12 @@ export default function EditUserPage({ user, onBack }) {
                             {/* Name */}
                             <div className="w-full">
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    User Name <span className="text-red-500 text-[16px]">*</span>
+                                    UserName
                                 </label>
                                 <input
                                     type="text"
                                     name="name"
+                                    readOnly
                                     value={formData.name}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
@@ -339,14 +356,60 @@ export default function EditUserPage({ user, onBack }) {
                                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                             </div>
 
+                            {/* First Name */}
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    First Name <span className="text-red-500 text-[16px]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                                {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                            </div>
+
+                            {/* Middle Name */}
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Middle Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="middleName"
+                                    value={formData.middleName}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                                {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                            </div>
+
+                            {/* Last Name */}
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Last Name <span className="text-red-500 text-[16px]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="surname"
+                                    value={formData.surname}
+                                    onChange={handleChange}
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                                {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                            </div>
+
                             {/* Email */}
                             <div className="w-full">
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Email <span className="text-red-500 text-[16px]">*</span>
+                                    Email
                                 </label>
                                 <input
                                     type="email"
                                     name="email"
+                                    readOnly
                                     value={formData.email}
                                     onChange={handleChange}
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"

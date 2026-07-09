@@ -7,6 +7,7 @@ import { loginContext } from "./hooks/LoginContext";
 import Header from "./Header";
 import { authHeaders } from "@/app/lib/auth";
 
+import ActivityTimeline from '@/components/activity/ActivityTimeline';
 export default function UserDetailsPage({ id }) {
     const [showEdit, setShowEdit] = useState(false);
     const { can, canAny } = useContext(loginContext);
@@ -203,17 +204,14 @@ export default function UserDetailsPage({ id }) {
                                         <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 cursor-pointer">{assignments.length}</span>
                                     )}
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab("activity")}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition cursor-pointer ${activeTab === "activity" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                >
+                                    Activity
+                                </button>
                             </div>
-                            <div className="mt-8 space-y-3 text-black">
-                                <div className="flex items-center justify-between rounded-xl bg-gray-100 px-4 py-3">
-                                    <span>Notes</span>
-                                    <span className="rounded bg-white px-2 py-1 text-xs font-semibold">0</span>
-                                </div>
-                                <div className="flex items-center justify-between rounded-xl bg-gray-100 px-4 py-3">
-                                    <span>Activities</span>
-                                    <span className="rounded bg-white px-2 py-1 text-xs font-semibold">17</span>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
 
@@ -295,6 +293,9 @@ export default function UserDetailsPage({ id }) {
                                     </div>
                                 </div>
                             </div>
+                        )}
+                        {activeTab === "activity" && (
+                            <ActivityTimeline userId={id} />
                         )}
 
                         {/* ── OTHER PROFILES TAB ── */}

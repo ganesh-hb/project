@@ -1,6 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivityCode } from '../activity/enums/activity-code.enum';
 
 import { GroupEntity } from 'src/packages/entity/group.entity';
 import { FileTransfer } from 'src/utilities/file.transfer';
@@ -11,7 +13,7 @@ import { PermissionEntity, GroupPermissionEntity } from 'src/packages/entity/cap
 
 @Injectable()
 export class GroupService {
-    constructor(private readonly fileTransfer: FileTransfer) {}
+    constructor(private readonly fileTransfer: FileTransfer, private readonly eventEmitter: EventEmitter2) {}
 
     @Inject()
     private readonly filter?: Filter;
@@ -45,7 +47,19 @@ export class GroupService {
             if (params.status)    queryParams.status    = params.status;
 
             const result = await this.groupEntity!.insert(queryParams);
-            return { success: 1, message: 'Inserted successfully', data: { insertData: result?.raw?.insertId } };
+            const insertId = result?.raw?.insertId;
+            // Emit activity after successful group creation
+            // this.eventEmitter.emit('activity.log', {
+            //   activityCode: ActivityCode.GROUP_CREATE,
+            //   userId: null,
+            //   companyId: null,
+            //   actorType: 'USER',
+            //   executionStatus: 'SUCCESS',
+            //   severity: 'INFO',
+            //   parameters: { groupName: params.groupName },
+            //   metadata: {},
+            // });
+            return { success: 1, message: 'Inserted successfully', data: { insertData: insertId } };
         } catch (err: any) {
             return { success: 0, message: err?.message };
         }
@@ -73,6 +87,17 @@ export class GroupService {
             queryParams.updatedDate = () => 'NOW()';
 
             const result = await this.groupEntity!.update({ groupId: params.groupId }, queryParams);
+            // Emit activity after successful group update
+            // this.eventEmitter.emit('activity.log', {
+            //   activityCode: ActivityCode.GROUP_UPDATE,
+            //   userId: params.updatedBy ?? null,
+            //   companyId: null,
+            //   actorType: 'USER',
+            //   executionStatus: 'SUCCESS',
+            //   severity: 'INFO',
+            //   parameters: { updatedFields: Object.keys(params) },
+            //   metadata: {},
+            // });
             return { success: 1, message: 'Updated successfully', data: { affected: result.affected } };
         } catch (err: any) {
             return { success: 0, message: err?.message };

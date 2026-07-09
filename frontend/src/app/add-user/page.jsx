@@ -46,6 +46,10 @@ export default function AddUserPage() {
 
     const [formData, setFormData] = useState({
         name: "",
+        firstName: "",
+        middleName: "",
+        surname: "",
+        email: "",
         email: "",
         age: "",
         phone: "",
@@ -67,6 +71,11 @@ export default function AddUserPage() {
     const { isLogin } = useContext(loginContext);
     const [errors, setErrors] = useState({
         email: "",
+        name: "",
+        firstName: "",
+        middleName: "",
+        surname: "",
+        age: "",
         name: "",
         age: "",
         phone: "",
@@ -161,6 +170,9 @@ export default function AddUserPage() {
                 const fieldErrors = {
                     email: "",
                     name: "",
+                    firstName: "",
+                    middleName: "",
+                    surname: "",
                     age: "",
                     password: "",
                     phone: "",
@@ -183,6 +195,9 @@ export default function AddUserPage() {
             }
             const payload = new FormData();
             payload.append("name", formData.name);
+            payload.append("firstName", formData.firstName);
+            payload.append("middleName", formData.middleName);
+            payload.append("surname", formData.surname);
             payload.append("email", formData.email);
             payload.append("age", String(formData.age));
             payload.append("phone", phoneRef.current.value.replace(/\D/g, ""));
@@ -266,17 +281,65 @@ export default function AddUserPage() {
                             {/* Name */}
                             <div className="w-full">
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    User Name <span className="text-red-500 text-[16px]">*</span>
+                                    UserName <span className="text-red-500 text-[16px]">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    placeholder="Enter full name"
+                                    placeholder="Enter UserName"
                                     className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                 />
                                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                            </div>
+
+                            {/* First Name */}
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    First Name <span className="text-red-500 text-[16px]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleChange}
+                                    placeholder="Enter first name"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                                {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                            </div>
+
+                            {/* Middle Name */}
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Middle Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="middleName"
+                                    value={formData.middleName}
+                                    onChange={handleChange}
+                                    placeholder="Enter middle name"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                                {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                            </div>
+
+                            {/* Last Name */}
+                            <div className="w-full">
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Last Name <span className="text-red-500 text-[16px]">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="surname"
+                                    value={formData.surname}
+                                    onChange={handleChange}
+                                    placeholder="Enter last name"
+                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                />
+                                {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
                             </div>
 
                             {/* Email */}

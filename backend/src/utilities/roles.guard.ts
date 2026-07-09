@@ -37,17 +37,17 @@ export class RolesGuard implements CanActivate {
             relations: ['group'],
         });
 
-        const groupCodes = assignments.map((a) => a.group?.groupCode).filter(Boolean);
+        const groupNames = assignments.map((a) => a.group?.groupName).filter(Boolean);
         const companyIds = assignments.map((a) => a.companyId);
 
         // Attach to request for use in controllers/services
-        request.userRoles = groupCodes;
+        request.userRoles = groupNames;
         request.userCompanyIds = companyIds;
-        request.isSuperAdmin = groupCodes.includes('superAdmin');
+        request.isSuperAdmin = groupNames.includes('superAdmin');
 
         // Check required roles
         if (requiredRoles.length) {
-            const hasRole = requiredRoles.some((r) => groupCodes.includes(r));
+            const hasRole = requiredRoles.some((r) => groupNames.includes(r));
             if (!hasRole) throw new ForbiddenException('Access denied');
         }
 

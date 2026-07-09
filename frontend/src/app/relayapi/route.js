@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 import { decryptResponse } from "../lib/crypto";
 
+// Backend URL (ensure protocol is included)
 const BACKEND = process.env.BACKEND_URL || "http://localhost:4000";
 
+/**
+ * Helper to build the base URL for a given module/service.
+ */
 function getServiceBase(request) {
     const module = request.headers.get("module") || request.headers.get("service") || "user";
     return `${BACKEND}/${module}`;
 }
 
+/**
+ * Parse the raw response from the backend.
+ * If the payload is encrypted, decrypt it, otherwise return the JSON body.
+ */
 async function parseResponse(res) {
     const text = await res.text();
     try {
@@ -15,6 +23,25 @@ async function parseResponse(res) {
         return payload.encrypted ? decryptResponse(payload.encrypted) : payload;
     } catch {
         return { message: text };
+    }
+}
+
+/**
+ * Centralised fetch wrapper that logs useful debugging information.
+ */
+async function doFetch(url, options) {
+    console.log("Relay forwarding:", options.method, url);
+    try {
+        const res = await fetch(url, options);
+        console.log("Backend status:", res.status);
+        const raw = await res.text();
+        console.log("Backend raw response:", raw);
+        // Re‑create a Response so parseResponse can read it again
+        const clone = new Response(raw, { status: res.status, headers: res.headers });
+        return { res: clone, payload: await parseResponse(clone) };
+    } catch (err) {
+        console.error("Relay fetch failed:", err);
+        throw err;
     }
 }
 
@@ -27,13 +54,11 @@ export async function GET(request) {
         const profileId = request.headers.get("x-profile-id");
         const qs = profileId ? `?profileId=${profileId}` : "";
 
-        const res = await fetch(`${base}/${endpoint}${qs}`, {
+        const { res, payload } = await doFetch(`${base}/${endpoint}${qs}`, {
             method: "GET",
             headers: { ...(token ? { Authorization: token } : {}) },
         });
-
-        const data = await parseResponse(res);
-        return NextResponse.json(data, { status: res.status });
+        return NextResponse.json(payload, { status: res.status });
     } catch (err) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
@@ -48,7 +73,7 @@ export async function PUT(request) {
         const base = getServiceBase(request);
 
         let body;
-        let fetchHeaders = {};
+        const fetchHeaders = {};
         if (token) fetchHeaders["Authorization"] = token;
         if (contentType.includes("application/json")) {
             const json = await request.json();
@@ -58,9 +83,12 @@ export async function PUT(request) {
             body = await request.formData();
         }
 
-        const res = await fetch(`${base}/${endpoint}`, { method: "PUT", headers: fetchHeaders, body });
-        const data = await parseResponse(res);
-        return NextResponse.json(data, { status: res.status });
+        const { res, payload } = await doFetch(`${base}/${endpoint}`, {
+            method: "PUT",
+            headers: fetchHeaders,
+            body,
+        });
+        return NextResponse.json(payload, { status: res.status });
     } catch (err) {
         return NextResponse.json({ error: err.message || "Something went wrong" }, { status: 500 });
     }
@@ -75,9 +103,8 @@ export async function POST(request) {
         const base = getServiceBase(request);
 
         let body;
-        let fetchHeaders = {};
+        const fetchHeaders = {};
         if (token) fetchHeaders["Authorization"] = token;
-
         if (contentType.includes("application/json")) {
             const json = await request.json();
             body = JSON.stringify(json);
@@ -85,9 +112,13 @@ export async function POST(request) {
         } else {
             body = await request.formData();
         }
-        const res = await fetch(`${base}/${endpoint}`, { method: "POST", headers: fetchHeaders, body });
-        const data = await parseResponse(res);
-        return NextResponse.json(data, { status: res.status });
+
+        const { res, payload } = await doFetch(`${base}/${endpoint}`, {
+            method: "POST",
+            headers: fetchHeaders,
+            body,
+        });
+        return NextResponse.json(payload, { status: res.status });
     } catch (err) {
         return NextResponse.json({ error: err.message || "Something went wrong" }, { status: 500 });
     }

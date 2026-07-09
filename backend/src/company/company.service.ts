@@ -1,6 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivityCode } from '../activity/enums/activity-code.enum';
 
 import { CompanyEntity } from 'src/packages/entity/company.entity';
 import { FileTransfer } from 'src/utilities/file.transfer';
@@ -12,7 +14,7 @@ import { CompanyCurrencyEntity } from 'src/packages/entity/company.currency.enti
 
 @Injectable()
 export class CompanyService {
-    constructor(private readonly fileTransfer: FileTransfer) {}
+    constructor(private readonly fileTransfer: FileTransfer, private readonly eventEmitter: EventEmitter2) {}
 
     @Inject()
     private readonly filter!: Filter;
@@ -67,6 +69,17 @@ async insertCompany(params: any, companyFile: any) {
             await this.companyCurrencyEntity.insert({ companyId: insertId, curId: Number(params.curId) });
         }
 
+        // Emit activity after successful company creation
+        // this.eventEmitter.emit('activity.log', {
+        //   activityCode: ActivityCode.COMPANY_CREATE,
+        //   userId: params.createdBy ?? null,
+        //   companyId: insertId,
+        //   actorType: 'USER',
+        //   executionStatus: 'SUCCESS',
+        //   severity: 'INFO',
+        //   parameters: { companyName: params.companyName },
+        //   metadata: {},
+        // });
         return { success: 1, message: 'Inserted successfully', data: { insertData: insertId } };
     } catch (err: any) {
         return { success: 0, message: err?.message };
@@ -140,6 +153,17 @@ async insertCompany(params: any, companyFile: any) {
             }
         }
 
+        // Emit activity after successful company update
+        // this.eventEmitter.emit('activity.log', {
+        //   activityCode: ActivityCode.COMPANY_UPDATE,
+        //   userId: params.updatedBy ?? null,
+        //   companyId: params.companyId,
+        //   actorType: 'USER',
+        //   executionStatus: 'SUCCESS',
+        //   severity: 'INFO',
+        //   parameters: { updatedFields: Object.keys(params) },
+        //   metadata: {},
+        // });
         return { success: 1, message: 'Updated successfully' };
     } catch (err: any) {
         return { success: 0, message: err?.message };

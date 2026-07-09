@@ -7,6 +7,8 @@ import { UserCompanyGroupEntity } from "../entity/user.company.group.entity";
 import { PermissionEntity, GroupPermissionEntity } from "../entity/capability.entity";
 import { CurrencyEntity } from "../entity/currency.entity";
 import { CompanyCurrencyEntity } from "../entity/company.currency.entity";
+import { ActivityMasterEntity } from "../entity/activity-master.entity";
+import { ActivityLogEntity } from "../entity/activity-log.entity";
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
     type: process.env.DB_CLIENT as "mysql" ?? "mysql",
@@ -24,9 +26,12 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
         GroupPermissionEntity,
         CurrencyEntity,
         CompanyCurrencyEntity,
+        ActivityMasterEntity,
+        ActivityLogEntity,
     ],
-    synchronize: true,
+    synchronize: false,
     migrationsRun: false,
     logging: false,
-    migrations: [__dirname + "/migrations/*.ts"],
+    // point to the actual migration directory
+    migrations: [__dirname + "/migration/*{.ts,.js}"],
 };

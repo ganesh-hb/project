@@ -26,7 +26,8 @@ import {
 } from 'src/packages/dto/user.dto';
 import { encryptResponse } from 'src/utilities/crypto';
 import { AuthGuard } from '@nestjs/passport';
-import { Roles } from 'src/utilities/roles.decorator';
+import { Roles, CompanyScoped } from 'src/utilities/roles.decorator';
+import { RolesGuard } from 'src/utilities/roles.guard';
 import { PermissionsGuard, RequirePermission } from 'src/utilities/permissions.guard';
 
 @Controller('user')
@@ -86,7 +87,6 @@ export class UserController {
         @UploadedFile() userFile: Express.Multer.File,
     ) {
         try {
-            console.log(body)
             if (userFile) {
                 const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
                 if (!allowedTypes.includes(userFile.mimetype)) {
@@ -108,22 +108,24 @@ export class UserController {
     @Post('user-login')
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async login(@Body() body: login) {
+        console.log(body)
         const result = await this.userService.login(body);
         return {
         encrypted: encryptResponse(result),
 };
     }
 
-    @Post('user-list')
-    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+ @Post('user-list')
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard, RolesGuard)
     @RequirePermission('userList')
+    @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+    @CompanyScoped()
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
-    async getUsers(@Body() body: getUserListDto) {
-    const result = await this.userService.getUsers(body);
-    console.log(result,"############### user list controller")
-    return {
-        encrypted: encryptResponse(result),
-    };
+    async getUsers(@Body() body: getUserListDto, @Req() req) {
+        const result = await this.userService.getUsers(body, req);
+        return {
+            encrypted: encryptResponse(result),
+        };
     }
 
     @Get("user-details/:id")

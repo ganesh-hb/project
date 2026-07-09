@@ -10,6 +10,7 @@ import {
     Length,
     Min,
     ValidateNested,
+    Matches,
 } from 'class-validator';
 
 export enum isOptional {
@@ -33,8 +34,24 @@ export enum isRole {
 export class UserDto {
     @IsString()
     @Length(2, 20)
+    @Matches(/^[A-Za-z0-9_]+$/ , { message: 'Username can only contain letters, numbers, and underscores' })
     name!: string;
 
+    @IsOptional()
+    @IsString()
+    @Length(1, 50)
+    firstName?: string;
+
+    @IsOptional()
+    @IsString()
+    @Length(0, 50)
+    middleName?: string;
+
+    @IsOptional()
+    @IsString()
+    @Length(1, 50)
+    surname?: string;
+    
     @IsEmail()
     email!: string;
 
@@ -97,11 +114,27 @@ export class userUpdateDto {
     @IsOptional()
     @IsString()
     @Length(3, 20)
-    name!: string;
+    @Matches(/^[A-Za-z0-9_]+$/ , { message: 'Username can only contain letters, numbers, and underscores' })
+    userName?: string; // immutable
 
     @IsOptional()
     @IsEmail()
-    email!: string;
+    email?: string; // immutable
+
+    @IsOptional()
+    @IsString()
+    @Length(1, 50)
+    firstName?: string;
+
+    @IsOptional()
+    @IsString()
+    @Length(0, 50)
+    middleName?: string;
+
+    @IsOptional()
+    @IsString()
+    @Length(1, 50)
+    surname?: string;
 
     @IsOptional()
     @IsInt()
@@ -163,9 +196,15 @@ export class UserPassDto {
 }
 
 export class login {
-    @IsNotEmpty()
+    // Either email or userName can be used for login. Both are optional but at least one must be provided.
+    @IsOptional()
     @IsEmail()
-    email!: string;
+    email?: string;
+
+    @IsOptional()
+    @IsString()
+    @IsNotEmpty({ message: 'Username cannot be empty' })
+    userName?: string;
 
     @IsNotEmpty()
     @IsString()

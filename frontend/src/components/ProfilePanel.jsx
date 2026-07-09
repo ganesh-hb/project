@@ -1,9 +1,11 @@
 "use client";
 import { useContext, useState } from "react";
 import { loginContext } from "./hooks/LoginContext";
+import ActivityTimeline from '@/components/activity/ActivityTimeline';
 
 export default function ProfilePage({ onClose }) {
     const { isLogin, displayUser, activeAssignment, permissions } = useContext(loginContext);
+    console.log(displayUser, "########################3 dispaly user")
     const [activeTab, setActiveTab] = useState("summary");
 
     if (!isLogin) return null;
@@ -62,8 +64,8 @@ export default function ProfilePage({ onClose }) {
                     <div className="col-span-12 lg:col-span-3">
                         <div className="rounded-2xl bg-white p-5 shadow-sm">
                             <div className="border-b pb-5">
-                                <h2 className="text-xl font-semibold capitalize text-gray-800">{isLogin.name}</h2>
-                                <p className="text-sm text-gray-400 mt-1">{isLogin.email}</p>
+                                <h2 className="text-xl font-semibold capitalize text-gray-800">{displayUser.name}</h2>
+                                <p className="text-sm text-gray-400 mt-1">{displayUser.email}</p>
                             </div>
                             <div className="mt-6 space-y-3">
                                 <button
@@ -78,8 +80,14 @@ export default function ProfilePage({ onClose }) {
                                 >
                                     Profiles
                                     {assignments.length > 0 && (
-                                        <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{assignments.length}</span>
+                                        <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 cursor-pointer">{assignments.length}</span>
                                     )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab("activity")}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "activity" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                >
+                                    My Activity
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("permissions")}
@@ -110,19 +118,19 @@ export default function ProfilePage({ onClose }) {
                                             />
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-semibold capitalize text-gray-800">{isLogin.name}</h2>
-                                            <span className={statusBadge(isLogin.status)}>{isLogin.status || "Active"}</span>
+                                            <h2 className="text-2xl font-semibold capitalize text-gray-800">{displayUser.name}</h2>
+                                            <span className={statusBadge(displayUser.status)}>{displayUser.status || "Active"}</span>
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-5">
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">User Name</p><p className="font-medium text-gray-800">{isLogin.name}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{isLogin.age ?? "N/A"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">User Name</p><p className="font-medium text-gray-800">{displayUser.name}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{displayUser.age ?? "N/A"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(isLogin.createdAt)}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{isLogin.createdBy || "N/A"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(isLogin.updatedDate)}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{isLogin.updatedBy || "N/A"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(displayUser.createdAt)}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{displayUser.createdBy || "N/A"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(displayUser.updatedDate)}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{displayUser.updatedBy || "N/A"}</p></div>
                                     </div>
                                 </div>
 
@@ -131,9 +139,9 @@ export default function ProfilePage({ onClose }) {
                                     <div className="rounded-2xl bg-white p-6 shadow-sm">
                                         <h3 className="mb-5 text-xl font-semibold text-gray-800">Contact Info</h3>
                                         <div className="space-y-5">
-                                            <div><p className="text-sm text-gray-500">Email</p><p className="font-medium text-gray-800">{isLogin.email}</p></div>
-                                            <div><p className="text-sm text-gray-500">Phone Number</p><p className="font-medium text-gray-800">{isLogin.phone || "N/A"}</p></div>
-                                            <div><p className="text-sm text-gray-500">Alternate Phone</p><p className="font-medium text-gray-800">{isLogin.alternatePhone || "-"}</p></div>
+                                            <div><p className="text-sm text-gray-500">Email</p><p className="font-medium text-gray-800">{displayUser.email}</p></div>
+                                            <div><p className="text-sm text-gray-500">Phone Number</p><p className="font-medium text-gray-800">{displayUser.phone || "N/A"}</p></div>
+                                            <div><p className="text-sm text-gray-500">Alternate Phone</p><p className="font-medium text-gray-800">{displayUser.alternatePhone || "-"}</p></div>
                                         </div>
                                     </div>
                                     <div className="rounded-2xl bg-white p-6 shadow-sm">
@@ -152,13 +160,14 @@ export default function ProfilePage({ onClose }) {
                                 {assignments.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                                         <p className="text-lg">No profiles assigned.</p>
+                                        <p className="text-sm mt-1">Click "Add Profile" to assign this user to a company and role.</p>
                                     </div>
                                 ) : (
                                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                         {assignments.map((a, i) => (
                                             <div
                                                 key={a.id || i}
-                                                className={`rounded-xl border p-5 shadow-sm transition ${selectedAssignment?.id === a.id ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-gray-50"}`}
+                                                className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition ${selectedAssignment?.id === a.id ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-gray-50"}`}
                                             >
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>
@@ -186,6 +195,10 @@ export default function ProfilePage({ onClose }) {
                                     </div>
                                 )}
                             </div>
+                        )}
+
+                        {activeTab === "activity" && (
+                            <ActivityTimeline userId={displayUser?.userId} />
                         )}
 
                         {activeTab === "permissions" && (

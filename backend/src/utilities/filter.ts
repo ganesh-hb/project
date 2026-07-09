@@ -1,5 +1,5 @@
 export class Filter {
-    async makeFilterString(param, alias) {
+    async makeFilterString(param, alias, aliasMap: Record<string, string> = {}) {
        try {
       let filterString: any = '';
 

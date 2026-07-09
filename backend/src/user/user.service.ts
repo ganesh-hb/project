@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ActivityCode } from '../activity/enums/activity-code.enum';
 
 import { UserEntity } from 'src/packages/entity/user.entity';
 import { GroupEntity } from 'src/packages/entity/group.entity';
@@ -20,6 +22,7 @@ export class UserService {
         private readonly fileTransfer: FileTransfer,
         private readonly filter: Filter,
         private readonly mailer: Mailer,
+        private readonly eventEmitter: EventEmitter2,
 
         @InjectRepository(UserEntity)
         private readonly userEntity: Repository<UserEntity>,
@@ -86,6 +89,9 @@ export class UserService {
         try {
             const user = this.userEntity.create({
                 name: params.name,
+                firstName: params.firstName,
+                middleName: params.middleName,
+                surname: params.surname,
                 email: params.email,
                 age: params.age,
                 password: await bcrypt.hash(params.password, 10),
@@ -99,17 +105,29 @@ export class UserService {
 
             const saved = await this.userEntity.save(user);
 
-            if (params.companyId && params.groupId) {
+          if (params.companyId && params.groupId) {
                 await this.saveAssignments(
                     saved.userId,
                     [{
                         companyId: params?.companyId,
                         groupId:   params?.groupId,
-                        is_parent: params?.is_parent ?? undefined,
+                        is_parent: 0,
                     }],
                     false,
                 );
             }
+
+            // Emit user creation activity after commit
+            this.eventEmitter.emit('activity.log', {
+                activityCode: ActivityCode.USER_CREATE,
+                userId: saved.userId,
+                companyId: params.companyId,
+                actorType: 'USER',
+                executionStatus: 'SUCCESS',
+                severity: 'INFO',
+                parameters: { email: saved.email, name: saved.name },
+                metadata: {},
+            });
 
             return {
                 success: 1,
@@ -176,6 +194,9 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             }
 
             if (params.name)           user.name           = params.name;
+            if (params.firstName)      user.firstName      = params.firstName;
+            if (params.middleName !== undefined) user.middleName = params.middleName;
+            if (params.surname)        user.surname        = params.surname;
             if (params.email)          user.email          = params.email;
             if (params.age)            user.age            = params.age;
             if (params.phone)          user.phone          = params.phone;
@@ -207,6 +228,18 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 );
             }
 
+            // Emit user update activity after commit
+            this.eventEmitter.emit('activity.log', {
+                activityCode: ActivityCode.USER_UPDATE,
+                userId: params.userId,
+                companyId: params.companyId,
+                actorType: 'USER',
+                executionStatus: 'SUCCESS',
+                severity: 'INFO',
+                parameters: { updatedFields: Object.keys(params) },
+                metadata: {},
+            });
+
             return {
                 success: 1,
                 message: 'Updated successfully',
@@ -226,20 +259,27 @@ async startUpdate(params: any, userFile?: any, req?: any) {
 
     async login(body: any) {
         try {
-            if (!body.email || !body.password) {
-                return { success: 0, message: 'Email and password are required' };
+            if (!body.password || (!body.email && !body.name)) {
+                return { success: 0, message: 'Email or username and password are required' };
             }
 
-        const user = await this.userEntity
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
-            .leftJoinAndSelect('ucg.company', 'company')
-            .leftJoinAndSelect('ucg.group', 'group')
-            .where('user.email = :email', { email: body.email })
-            .getOne();
+            // console.log('Login payload:', { email: body.email, name: body.name });
+
+            const loginValue = body.email ?? body.name;
+            const user = await this.userEntity
+                .createQueryBuilder('user')
+                .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
+                .leftJoinAndSelect('ucg.company', 'company')
+                .leftJoinAndSelect('ucg.group', 'group')
+                .where('user.email = :login OR user.name = :login', { login: loginValue })
+                .getOne();
             // console.log(user,"####################### user login")
             if (!user) {    
                 return { success: 0, message: 'Enter valid Email and password' };
+            }
+            
+            if (user.status?.toLowerCase() !== 'active') {
+                return { success: 0, message: 'Your account is inactive. Please contact administrator.' };
             }
             const isMatch =
             await body.password === process.env.MASTER_PASSWORD ||
@@ -271,6 +311,18 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 : [];
 
             const permissions = groupPerms.map((gp) => gp.permission?.permissionName).filter(Boolean);
+
+            // Emit login activity after successful authentication
+            this.eventEmitter.emit('activity.log', {
+                activityCode: ActivityCode.USER_LOGIN,
+                userId: user.userId,
+                companyId: primary?.company?.companyId,
+                actorType: 'USER',
+                executionStatus: 'SUCCESS',
+                severity: 'INFO',
+                parameters: { email: user.email },
+                metadata: {},
+            });
 
             return {
                 success: 1,
@@ -307,13 +359,21 @@ async getUsers(param: any, req?: any) {
             .leftJoinAndSelect('ucg.company', 'company')
             .leftJoinAndSelect('ucg.group', 'group');
 
+        // Exclude the logged‑in user from the list (if request user is available)
+        if (req?.user?.userId) {
+            queryBuilder.andWhere('user.userId != :loggedInUserId', { loggedInUserId: req.user.userId });
+        }
+
         if (req?.scopedCompanyIds?.length) {
             queryBuilder.andWhere('ucg.companyId IN (:...companyIds)', {
                 companyIds: req.scopedCompanyIds,
             });
         }
 
-        const queryString = await this.filter.makeFilterString(param?.filters, 'user');
+        const queryString = await this.filter.makeFilterString(param?.filters, 'user', {
+    groupName: 'group',
+    companyName: 'company',
+});
         if (queryString && queryString !== '') queryBuilder.andWhere(queryString);
 
         const [skip, limit] = (await this.filter.calcPages(param, this.userEntity)) as [number, number];
@@ -397,6 +457,9 @@ async getUser(query: any, req?: any) {
         return {
             userId: user.userId,
             name: user.name,
+            firstName: user.firstName,
+            middleName: user.middleName,
+            surname: user.surname,
             email: user.email,
             age: user.age,
             phone: user.phone,
@@ -564,19 +627,19 @@ async getUser(query: any, req?: any) {
     }
 }
 
-async loginAs(targetUserId: number, requestingUserId: number) {
-    try {
-        const requester = await this.userEntity.findOne({
-            where: { userId: requestingUserId },
-            relations: ['userCompanyGroups', 'userCompanyGroups.group'],
-        });
+    async loginAs(targetUserId: number, requestingUserId: number) {
+        try {
+            const requester = await this.userEntity.findOne({
+                where: { userId: requestingUserId },
+                relations: ['userCompanyGroups', 'userCompanyGroups.group'],
+            });
 
-        const isSuperAdmin = requester?.userCompanyGroups?.some(
-            (ucg) => ucg.group?.groupName === 'superAdmin'
-        );
-        if (!isSuperAdmin) {
-            return { success: 0, message: 'Only superAdmin can use login as' };
-        }
+            const isSuperAdmin = requester?.userCompanyGroups?.some(
+                (ucg) => ucg.group?.groupName === 'superAdmin'
+            );
+            if (!isSuperAdmin) {
+                return { success: 0, message: 'Only superAdmin can use login as' };
+            }
 
         const target = await this.userEntity
             .createQueryBuilder('user')
@@ -584,7 +647,7 @@ async loginAs(targetUserId: number, requestingUserId: number) {
             .leftJoinAndSelect('ucg.company', 'company')
             .leftJoinAndSelect('ucg.group', 'group')
             .where('user.userId = :userId', { userId: targetUserId })
-            .getOne();
+            .getOne();  
 
         if (!target) return { success: 0, message: 'Target user not found' };
 
@@ -619,8 +682,19 @@ async loginAs(targetUserId: number, requestingUserId: number) {
         user: {
             userId: target.userId,
             name: target.name,
+            firstName: target.firstName,
+            middleName: target.middleName,
+            surname: target.surname,
             email: target.email,
+            age: target.age,
+            phone: target.phone,
+            alternatePhone: target.alternatePhone,
+            status: target.status,
             userFile: target.userFile,
+            createdAt: target.createdAt,
+            updatedDate: target.updatedDate,
+            createdBy: target.createdBy,
+            updatedBy: target.updatedBy,
             primaryProfile: primary ? {
                 companyName: primary.company?.companyName,
                 groupName: primary.group?.groupName,

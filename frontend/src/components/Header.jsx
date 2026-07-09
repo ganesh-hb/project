@@ -21,25 +21,17 @@ export default function Header({ onSearch, page }) {
     const { isLogin, setLogin, displayUser } = useContext(loginContext);
 
     // console.log(isLogin, "################################ is login header")
-    const formattedGroupName =
-        displayUser?.assignments?.length
-            ? [...new Set(
-                displayUser.assignments
-                    .map(a => a.groupName)
-                    .filter(Boolean)
-            )]
-                .map(name => name.replace(/([A-Z])/g, ' $1').trim())
-                .join(', ')
-            : 'N/A';
+    const primaryAssignment =
+        // Prefer explicit primaryProfile if provided, else find assignment with is_parent === 0
+        (displayUser?.primaryProfile) ||
+        displayUser?.assignments?.find(a => a.is_parent === 0) ||
+        null;
 
-    const formattedCompanyName =
-        displayUser?.assignments?.length
-            ? [...new Set(
-                displayUser.assignments
-                    .map(a => a.companyName)
-                    .filter(Boolean)
-            )].join(', ')
-            : 'N/A';
+    const formattedGroupName = primaryAssignment?.groupName
+        ? primaryAssignment.groupName.replace(/([A-Z])/g, ' $1').trim()
+        : 'N/A';
+
+    const formattedCompanyName = primaryAssignment?.companyName || 'N/A';
 
 
     const [openProfile, setOpenProfile] = useState(false);
@@ -133,6 +125,8 @@ export default function Header({ onSearch, page }) {
         document.cookie =
             document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
         localStorage.removeItem("accessToken")
+        localStorage.removeItem("activeAssignment")
+        localStorage.removeItem("permissions")
         localStorage.removeItem("token")
         localStorage.removeItem("userInfo")
 
@@ -499,13 +493,13 @@ export default function Header({ onSearch, page }) {
                             )}
                         </div>
 
-                        <button className="text-lg hover:text-blue-600">
+                        {/* <button className="text-lg hover:text-blue-600">
                             ↻
                         </button>
 
                         <button className="text-lg hover:text-blue-600">
                             ⇪
-                        </button>
+                        </button> */}
 
                         <button
                             className={`text-lg hover:text-blue-600 cursor-pointer ${showSidePanel ? "text-blue-600" : ""}`}
@@ -518,7 +512,7 @@ export default function Header({ onSearch, page }) {
                             </svg>
                         </button>
 
-                        <div className="mt-1">
+                        {/* <div className="mt-1">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <div variant="outline"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -536,10 +530,10 @@ export default function Header({ onSearch, page }) {
                                     </DropdownMenuGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        </div>
+                        </div> */}
                     </div>}
 
-                    <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                    {/* <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
                         <img
                             src="https://flagcdn.com/us.svg"
                             alt="flag"
@@ -553,12 +547,12 @@ export default function Header({ onSearch, page }) {
                         <span className="text-xs text-gray-500">
                             ▼
                         </span>
-                    </div>
+                    </div> */}
 
-                    <button className="text-gray-500 hover:text-blue-600">
+                    {/* <button className="text-gray-500 hover:text-blue-600">
                         <img src="/header/menu.svg" alt="" />
 
-                    </button>
+                    </button> */}
 
                     <div className="relative" ref={profileRef}>
                         <div
@@ -643,10 +637,10 @@ export default function Header({ onSearch, page }) {
                         )}
                     </div>
 
-                    <button className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600">
+                    {/* <button className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600">
                         ☰
                         <span>Menu</span>
-                    </button>
+                    </button> */}
                 </div>
             </header>
 

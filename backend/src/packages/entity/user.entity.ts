@@ -12,8 +12,17 @@ export class UserEntity {
     @PrimaryGeneratedColumn()
     userId!: number;
 
-    @Column()
+    @Column({ name: 'name', unique: true })
     name!: string;
+
+    @Column({ nullable: true })
+    firstName!: string;
+
+    @Column({ nullable: true })
+    middleName?: string;
+
+    @Column({ nullable: true })
+    surname?: string;
 
     @Column({ unique: true })
     email!: string;
@@ -46,10 +55,7 @@ export class UserEntity {
     state!: string;
 
     @Column({ nullable: true })
-    postalCode?: number;
-
-    @Column({ nullable: true })
-    AddressLineOne!: string;
+    city!: string;
 
     @Column({ nullable: true })
     alternatePhone!: string;
