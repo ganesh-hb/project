@@ -70,6 +70,9 @@ export class CompanyEntity {
     @Column({ nullable: true })
     addedBy!: number;
 
+    @Column({ nullable: true })
+    updatedBy!: number;
+
     @OneToMany(
         () => UserCompanyGroupEntity,
         (ucg) => ucg.company,

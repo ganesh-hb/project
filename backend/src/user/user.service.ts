@@ -353,61 +353,71 @@ async startUpdate(params: any, userFile?: any, req?: any) {
 async getUsers(param: any, req?: any) {
     let return_data: any = {};
     try {
-        let queryBuilder = this.userEntity
+        // Build base query with joins for filtering
+        const baseQB = this.userEntity
             .createQueryBuilder('user')
-            .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
-            .leftJoinAndSelect('ucg.company', 'company')
-            .leftJoinAndSelect('ucg.group', 'group');
-
-        // Exclude the logged‑in user from the list (if request user is available)
+            .leftJoin('user.userCompanyGroups', 'ucg')
+            .leftJoin('ucg.company', 'company')
+            .leftJoin('ucg.group', 'group')
+             .orderBy('user.name', 'ASC')
+                
         if (req?.user?.userId) {
-            queryBuilder.andWhere('user.userId != :loggedInUserId', { loggedInUserId: req.user.userId });
+            baseQB.andWhere('user.userId != :loggedInUserId', { loggedInUserId: req.user.userId });
         }
 
         if (req?.scopedCompanyIds?.length) {
-            queryBuilder.andWhere('ucg.companyId IN (:...companyIds)', {
-                companyIds: req.scopedCompanyIds,
-            });
+            baseQB.andWhere('ucg.companyId IN (:...companyIds)', { companyIds: req.scopedCompanyIds });
         }
 
-        const queryString = await this.filter.makeFilterString(param?.filters, 'user', {
-    groupName: 'group',
-    companyName: 'company',
-});
-        if (queryString && queryString !== '') queryBuilder.andWhere(queryString);
+        const filterString = await this.filter.makeFilterString(
+            param?.filters,
+            'user',
+            { groupName: 'group', companyName: 'company' },
+            param?.condition === 'Any' ? 'Any' : 'All',
+        );
+
+        if (filterString && filterString !== '') baseQB.andWhere(`(${filterString})`);
+
+        const allIds = await baseQB.select('user.userId').getMany();
+        const total = allIds.length;
 
         const [skip, limit] = (await this.filter.calcPages(param, this.userEntity)) as [number, number];
-        queryBuilder.skip(skip).take(limit);
+        const pageIds = allIds.slice(skip, skip + limit).map((u: any) => u.userId);
 
-        const data = await queryBuilder.getMany();
-        const total = await this.userEntity.count();
+        const data = pageIds.length
+            ? await this.userEntity
+                  .createQueryBuilder('user')
+                  .whereInIds(pageIds)
+                  .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
+                  .leftJoinAndSelect('ucg.company', 'company')
+                  .leftJoinAndSelect('ucg.group', 'group')
+                  .orderBy('user.name', 'ASC') 
+                  .getMany()
+            : [];
 
         const formattedData = data.map((user) => {
             const allAssignments = user.userCompanyGroups ?? [];
-
-            // Primary = is_parent=0, fallback to first
-            const primary =
-                allAssignments.find((u) => u.is_parent === 0) ??
-                allAssignments[0] ??
-                null;
-
+            const primary = allAssignments.find((a) => a.is_parent === 0) ?? allAssignments[0] ?? null;
             return {
                 userId: user.userId,
                 name: user.name,
                 email: user.email,
+                firstName:user?.firstName,
+                surname:user?.surname,
                 phone: user.phone,
                 status: user.status,
                 userFile: user.userFile,
                 age: user.age,
-                // Single primary assignment shown in list view
-                assignments: primary ? [{
-                    id: primary.id,
-                    companyId: primary.companyId,
-                    companyName: primary.company?.companyName,
-                    groupId: primary.groupId,
-                    groupName: primary.group?.groupName,
-                    is_parent: primary.is_parent,
-                }] : [],
+                assignments: primary
+                    ? [{
+                          id: primary.id,
+                          companyId: primary.companyId,
+                          companyName: primary.company?.companyName,
+                          groupId: primary.groupId,
+                          groupName: primary.group?.groupName,
+                          is_parent: primary.is_parent,
+                      }]
+                    : [],
             };
         });
 
@@ -417,6 +427,85 @@ async getUsers(param: any, req?: any) {
     }
     return return_data;
 }
+
+// async getUsers(param: any, req?: any) {
+//     let return_data: any = {};
+//     try {
+//         const baseQB = this.userEntity
+//             .createQueryBuilder('user')
+//             .leftJoin('user.userCompanyGroups', 'ucg')
+//             .leftJoin('ucg.company', 'company')
+//             .leftJoin('ucg.group', 'group')
+//             .orderBy('user.name', 'ASC'); 
+
+//         if (req?.user?.userId) {
+//             baseQB.andWhere('user.userId != :loggedInUserId', { loggedInUserId: req.user.userId });
+//         }
+
+//         if (req?.scopedCompanyIds?.length) {
+//             baseQB.andWhere('ucg.companyId IN (:...companyIds)', { companyIds: req.scopedCompanyIds });
+//         }
+
+//         const filterString = await this.filter.makeFilterString(
+//             param?.filters,
+//             'user',
+//             { groupName: 'group', companyName: 'company' },
+//             param?.condition === 'Any' ? 'Any' : 'All',
+//         );
+
+//         if (filterString && filterString !== '') {
+//             baseQB.andWhere(`(${filterString})`);
+//         }
+
+//         const allIdsQB = baseQB.clone().select('user.userId');
+//         const allIds = await allIdsQB.getMany();
+//         const total = allIds.length;
+
+//         const [skip, limit] = (await this.filter.calcPages(param, this.userEntity)) as [number, number];
+
+//         const pageIds = allIds.slice(skip, skip + limit).map((u: any) => u.userId);
+
+//         const data = pageIds.length
+//             ? await this.userEntity
+//                   .createQueryBuilder('user')
+//                   .whereInIds(pageIds)
+//                   .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
+//                   .leftJoinAndSelect('ucg.company', 'company')
+//                   .leftJoinAndSelect('ucg.group', 'group')
+//                   .orderBy('user.name', 'ASC')
+//                   .getMany()
+//             : [];
+
+//         const formattedData = data.map((user) => {
+//             const allAssignments = user.userCompanyGroups ?? [];
+//             const primary = allAssignments.find((a) => a.is_parent === 0) ?? allAssignments[0] ?? null;
+//             return {
+//                 userId: user.userId,
+//                 name: user.name,
+//                 email: user.email,
+//                 phone: user.phone,
+//                 status: user.status,
+//                 userFile: user.userFile,
+//                 age: user.age,
+//                 assignments: primary
+//                     ? [{
+//                           id: primary.id,
+//                           companyId: primary.companyId,
+//                           companyName: primary.company?.companyName,
+//                           groupId: primary.groupId,
+//                           groupName: primary.group?.groupName,
+//                           is_parent: primary.is_parent,
+//                       }]
+//                     : [],
+//             };
+//         });
+
+//         return_data = { success: 1, message: 'List fetched successfully', total, data: formattedData };
+//     } catch (err: any) {
+//         return_data = { success: 0, message: err.message };
+//     }
+//     return return_data;
+// }
 async getUser(query: any, req?: any) {
     try {
         const targetId = Number(query.id ?? query);

@@ -1,108 +1,102 @@
 export class Filter {
-    async makeFilterString(param, alias, aliasMap: Record<string, string> = {}) {
-       try {
-      let filterString: any = '';
+    /**
+     * Build a WHERE clause string from an array of filter objects.
+     *
+     * @param param     - Array of { key, operator, value } filter objects, or a single object.
+     * @param alias     - Default table alias (e.g. 'user').
+     * @param aliasMap  - Optional map of field names to their joined-table aliases
+     *                    (e.g. { groupName: 'group', companyName: 'company' }).
+     * @param condition - 'All' (AND) | 'Any' (OR). Defaults to 'All'.
+     */
+    async makeFilterString(
+        param,
+        alias,
+        aliasMap: Record<string, string> = {},
+        condition: 'All' | 'Any' = 'All',
+    ) {
+        try {
+            const join = condition === 'Any' ? ' OR ' : ' AND ';
+            let filterString: any = '';
 
-      if (Array.isArray(param)) {
-        for (let i = 0; i < param.length; i++) {
-          let key = "";
-          let operator = "";
-          let value = "";
+            if (Array.isArray(param)) {
+                for (let i = 0; i < param.length; i++) {
+                    let key = '';
+                    let operator = '';
+                    let value = '';
 
-          for (let j in param[i]) {
-            if (j == "key") {
-              key = param[i][j];
+                    for (let j in param[i]) {
+                        if (j === 'key')      key      = param[i][j];
+                        if (j === 'operator') operator = param[i][j];
+                        if (j === 'value')    value    = param[i][j];
+                    }
+
+                    const clause = await this.filterCondition(key, operator, value, alias, aliasMap);
+
+                    if (filterString !== '') {
+                        filterString += join + clause;
+                    } else {
+                        filterString = clause;
+                    }
+                }
+            } else {
+                let key = '';
+                let operator = '';
+                let value = '';
+
+                for (let i in param) {
+                    if (i === 'key')      key      = param[i];
+                    if (i === 'operator') operator = param[i];
+                    if (i === 'value')    value    = param[i];
+                }
+
+                filterString = await this.filterCondition(key, operator, value, alias, aliasMap);
             }
-            if (j == "operator") {
-              operator = param[i][j];
-            }
-            if (j == "value") {
-              value = param[i][j];
-            }
-          }
 
-          let condition = await this.filterCondition(
-            key,
-            operator,
-            value,
-            alias
-          );
-
-          if (filterString != '') {
-            filterString += ' AND ' + condition;
-          } else {
-            filterString = condition;
-          }
+            return filterString;
+        } catch (err) {
+            console.log(err);
         }
-      } else {
-        let key = "";
-        let operator = "";
-        let value = "";
-
-        for (let i in param) {
-          if (i == "key") {
-            key = param[i];
-          }
-          if (i == "operator") {
-            operator = param[i];
-          }
-          if (i == "value") {
-            value = param[i];
-          }
-        }
-
-        filterString = await this.filterCondition(
-          key,
-          operator,
-          value,
-          alias
-        );
-      }
-
-      return filterString;
-    } catch (err) {
-      console.log(err);
     }
-  }
 
-    async filterCondition(key,operator,value ,alias) {
+    async filterCondition(key,operator,value ,alias, aliasMap: Record<string, string> = {}) {
         try {
             let whereStr = ""
-            let symbol = "";
+            let symbol = ""
+            // Resolve alias for the key if provided in aliasMap
+            const resolvedAlias = aliasMap[key] || alias;
             switch (operator) {
                 case "equal":
                 symbol='=';
-                whereStr += ' ' +`${alias + '.' + key} ${symbol}  "${value}"`
+                whereStr += ' ' +`${resolvedAlias + '.' + key} ${symbol}  "${value}"`
                 break;
 
                 case "greaterThan":
                     symbol = '>'
-                    whereStr += ' ' +`${alias + '.' + key} ${symbol}  "${value}"`
-                break;
+                    whereStr += ' ' +`${resolvedAlias + '.' + key} ${symbol}  "${value}"`
+                    break;
 
                 case "smallerThan":
-                    symbol = '>'
-                    whereStr += ' ' +`${alias + '.' + key} ${symbol}  "${value}"`
-                break;
+                    symbol = '<'
+                    whereStr += ' ' +`${resolvedAlias + '.' + key} ${symbol}  "${value}"`
+                    break;
 
                 case "begin":
                     symbol = 'LIKE'
-                    whereStr += ' ' + `${alias}.${key} ${symbol} "${value}%"`
-                break;
+                    whereStr += ' ' + `${resolvedAlias}.${key} ${symbol} "${value}%"`
+                    break;
 
                 case "contains":
                     symbol = 'LIKE'
-                    whereStr += ' ' + `${alias}.${key} ${symbol} "%${value}%"`
-                break;
+                    whereStr += ' ' + `${resolvedAlias}.${key} ${symbol} "%${value}%"`
+                    break;
 
                 case "end":
                     symbol = 'LIKE'
-                    whereStr += ' ' + `${alias}.${key} ${symbol} "%${value}"`
-                break;
+                    whereStr += ' ' + `${resolvedAlias}.${key} ${symbol} "%${value}"`
+                    break;
 
             }
             return whereStr;
-        
         } catch (err) {
             return err;
         }

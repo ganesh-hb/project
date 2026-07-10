@@ -4,8 +4,6 @@ import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Len
 export enum isStatus {
     ACTIVE = "active",
     INACTIVE = "inactive",
-    PENDING = "pending",
-    BLOCK = "block"
 }
 
 export class CompanyDto {
@@ -47,6 +45,10 @@ export class CompanyDto {
     @IsOptional()
     @IsString()
     phone?: number;
+
+    @IsOptional()
+    @Transform(({ value }) => Number(value))
+    addedBy?: number;
 
     @IsOptional()
     @IsString()
@@ -154,6 +156,10 @@ export class CompanyUpdateDto {
     @IsOptional()
     @IsEmail()
     ownerEmail?: string;
+
+    @IsOptional()
+    @Transform(({ value }) => Number(value))
+    updatedBy!: number;
 
     @IsOptional()
     @IsString()

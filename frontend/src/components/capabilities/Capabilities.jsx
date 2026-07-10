@@ -1,37 +1,19 @@
 "use client";
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
+import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
-import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 
 export default function CapabilitiesList() {
     const router = useRouter();
+    const { isLogin } = useContext(loginContext);
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const { isLogin } = useContext(loginContext);
-    const [superAdmin, setSuperAdmin] = useState(false);
-
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        setSuperAdmin(isSuperAdmin(isLogin || storedUser));
-        if (superAdmin === false) {
-            // router.replace("/");
-        }
-    }, [isLogin]);
-    // const { superAdmin } = useContext(loginContext);
-
-    // useEffect(() => {
-    //     if (superAdmin === false) {
-    //         router.replace("/");
-    //     }
-    // }, [superAdmin]);
-
-    // if (!superAdmin) return null;
-
-    useEffect(() => { fetchGroups(); }, []);
+        fetchGroups();
+    }, []);
 
     const fetchGroups = async () => {
         setLoading(true);
@@ -93,11 +75,7 @@ export default function CapabilitiesList() {
                             </thead>
                             <tbody>
                                 {groups.map((group, i) => (
-                                    <tr
-                                        key={group.groupId || i}
-                                        className="border-b hover:bg-gray-50 transition"
-
-                                    >
+                                    <tr key={group.groupId || i} className="border-b hover:bg-gray-50 transition">
                                         <td className="px-6 py-4 text-gray-400">{i + 1}</td>
                                         <td className="px-6 py-4 font-medium text-gray-800">{group.groupName}</td>
                                         <td className="px-6 py-4 text-gray-600">{group.groupCode}</td>

@@ -246,7 +246,7 @@ export default function CompanyUpdate({ id, onBack }) {
 
                                 <div>
                                     <label className={labelClass}>Company Code <span className="text-red-500">*</span></label>
-                                    <input type="text" name="companyCode" value={formData.companyCode} onChange={handleChange} placeholder="e.g. ACME01" className={inputClass} />
+                                    <input type="text" name="companyCode" value={formData.companyCode} readOnly onChange={handleChange} placeholder="e.g. ACME01" className={inputClass} />
                                     {errors.companyCode && <p className={errorClass}>{errors.companyCode}</p>}
                                 </div>
 
@@ -255,21 +255,14 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="block">Block</option>
                                     </select>
                                     {errors.status && <p className={errorClass}>{errors.status}</p>}
                                 </div>
 
-                                <div>
-                                    <label className={labelClass}>Location</label>
-                                    <input type="text" name="companyLocation" value={formData.companyLocation} onChange={handleChange} placeholder="Enter company location" className={inputClass} />
-                                    {errors.companyLocation && <p className={errorClass}>{errors.companyLocation}</p>}
-                                </div>
 
                                 <div>
                                     <label className={labelClass}>Email</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="company@email.com" className={inputClass} />
+                                    <input type="email" name="email" value={formData.email} readOnly onChange={handleChange} placeholder="company@email.com" className={inputClass} />
                                     {errors.email && <p className={errorClass}>{errors.email}</p>}
                                 </div>
 
@@ -317,7 +310,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                 </div>
                                 <div>
                                     <label className={labelClass}>Phone</label>
-                                    <input type="number" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className={inputClass} />
+                                    <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength="10" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className={inputClass} />
                                     {errors.phone && <p className={errorClass}>{errors.phone}</p>}
                                 </div>
                             </div>
@@ -327,12 +320,6 @@ export default function CompanyUpdate({ id, onBack }) {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Address</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-                                <div className="lg:col-span-2">
-                                    <label className={labelClass}>Address Line</label>
-                                    <input type="text" name="AddressLineOne" value={formData.AddressLineOne} onChange={handleChange} placeholder="Street address" className={inputClass} />
-                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
-                                </div>
 
                                 <div>
                                     <label className={labelClass}>Country</label>
@@ -390,10 +377,11 @@ export default function CompanyUpdate({ id, onBack }) {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Postal Code</label>
-                                    <input type="number" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Postal / ZIP code" className={inputClass} />
-                                    {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}
+                                    <label className={labelClass}>Address Line 1</label>
+                                    <input type="text" name="companyLocation" value={formData.companyLocation} onChange={handleChange} disabled={!formData.city} placeholder="Enter company location" className={`${inputClass} disabled:bg-gray-100`} />
+                                    {errors.companyLocation && <p className={errorClass}>{errors.companyLocation}</p>}
                                 </div>
+
 
                             </div>
                         </div>
@@ -414,7 +402,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                 </div>
                                 <div>
                                     <label className={labelClass}>Owner Phone</label>
-                                    <input type="text" name="ownerPhone" value={formData.ownerPhone} onChange={handleChange} placeholder="Owner phone number" className={inputClass} />
+                                    <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength="10" name="ownerPhone" value={formData.ownerPhone} onChange={handleChange} placeholder="Owner phone number" className={inputClass} />
                                     {errors.ownerPhone && <p className={errorClass}>{errors.ownerPhone}</p>}
                                 </div>
                             </div>

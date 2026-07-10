@@ -11,7 +11,7 @@ import AppPagination from "../ui/AppPagination";
 
 export default function GroupList() {
     const router = useRouter();
-    const { isLogin } = useContext(loginContext);
+    const { isLogin, can } = useContext(loginContext);
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -80,12 +80,14 @@ export default function GroupList() {
 
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-semibold text-gray-800">Groups</h1>
-                    <button
-                        onClick={() => router.push("/add-group")}
-                        className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
-                    >
-                        <span>+</span> Add Group
-                    </button>
+                    {can("groupAdd") && (
+                        <button
+                            onClick={() => router.push("/add-group")}
+                            className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
+                        >
+                            <span>+</span> Add Group
+                        </button>
+                    )}
                 </div>
 
                 {loading && (
@@ -116,8 +118,8 @@ export default function GroupList() {
                                     {groups.map((group, index) => (
                                         <tr
                                             key={group.groupId || index}
-                                            className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
-                                            onClick={() => router.push(`/group/${group.groupId}`)}
+                                            className={`border-b border-gray-100 hover:bg-gray-50 transition ${can("groupView") ? "cursor-pointer" : ""}`}
+                                            onClick={() => can("groupView") && router.push(`/group/${group.groupId}`)}
                                         >
                                             <td className="px-5 py-4 text-gray-500 text-sm">{index + 1}</td>
                                             <td className="px-5 py-4 font-medium text-blue-600 hover:underline">
@@ -125,7 +127,7 @@ export default function GroupList() {
                                                     ? group.groupName.replace(/([A-Z])/g, " $1").trim()
                                                     : "-"}
                                             </td>
-                                            <td className="px-5 py-4 text-gray-600">{group.description || "-"}</td>
+                                            <td className="px-5 py-4 text-gray-600">{group.groupCode || "-"}</td>
                                             <td className="px-5 py-4">
                                                 <span className={
                                                     group.status === "Active"

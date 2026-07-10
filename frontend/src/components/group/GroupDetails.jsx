@@ -1,12 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import GroupUpdate from "./GroupUpdate";
+import { loginContext } from "../hooks/LoginContext";
 
 export default function GroupDetails({ id }) {
     const router = useRouter();
+    const { can } = useContext(loginContext);
     const [group, setGroup] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showEdit, setShowEdit] = useState(false);
@@ -76,12 +78,14 @@ export default function GroupDetails({ id }) {
             <div className="px-6 pb-10">
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="text-3xl font-semibold text-gray-800">{group.groupName}</h1>
-                    <button
-                        onClick={() => setShowEdit(true)}
-                        className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer"
-                    >
-                        Edit Group
-                    </button>
+                    {can("groupUpdate") && (
+                        <button
+                            onClick={() => setShowEdit(true)}
+                            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer"
+                        >
+                            Edit Group
+                        </button>
+                    )}
                 </div>
 
                 <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
@@ -89,6 +93,8 @@ export default function GroupDetails({ id }) {
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 text-sm text-gray-700">
                         <div><span className="font-medium text-gray-500">Group Name:</span> {group.groupName || "-"}</div>
                         <div><span className="font-medium text-gray-500">Group Code:</span> {group.groupCode || "-"}</div>
+                        <div><span className="font-medium text-gray-500">Added By:</span> {group.addedByName || "-"}</div>
+                        <div><span className="font-medium text-gray-500">Updated By:</span> {group.updatedByName || "-"}</div>
                         <div>
                             <span className="font-medium text-gray-500">Status:</span>{" "}
                             <span className={statusBadge(group.status)}>{group.status.charAt(0).toUpperCase() + group.status.slice(1) || "Unknown"}</span>

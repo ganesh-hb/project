@@ -298,7 +298,7 @@ export default function Header({ onSearch, page }) {
                             gotoSitemap(e)
                         }}>
                             <span className="text-blue-600 font-bold text-xl">
-                                R
+                                <img src="/header/production.svg" alt="logo" />
                             </span>
                         </div>
 
@@ -593,11 +593,11 @@ export default function Header({ onSearch, page }) {
                                     <span className="text-sm font-medium text-gray-700 cursor-pointer">Profile</span>
                                 </button>
 
-                                <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b">
+                                {/* <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b">
                                     <span className="text-sm font-medium text-gray-700">
                                         Preferences
                                     </span>
-                                </button>
+                                </button> */}
 
                                 <button className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b">
                                     <span

@@ -7,49 +7,57 @@ import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin } from "@/app/lib/auth";
 
 export default function SiteMap() {
-    const { isLogin } = useContext(loginContext);
+    const { isLogin, can } = useContext(loginContext);
     const [superAdmin, setSuperAdmin] = useState(false);
 
     useEffect(() => {
         const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
         setSuperAdmin(isSuperAdmin(isLogin || storedUser));
     }, [isLogin]);
-    const dashboardSections = [
+
+    const allSections = [
         {
             title: "Dashboards",
             items: ["Sitemap"],
-            redirectTo: '/'
+            redirectTo: '/',
+            show: true,
         },
         {
             title: "Users",
             items: ["User List"],
-            redirectTo: '/users'
+            redirectTo: '/users',
+            show: can("userList"),
         },
         {
             title: "Companies",
             items: ["Company List"],
-            redirectTo: '/company-list'
+            redirectTo: '/company-list',
+            show: can("companyList"),
         },
         {
             title: "Groups",
             items: ["Group List"],
-            redirectTo: '/group-list'
+            redirectTo: '/group-list',
+            show: can("groupList"),
         },
-        ...(superAdmin ? [{
+        {
             title: "Settings",
             items: ["Capabilities"],
-            redirectTo: '/capabilities'
-        }] : []),
+            redirectTo: '/capabilities',
+            show: superAdmin,
+        },
     ];
-    const router = useRouter()
+
+    const dashboardSections = allSections.filter((s) => s.show);
+
+    const router = useRouter();
     const gotoPage = (e, item) => {
-        router.push(item)
-    }
+        router.push(item);
+    };
     const gotoPages = (e, url) => {
-        e.preventDefault()
-        e.stopPropagation()
-        // router.push(`http://localhost:3000${url}`)
-    }
+        e.preventDefault();
+        e.stopPropagation();
+    };
 
     return (
         <main className="min-h-screen">

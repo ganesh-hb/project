@@ -3,6 +3,8 @@
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useContext } from "react";
+import { loginContext } from "@/components/hooks/LoginContext";
 
 function StatusBadge({ status }) {
     if (!status) return <span className="text-gray-400 text-sm">-</span>;
@@ -21,10 +23,11 @@ function StatusBadge({ status }) {
 
 function NameCell({ row }) {
     const router = useRouter();
+    const { can } = useContext(loginContext);
     return (
         <span
-            className="text-blue-600 font-semibold cursor-pointer hover:underline text-base"
-            onClick={() => router.push(`/user/${row.original.user_userId}`)}
+            className={`font-semibold text-base ${can("userView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+            onClick={() => can("userView") && router.push(`/user/${row.original.user_userId}`)}
         >
             {row.getValue("user_name")}
         </span>

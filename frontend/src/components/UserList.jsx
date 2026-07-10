@@ -10,6 +10,7 @@ import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin, isCompanyAdmin, authHeaders } from "../app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import AppPagination from "./ui/AppPagination";
+import { ChevronDown } from "lucide-react";
 
 function formatRoles(assignments) {
     if (!Array.isArray(assignments) || assignments.length === 0) return "N/A";
@@ -46,6 +47,12 @@ export default function UsersPage() {
         setSuperAdmin(isSuperAdmin(isLogin || storedUser));
         setCompanyAdmin(isCompanyAdmin(isLogin || storedUser));
     }, [isLogin]);
+
+    const [expandedRows, setExpandedRows] = useState({});
+
+    const toggleRow = (id) => {
+        setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
 
     useEffect(() => {
         fetchData(1, {});
@@ -88,13 +95,15 @@ export default function UsersPage() {
                 ? decryptResponse(payload.encrypted)
                 : payload;
 
-
+            console.log(data.data)
             setUsers(
                 Array.isArray(data)
                     ? data
                     : (data.data ?? []).map((user) => ({
                         user_userId: user.userId,
                         user_name: user.name,
+                        user_fName: user.firstName,
+                        user_sName: user.surname,
                         user_email: user.email,
                         user_phone: user.phone,
                         user_status: user.status,
@@ -142,7 +151,7 @@ export default function UsersPage() {
         const success = await loginAs(user.user_userId);
         if (success) {
             toast.success(`Now acting as ${user.user_name}`, { position: "top-right" });
-            window.location.href = "/users";
+            window.location.href = "/";
         } else {
             toast.error("Failed to switch user", { position: "top-right" });
         }
@@ -168,7 +177,7 @@ export default function UsersPage() {
                     <span className="text-gray-800" onClick={(e) => gotoPages(e, "/users")}>
                         Users
                     </span>
-                    {(superAdmin || companyAdmin) && (
+                    {/* {(superAdmin || companyAdmin) && (
                         <span
                             className={`ml-4 inline-block rounded-full px-3 py-1 text-xs font-semibold ${superAdmin
                                 ? "bg-purple-100 text-purple-700"
@@ -177,7 +186,7 @@ export default function UsersPage() {
                         >
                             {superAdmin ? "Super Admin" : "Company Admin"}
                         </span>
-                    )}
+                    )} */}
                 </nav>
 
                 <div className="w-full">
@@ -244,13 +253,13 @@ export default function UsersPage() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div
-                                                className="cursor-pointer hover:underline text-[#3563e9] font-semibold text-lg truncate"
-                                                onClick={(e) => gotoUser(e, user)}
+                                                className={`font-semibold text-lg truncate ${can("userView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
+                                                onClick={(e) => can("userView") && gotoUser(e, user)}
                                             >
-                                                {user.user_name}
+                                                {user.user_fName ? user.user_fName + " " + user.user_sName : user.user_name}
                                             </div>
                                             <div className="text-sm text-gray-600 break-all mt-1">
-                                                {user.user_email}
+                                                {user.user_name}
                                             </div>
 
                                             <div
@@ -311,82 +320,102 @@ export default function UsersPage() {
                     )}
 
                     {!loading && !error && viewMode === "list" && (
-                        <div className="w-full bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                            <div className="w-full overflow-x-auto">
-                                <table className="w-full min-w-[1100px]">
-                                    <thead className="bg-[#f3f4f6] border-b border-gray-200">
-                                        <tr className="text-[#6b7280] text-sm font-semibold">
-                                            <th className="px-5 py-4 text-left w-[50px]">
-                                                <input type="checkbox" />
-                                            </th>
-                                            <th className="px-5 py-4 text-left">Name</th>
-                                            <th className="px-5 py-4 text-left">Email</th>
-                                            <th className="px-5 py-4 text-left">Phone Number</th>
-                                            <th className="px-5 py-4 text-left">Role</th>
-                                            <th className="px-5 py-4 text-left">Company</th>
-                                            <th className="px-5 py-4 text-left">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users?.map((user, index) => (
-                                            <tr
-                                                key={user.user_userId || index}
-                                                className="border-b border-gray-100 hover:bg-gray-50 transition"
-                                            >
-                                                <td className="px-5 py-5">
-                                                    <input type="checkbox" />
-                                                </td>
-                                                <td className="px-5 py-5">
-                                                    <span
-                                                        className="text-[#3563e9] font-medium cursor-pointer hover:underline"
-                                                        onClick={(e) => gotoUser(e, user)}
-                                                    >
-                                                        {user.user_name}
-                                                    </span>
-                                                </td>
-                                                <td className="px-5 py-5 text-[#374151] break-all">
-                                                    {user.user_email}
-                                                </td>
-                                                <td className="px-5 py-5 text-[#374151]">
-                                                    {user.user_phone || "-"}
-                                                </td>
-                                                <td className="px-5 py-5 text-[#374151]">
-                                                    {formatRoles(user.assignments)}
-                                                </td>
-                                                <td className="px-5 py-5 text-[#374151]">
-                                                    {formatCompanies(user.assignments)}
-                                                </td>
-                                                <td className="px-5 py-5">
-                                                    {user.user_status ? (
-                                                        <span
-                                                            className={
-                                                                user.user_status === "Active"
-                                                                    ? "inline-block rounded-full bg-green-100 px-3 py-1 text-sm text-green-700"
-                                                                    : user.user_status === "Inactive"
-                                                                        ? "inline-block rounded-full bg-red-100 px-3 py-1 text-sm text-red-700"
-                                                                        : "inline-block rounded-full bg-sky-100 px-3 py-1 text-sm text-sky-700"
-                                                            }
+                        <div className="w-full bg-white rounded-2xl border border-gray-200 grid grid-cols-1 gap-5 p-4">
+                            {users?.map((user, index) => {
+                                const rowId = user.user_userId || index;
+                                const isOpen = !!expandedRows[rowId];
+                                return (
+                                    <div key={rowId} className="px-6 py-6 border border-gray-200 bg-gray-50/2 rounded-xl">
+                                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start">
+                                            <div>
+                                                <div className="text-sm text-gray-500 mb-1">Name</div>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 min-w-[40px] items-center justify-center overflow-hidden rounded-full bg-blue-600 text-base font-bold uppercase text-white">
+                                                        {user.user_userFile ? (
+                                                            <img
+                                                                src={`http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`}
+                                                                alt="userImage"
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            (user.user_name || "?").charAt(0)
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div
+                                                            className={`text-base font-semibold ${can("userView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
+                                                            onClick={(e) => can("userView") && gotoUser(e, user)}
                                                         >
-                                                            {user.user_status}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[#ff637e] font-medium">
-                                                            Inactive
-                                                        </span>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {users.length === 0 && (
-                                            <tr>
-                                                <td colSpan={7} className="text-center text-gray-400 py-16">
-                                                    No users found.
-                                                </td>
-                                            </tr>
+                                                            {user.user_name}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">{user.user_phone || "-"}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <div className="text-sm text-gray-500 mb-1">User Name</div>
+                                                <div className="text-base text-gray-800 break-all">{user.user_name}</div>
+                                            </div>
+
+                                            <div>
+                                                <div className="text-sm text-gray-500 mb-1">Status</div>
+                                                <span
+                                                    className={
+                                                        user.user_status === "Active"
+                                                            ? "inline-block rounded-full bg-green-100 px-3 py-1 text-base text-green-700"
+                                                            : user.user_status === "Inactive"
+                                                                ? "inline-block rounded-full bg-red-100 px-3 py-1 text-base text-red-700"
+                                                                : "inline-block rounded-full bg-sky-100 px-3 py-1 text-base text-sky-700"
+                                                    }
+                                                >
+                                                    {user.user_status || "Inactive"}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Company Name</div>
+                                                    <div className="text-base text-[#3563e9] font-medium">
+                                                        {formatCompanies(user.assignments)}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleRow(rowId)}
+                                                    aria-label={isOpen ? "Collapse" : "Expand"}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                                >
+                                                    <ChevronDown
+                                                        className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                                    />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {isOpen && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4 pt-4 border-gray-100">
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Email</div>
+                                                    <div className="text-base text-gray-800 break-all">{user.user_email}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Phone</div>
+                                                    <div className="text-base text-gray-800 break-all">{user.user_phone}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Group Name</div>
+                                                    <div className="text-base text-gray-800">{formatRoles(user.assignments)}</div>
+                                                </div>
+                                            </div>
                                         )}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    </div>
+                                );
+                            })}
+
+                            {users.length === 0 && (
+                                <div className="text-center text-gray-400 py-16">No users found.</div>
+                            )}
                         </div>
                     )}
 

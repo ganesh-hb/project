@@ -14,6 +14,7 @@ import Header from "@/components/Header";
 import { AddFormSchema } from "@/components/Zod";
 import { authHeaders } from "../lib/auth";
 import { loginContext } from "@/components/hooks/LoginContext";
+import RouteGuard from "@/components/RouteGuard";
 
 const MIN_AGE_MS = 18 * 365 * 24 * 60 * 60 * 1000;
 
@@ -28,7 +29,6 @@ export default function AddUserPage() {
 
     const phoneRef = useRef(null);
     const itiRef = useRef(null);
-
     useEffect(() => {
         if (phoneRef.current) {
             itiRef.current = intlTelInput(phoneRef.current, {
@@ -38,7 +38,7 @@ export default function AddUserPage() {
                     "https://cdn.jsdelivr.net/npm/intl-tel-input@26.1.1/build/js/utils.js",
             });
         }
-        setFormData((prev) => ({ ...prev, tel: phoneRef.current }));
+        setFormData((prev) => ({ ...prev, tel: phoneRef.current?.value || "" }));
         return () => {
             if (itiRef.current) itiRef.current.destroy();
         };
@@ -85,7 +85,9 @@ export default function AddUserPage() {
         companyId: "",
         groupId: "",
     });
-
+    const onBack = async () => {
+        router.back()
+    }
     useEffect(() => {
         const fetchGroups = async () => {
             try {
@@ -239,309 +241,317 @@ export default function AddUserPage() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#f5f6f8] text-black">
-            <Header page="user-add" />
+        <RouteGuard permission="userAdd">
+            <div className="min-h-screen w-full bg-[#f5f6f8] text-black">
+                <Header page="user-add" />
 
-            <nav
-                className="p-6 flex items-center space-x-2 text-sm font-medium text-gray-500"
-                aria-label="Breadcrumb"
-            >
-                <span
-                    className="cursor-pointer transition-colors hover:text-blue-600 hover:underline"
-                    onClick={(e) => gotoPages(e, "/")}
+                <nav
+                    className="p-6 flex items-center space-x-2 text-sm font-medium text-gray-500"
+                    aria-label="Breadcrumb"
                 >
-                    Home
-                </span>
-                <span className="text-gray-400">{">>"}</span>
-                <span
-                    className="cursor-pointer transition-colors hover:text-blue-600 hover:underline"
-                    onClick={(e) => gotoPages(e, "/users")}
-                >
-                    Users
-                </span>
-                <span className="text-gray-400">{">>"}</span>
-                <span className="text-gray-800">Add User</span>
-            </nav>
-
-            <div className="px-6">
-                <div className="mb-8 flex items-center justify-between">
-                    <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add User</h1>
-                    <button
-                        onClick={() => router.push("/users")}
-                        className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                    <span
+                        className="cursor-pointer transition-colors hover:text-blue-600 hover:underline"
+                        onClick={(e) => gotoPages(e, "/")}
                     >
-                        ← Back
-                    </button>
-                </div>
+                        Home
+                    </span>
+                    <span className="text-gray-400">{">>"}</span>
+                    <span
+                        className="cursor-pointer transition-colors hover:text-blue-600 hover:underline"
+                        onClick={(e) => gotoPages(e, "/users")}
+                    >
+                        Users
+                    </span>
+                    <span className="text-gray-400">{">>"}</span>
+                    <span className="text-gray-800">Add User</span>
+                </nav>
 
-                <div className="w-full rounded-2xl bg-white p-8 shadow-sm">
-                    <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
-                        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="px-6">
+                    <div className="mb-8 flex items-center justify-between">
+                        <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add User</h1>
+                        <button
+                            onClick={() => router.push("/users")}
+                            className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                        >
+                            ← Back
+                        </button>
+                    </div>
 
-                            {/* Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    UserName <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder="Enter UserName"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-                            </div>
+                    <div className="w-full rounded-2xl bg-white p-8 shadow-sm">
+                        <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
+                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
 
-                            {/* First Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    First Name <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    placeholder="Enter first name"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
-                            </div>
-
-                            {/* Middle Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Middle Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="middleName"
-                                    value={formData.middleName}
-                                    onChange={handleChange}
-                                    placeholder="Enter middle name"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
-                            </div>
-
-                            {/* Last Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Last Name <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="surname"
-                                    value={formData.surname}
-                                    onChange={handleChange}
-                                    placeholder="Enter last name"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
-                            </div>
-
-                            {/* Email */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Email <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="Enter email address"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-                            </div>
-
-                            {/* Password */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Password <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
+                                {/* Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        UserName <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
                                     <input
-                                        type={showPassword ? "text" : "password"}
-                                        name="password"
-                                        value={formData.password}
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
                                         onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
+                                        placeholder="Enter UserName"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                     />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                                    >
-                                        <img
-                                            src={showPassword ? "/password/hidden.png" : "/password/eye.png"}
-                                            alt=""
-                                            className="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition mt-5"
-                                        />
-                                    </button>
+                                    {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                                 </div>
-                                {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-                            </div>
 
-                            {/* DOB */}
-                            <div>
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DemoContainer
-                                        components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
-                                    >
-                                        <DemoItem label="DOB *">
-                                            <DesktopDatePicker
-                                                value={formData.dob}
-                                                onChange={handleDateChange}
-                                                maxDate={dayjs(Date.now() - MIN_AGE_MS)}
-                                            />
-                                        </DemoItem>
-                                    </DemoContainer>
-                                </LocalizationProvider>
-                                {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
-                            </div>
+                                {/* First Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        First Name <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        placeholder="Enter first name"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                                </div>
 
-                            {/* Phone */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Phone Number <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="tel"
-                                    ref={phoneRef}
-                                    name="phone"
-                                    maxLength="10"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
-                            </div>
+                                {/* Middle Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Middle Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="middleName"
+                                        value={formData.middleName}
+                                        onChange={handleChange}
+                                        placeholder="Enter middle name"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                                </div>
 
-                            {/* Status */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Status <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Block">Block</option>
-                                </select>
-                            </div>
+                                {/* Last Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Last Name <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="surname"
+                                        value={formData.surname}
+                                        onChange={handleChange}
+                                        placeholder="Enter last name"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                                </div>
 
-                            {/* Alternate Phone */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Alternate Phone Number
-                                </label>
-                                <input
-                                    type="text"
-                                    name="alternatePhone"
-                                    maxLength="10"
-                                    value={formData.alternatePhone}
-                                    onChange={handleChange}
-                                    placeholder="Enter alternate number"
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.alternatePhone && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
-                                )}
-                            </div>
+                                {/* Email */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Email <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="Enter email address"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                                </div>
 
-                            {/* Role dropdown */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Role <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <select
-                                    onChange={(e) => {
-                                        setFormData((prev) => ({ ...prev, groupId: e.target.value }));
-                                        setErrors((prev) => ({ ...prev, groupId: "" }));
-                                    }}
-                                    value={formData.groupId}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                >
-                                    <option value="">Select role</option>
-                                    {groups.map((g) => (
-                                        <option key={g.groupId} value={String(g.groupId)}>
-                                            {g.groupName}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.groupId && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.groupId}</p>
-                                )}
-                            </div>
-
-                            {/* Company dropdown */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Company <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <select
-                                    onChange={(e) => {
-                                        setFormData((prev) => ({ ...prev, companyId: e.target.value }));
-                                        setErrors((prev) => ({ ...prev, companyId: "" }));
-                                    }}
-                                    value={formData.companyId}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                >
-                                    <option value="">Select company</option>
-                                    {companies.map((c) => (
-                                        <option key={c.companyId} value={String(c.companyId)}>
-                                            {c.companyName}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.companyId && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>
-                                )}
-                            </div>
-
-                            {/* Profile Image */}
-                            <div className="w-full lg:col-span-2">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Profile Image
-                                </label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImage}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3"
-                                />
-                                {errors.userFile && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
-                                )}
-                                {preview && (
-                                    <div className="mt-4">
-                                        <img
-                                            src={preview}
-                                            alt="preview"
-                                            className="h-24 w-24 rounded-full object-cover border"
+                                {/* Password */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Password <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                                        >
+                                            <img
+                                                src={showPassword ? "/password/hidden.png" : "/password/eye.png"}
+                                                alt=""
+                                                className="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition mt-5"
+                                            />
+                                        </button>
                                     </div>
-                                )}
+                                    {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+                                </div>
+
+                                {/* DOB */}
+                                <div>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DemoContainer
+                                            components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
+                                        >
+                                            <DemoItem label="DOB *">
+                                                <DesktopDatePicker
+                                                    value={formData.dob}
+                                                    onChange={handleDateChange}
+                                                    maxDate={dayjs(Date.now() - MIN_AGE_MS)}
+                                                />
+                                            </DemoItem>
+                                        </DemoContainer>
+                                    </LocalizationProvider>
+                                    {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                                </div>
+
+                                {/* Phone */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Phone Number <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        ref={phoneRef}
+                                        name="phone"
+                                        maxLength="10"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                                </div>
+
+
+                                {/* Status */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Status <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <select
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
+
+                                {/* Alternate Phone */}
+                                {/* <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Alternate Phone Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="alternatePhone"
+                                        maxLength="10"
+                                        value={formData.alternatePhone}
+                                        onChange={handleChange}
+                                        placeholder="Enter alternate number"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.alternatePhone && (
+                                        <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
+                                    )}
+                                </div> */}
+
+                                {/* Role dropdown */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Role <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <select
+                                        onChange={(e) => {
+                                            setFormData((prev) => ({ ...prev, groupId: e.target.value }));
+                                            setErrors((prev) => ({ ...prev, groupId: "" }));
+                                        }}
+                                        value={formData.groupId}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="">Select role</option>
+                                        {groups.map((g) => (
+                                            <option key={g.groupId} value={String(g.groupId)}>
+                                                {g.groupName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.groupId && (
+                                        <p className="mt-1 text-sm text-red-500">{errors.groupId}</p>
+                                    )}
+                                </div>
+
+                                {/* Company dropdown */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Company <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <select
+                                        onChange={(e) => {
+                                            setFormData((prev) => ({ ...prev, companyId: e.target.value }));
+                                            setErrors((prev) => ({ ...prev, companyId: "" }));
+                                        }}
+                                        value={formData.companyId}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="">Select company</option>
+                                        {companies.map((c) => (
+                                            <option key={c.companyId} value={String(c.companyId)}>
+                                                {c.companyName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.companyId && (
+                                        <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>
+                                    )}
+                                </div>
+
+                                {/* Profile Image */}
+                                <div className="w-full lg:col-span-2">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Profile Image
+                                    </label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImage}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3"
+                                    />
+                                    {errors.userFile && (
+                                        <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
+                                    )}
+                                    {preview && (
+                                        <div className="mt-4">
+                                            <img
+                                                src={preview}
+                                                alt="preview"
+                                                className="h-24 w-24 rounded-full object-cover border"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                        <div className="mt-10 flex justify-center">
-                            <button
-                                type="submit"
-                                className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
-                            >
-                                Submit
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                            <div className="mt-10 flex justify-center gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => onBack()}
+                                    className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer "
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+                                >
+                                    Submit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div >
             </div >
-        </div >
+        </RouteGuard>
     );
 }

@@ -152,8 +152,6 @@ export default function GroupUpdate({ id, onBack }) {
                                 <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="block">Block</option>
                                 </select>
                                 {errors.status && <p className={errorClass}>{errors.status}</p>}
                             </div>

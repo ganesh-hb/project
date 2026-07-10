@@ -11,6 +11,7 @@ import { Mailer } from 'src/utilities/mailer';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { CurrencyEntity } from 'src/packages/entity/currency.entity';
 import { CompanyCurrencyEntity } from 'src/packages/entity/company.currency.entity';
+import { UserEntity } from 'src/packages/entity/user.entity';
 
 @Injectable()
 export class CompanyService {
@@ -61,6 +62,7 @@ async insertCompany(params: any, companyFile: any) {
         if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
         if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
         if (companyFile)            queryParams.companyFile     = companyFile.filename;
+        if (params.addedBy)         queryParams.addedBy         = Number(params.addedBy);
 
         const result = await this.companyEntity.insert(queryParams);
         const insertId = result?.raw?.insertId;
@@ -135,6 +137,7 @@ async insertCompany(params: any, companyFile: any) {
         if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
         if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
         if (companyFile)            queryParams.companyFile     = companyFile.filename;
+        if (params.updatedBy)       queryParams.updatedBy       = Number(params.updatedBy);
 
         queryParams.updatedDate = () => 'NOW()';
 
@@ -210,7 +213,7 @@ async insertCompany(params: any, companyFile: any) {
     }
 
 
- async getCompany(query: any) {
+    async getCompany(query: any) {
         try {
             const company = await this.companyEntity.findOne({
                 where: { companyId: Number(query) },
@@ -220,14 +223,19 @@ async insertCompany(params: any, companyFile: any) {
                 throw new NotFoundException('Company not found');
             }
 
-            const [assignments, currencyMapping, allCurrencies] = await Promise.all([
+            const userRepo = this.companyEntity.manager.getRepository(UserEntity);
+            const [assignments, currencyMapping, allCurrencies, addedByUser, updatedByUser] = await Promise.all([
                 this.ucgEntity.find({ where: { companyId: Number(query) }, relations: ['user', 'group'] }),
                 this.companyCurrencyEntity.findOne({ where: { companyId: Number(query) }, relations: ['currency'] }),
                 this.currencyEntity.find({ order: { name: 'ASC' } }),
+                company.addedBy ? userRepo.findOne({ where: { userId: company.addedBy }, select: ['name'] }) : null,
+                company.updatedBy ? userRepo.findOne({ where: { userId: company.updatedBy }, select: ['name'] }) : null,
             ]);
 
             return {
                 ...company,
+                addedByName: addedByUser?.name ?? null,
+                updatedByName: updatedByUser?.name ?? null,
                 currency: currencyMapping?.currency ?? null,
                 curId: currencyMapping?.curId ?? null,
                 allCurrencies,

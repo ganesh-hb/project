@@ -10,6 +10,7 @@ import { Filter } from 'src/utilities/filter';
 import { Mailer } from 'src/utilities/mailer';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { PermissionEntity, GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { UserEntity } from 'src/packages/entity/user.entity';
 
 @Injectable()
 export class GroupService {
@@ -45,6 +46,7 @@ export class GroupService {
             if (params.groupName) queryParams.groupName = params.groupName;
             if (params.groupCode) queryParams.groupCode = params.groupCode;
             if (params.status)    queryParams.status    = params.status;
+            if (params.addedBy)   queryParams.addedBy   = Number(params.addedBy);
 
             const result = await this.groupEntity!.insert(queryParams);
             const insertId = result?.raw?.insertId;
@@ -84,6 +86,7 @@ export class GroupService {
             if (params.groupName) queryParams.groupName = params.groupName;
             if (params.groupCode) queryParams.groupCode = params.groupCode;
             if (params.status)    queryParams.status    = params.status;
+            if (params.updatedBy) queryParams.updatedBy = Number(params.updatedBy);
             queryParams.updatedDate = () => 'NOW()';
 
             const result = await this.groupEntity!.update({ groupId: params.groupId }, queryParams);
@@ -129,18 +132,23 @@ export class GroupService {
         try {
             const groupId = Number(query);
 
-            const [group, assignments] = await Promise.all([
-                this.groupEntity!.findOne({ where: { groupId } }),
+            const group = await this.groupEntity!.findOne({ where: { groupId } });
+            if (!group) throw new NotFoundException('Group not found');
+
+            const userRepo = this.groupEntity!.manager.getRepository(UserEntity);
+            const [assignments, addedByUser, updatedByUser] = await Promise.all([
                 this.ucgEntity!.find({
                     where: { groupId },
                     relations: ['user', 'company'],
                 }),
+                group.addedBy ? userRepo.findOne({ where: { userId: group.addedBy }, select: ['name'] }) : null,
+                group.updatedBy ? userRepo.findOne({ where: { userId: group.updatedBy }, select: ['name'] }) : null,
             ]);
-
-            if (!group) throw new NotFoundException('Group not found');
 
             return {
                 ...group,
+                addedByName: addedByUser?.name ?? null,
+                updatedByName: updatedByUser?.name ?? null,
                 assignments: assignments.map((ucg) => ({
                     userId: ucg.userId,
                     userName: ucg.user?.name,

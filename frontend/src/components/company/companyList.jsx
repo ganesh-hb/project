@@ -12,7 +12,7 @@ import AppPagination from "../ui/AppPagination";
 
 export default function CompanyList() {
     const router = useRouter();
-    const { isLogin } = useContext(loginContext);
+    const { isLogin, can } = useContext(loginContext);
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -82,12 +82,14 @@ export default function CompanyList() {
 
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-semibold text-gray-800">Companies</h1>
-                    <button
-                        onClick={() => router.push("/add-company")}
-                        className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
-                    >
-                        <span>+</span> Add Company
-                    </button>
+                    {can("companyAdd") && (
+                        <button
+                            onClick={() => router.push("/add-company")}
+                            className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
+                        >
+                            <span>+</span> Add
+                        </button>
+                    )}
                 </div>
 
                 {loading && (
@@ -122,7 +124,10 @@ export default function CompanyList() {
                                             className="border-b border-gray-100 hover:bg-gray-50 transition"
                                         >
                                             <td className="px-5 py-4 text-gray-500 text-sm">{index + 1}</td>
-                                            <td className="px-5 py-4 font-medium text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/company/${company.companyId}`)}>
+                                            <td
+                                                className={`px-5 py-4 font-medium ${can("companyView") ? "text-blue-600 hover:underline cursor-pointer" : "text-gray-800"}`}
+                                                onClick={() => can("companyView") && router.push(`/company/${company.companyId}`)}
+                                            >
                                                 {company.companyName}
                                             </td>
                                             <td className="px-5 py-4 text-gray-600">{company.email || "-"}</td>

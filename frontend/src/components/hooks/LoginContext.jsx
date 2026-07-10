@@ -137,6 +137,7 @@ export default function LoginContext({ children }) {
     function stopImpersonating() {
         localStorage.removeItem("impersonationToken");
         localStorage.removeItem("impersonatedUser");
+        localStorage.removeItem("activeAssignment")
         localStorage.removeItem("impersonatedPermissions");
         setImpersonating(null);
 

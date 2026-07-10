@@ -9,8 +9,6 @@ export enum isOptional {
 export enum isStatus{
     ACTIVE="active",
     INACTIVE="inactive",
-    PENDING="pending",
-    BLOCK="block"
 }
 
 export class GroupDto{
@@ -25,6 +23,10 @@ export class GroupDto{
     @IsString()
     @IsEnum(isStatus)
     status!: string;
+
+    @IsOptional()
+    @Transform(({ value }) => Number(value))
+    addedBy!: number;
 
     @IsOptional()
     groupFile: any;
@@ -46,6 +48,10 @@ export class GroupUpdateDto {
     @IsString()
     @Length(2, 20)
     groupCode!: string;
+
+    @IsOptional()
+    @Transform(({ value }) => Number(value))
+    updatedBy!: number;
 
     @IsOptional()
     @IsString()

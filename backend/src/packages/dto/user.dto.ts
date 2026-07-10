@@ -21,8 +21,6 @@ export enum isOptional {
 export enum isStatus {
     ACTIVE = 'Active',
     INACTIVE = 'Inactive',
-    PENDING = 'Pending',
-    BLOCK = 'Block',
 }
 
 export enum isRole {

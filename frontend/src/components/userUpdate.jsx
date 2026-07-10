@@ -13,6 +13,10 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { authHeaders } from "@/app/lib/auth";
 import { loginContext } from "./hooks/LoginContext";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 const MIN_AGE_MS = 18 * 365 * 24 * 60 * 61 * 1000;
 
@@ -256,6 +260,21 @@ export default function EditUserPage({ user, onBack }) {
                 payload.append("userFile", formData.userFile);
             }
 
+            const result = await MySwal.fire({
+                title: "Create User?",
+                text: "Are you sure you want to create this user?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Create",
+                cancelButtonText: "Cancel",
+                reverseButtons: true,
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+
             const response = await fetch("/relayapi", {
                 method: "PUT",
                 headers: {
@@ -465,13 +484,11 @@ export default function EditUserPage({ user, onBack }) {
                                 >
                                     <option value="Active">Active</option>
                                     <option value="Inactive">Inactive</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Block">Block</option>
                                 </select>
                             </div>
 
                             {/* Alternate Phone */}
-                            <div className="w-full">
+                            {/* <div className="w-full">
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Alternate Phone Number
                                 </label>
@@ -486,7 +503,7 @@ export default function EditUserPage({ user, onBack }) {
                                 {errors.alternatePhone && (
                                     <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
                                 )}
-                            </div>
+                            </div> */}
 
                             {/* Role dropdown */}
                             <div className="w-full">
@@ -565,7 +582,14 @@ export default function EditUserPage({ user, onBack }) {
 
                         </div>
 
-                        <div className="mt-10 flex justify-center">
+                        <div className="mt-10 flex justify-center gap-4">
+                            <button
+                                type="button"
+                                onClick={() => onBack()}
+                                className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer"
+                            >
+                                Cancel
+                            </button>
                             <button
                                 type="submit"
                                 className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"

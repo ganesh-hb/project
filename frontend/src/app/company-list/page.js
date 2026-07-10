@@ -1,10 +1,10 @@
 import CompanyList from "@/components/company/companyList";
-import GroupList from "@/components/group/groupList";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function companies() {
     return (
-        <>
+        <RouteGuard permission="companyList">
             <CompanyList />
-        </>
-    )
+        </RouteGuard>
+    );
 }

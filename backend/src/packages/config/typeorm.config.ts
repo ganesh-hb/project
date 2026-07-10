@@ -29,7 +29,7 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
         ActivityMasterEntity,
         ActivityLogEntity,
     ],
-    synchronize: false,
+    synchronize: true,
     migrationsRun: false,
     logging: false,
     // point to the actual migration directory

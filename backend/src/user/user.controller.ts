@@ -129,8 +129,8 @@ export class UserController {
     }
 
     @Get("user-details/:id")
-    @UseGuards(AuthGuard('jwt'))
-    @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('userList')
     async getUser(@Param('id') id: string, @Query('profileId') profileId?: string) {
         const result = await this.userService.getUser({ id, profileId });
         return { encrypted: encryptResponse(result) };
@@ -160,8 +160,8 @@ export class UserController {
     }
 
     @Post('user-add-profile')
-    @UseGuards(AuthGuard('jwt'))
-    @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('userUpdate')
     async addProfile(@Body() body: { userId: number; groupId: number; companyId: number; isActive: string }) {
         const result = await this.userService.addProfile(body);
         return { encrypted: encryptResponse(result) };

@@ -172,9 +172,11 @@ export default function UserDetailsPage({ id }) {
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Details</h1>
                     <div className="flex items-center gap-4">
-                        <button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer" onClick={() => setShowEdit(true)}>
-                            Edit User
-                        </button>
+                        {can("userUpdate") && (
+                            <button className="rounded-xl bg-blue-600 px-8 h-12 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer" onClick={() => setShowEdit(true)}>
+                                Edit
+                            </button>
+                        )}
                         <button className="px-8 h-12 rounded-md bg-gray-500 text-white font-medium hover:bg-gray-600 transition cursor-pointer" onClick={gotoBack}>
                             Back
                         </button>
@@ -264,7 +266,7 @@ export default function UserDetailsPage({ id }) {
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-5">
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">User Name</p><p className="font-medium text-gray-800">{userData.user_name}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">UserName</p><p className="font-medium text-gray-800">{userData.user_name}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{userData.user_age ?? "N/A"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName}</p></div>
@@ -303,12 +305,14 @@ export default function UserDetailsPage({ id }) {
                             <div className="rounded-2xl bg-white p-6 shadow-sm">
                                 <div className="mb-6 flex items-center justify-between">
                                     <h3 className="text-xl font-semibold text-gray-800">Profiles</h3>
-                                    <button
-                                        onClick={() => setShowAddProfile(true)}
-                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
-                                    >
-                                        + Add Profile
-                                    </button>
+                                    {can("userUpdate") && (
+                                        <button
+                                            onClick={() => setShowAddProfile(true)}
+                                            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+                                        >
+                                            + Add Profile
+                                        </button>
+                                    )}
                                 </div>
 
                                 {assignments.length === 0 ? (
@@ -340,7 +344,7 @@ export default function UserDetailsPage({ id }) {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                {selectedProfileIndex !== i && (
+                                                {/* {selectedProfileIndex !== i && (
                                                     <button
                                                         onClick={() => {
                                                             setSelectedProfileIndex(i);
@@ -352,7 +356,7 @@ export default function UserDetailsPage({ id }) {
                                                     >
                                                         Set as Active
                                                     </button>
-                                                )}
+                                                )} */}
                                             </div>
                                         ))}
                                     </div>

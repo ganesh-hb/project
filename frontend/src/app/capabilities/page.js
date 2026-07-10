@@ -1,5 +1,10 @@
 import CapabilitiesList from "@/components/capabilities/Capabilities";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function CapabilitiesPage() {
-    return <CapabilitiesList />;
+    return (
+        <RouteGuard isSuperAdminOnly>
+            <CapabilitiesList />
+        </RouteGuard>
+    );
 }

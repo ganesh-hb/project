@@ -26,6 +26,9 @@ export class GroupEntity {
     @Column()
     status!: string;
 
+    @Column({ nullable: true })
+    updatedBy!: number;
+
     @CreateDateColumn()
     createdAt!: Date;
 

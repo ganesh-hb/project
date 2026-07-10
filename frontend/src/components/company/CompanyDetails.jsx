@@ -1,12 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import CompanyUpdate from "./CompanyUpdate";
+import { loginContext } from "../hooks/LoginContext";
 
 export default function CompanyDetails({ id }) {
     const router = useRouter();
+    const { can } = useContext(loginContext);
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("summary");
@@ -29,7 +31,6 @@ export default function CompanyDetails({ id }) {
                 },
             });
             const data = await res.json();
-            console.log(data)
             setCompany(data);
         } catch (err) {
             console.error(err);
@@ -91,12 +92,14 @@ export default function CompanyDetails({ id }) {
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Company Details</h1>
                     <div className="flex items-center gap-4">
-                        <button
-                            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer"
-                            onClick={() => setShowEdit(true)}
-                        >
-                            Edit Company
-                        </button>
+                        {can("companyUpdate") && (
+                            <button
+                                className="rounded-xl bg-blue-600 px-8 h-12 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer"
+                                onClick={() => setShowEdit(true)}
+                            >
+                                Edit
+                            </button>
+                        )}
                         <button
                             className="h-12 rounded-md bg-gray-500 px-8 font-medium text-white hover:bg-gray-600 transition cursor-pointer"
                             onClick={() => router.back()}
@@ -172,10 +175,12 @@ export default function CompanyDetails({ id }) {
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-4">
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company Code</p><p className="font-medium text-gray-800">{company.companyCode || "N/A"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Location</p><p className="font-medium text-gray-800">{company.companyLocation || "N/A"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company Code</p><p className="font-medium text-gray-800">{company.companyCode || "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Location</p><p className="font-medium text-gray-800">{company.companyLocation || "-"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Website</p><p className="font-medium text-gray-800">{company.website || "N/A"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Status</p><span className={statusBadge(company.status)}>{company.status.charAt(0).toUpperCase() + company.status.slice(1).toLowerCase()}</span></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Added By</p><p className="font-medium text-gray-800">{company.addedByName || "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{company.updatedByName || "-"}</p></div>
+                                        {/* <div className="grid grid-cols-2"><p className="text-gray-500">Status</p><span className={statusBadge(company.status)}>{company.status.charAt(0).toUpperCase() + company.status.slice(1).toLowerCase()}</span></div> */}
                                     </div>
                                 </div>
 
@@ -231,8 +236,8 @@ export default function CompanyDetails({ id }) {
                                                 {assignments.map((a, i) => (
                                                     <tr
                                                         key={i}
-                                                        className="border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
-                                                        onClick={() => router.push(`/user/${a.userId}`)}
+                                                        className={`border-b border-gray-100 hover:bg-gray-50 transition ${can("userView") ? "cursor-pointer" : ""}`}
+                                                        onClick={() => can("userView") && router.push(`/user/${a.userId}`)}
                                                     >
                                                         <td className="px-5 py-4 text-gray-500 text-sm">{i + 1}</td>
                                                         <td className="px-5 py-4 font-medium text-blue-600 hover:underline">{a.userName || "N/A"}</td>

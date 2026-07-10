@@ -30,12 +30,9 @@ async function parseResponse(res) {
  * Centralised fetch wrapper that logs useful debugging information.
  */
 async function doFetch(url, options) {
-    console.log("Relay forwarding:", options.method, url);
     try {
         const res = await fetch(url, options);
-        console.log("Backend status:", res.status);
         const raw = await res.text();
-        console.log("Backend raw response:", raw);
         // Re‑create a Response so parseResponse can read it again
         const clone = new Response(raw, { status: res.status, headers: res.headers });
         return { res: clone, payload: await parseResponse(clone) };

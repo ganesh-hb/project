@@ -33,7 +33,7 @@ export class CompanyController {
             }else{
               return "File required!!!"
             }
-            let param = body
+            let param = { ...body, addedBy: req.user.userId };
             return await this.companyService.startInsertCompany(param,companyFile)
     }
 
@@ -43,7 +43,7 @@ export class CompanyController {
      @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('companyUpdate')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
-    async updateCompany(@Body() body: CompanyUpdateDto, @UploadedFile() companyFile: Express.Multer.File) {
+    async updateCompany(@Req() req, @Body() body: CompanyUpdateDto, @UploadedFile() companyFile: Express.Multer.File) {
         try {
             if (companyFile) {
                 const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
@@ -51,7 +51,8 @@ export class CompanyController {
                     return { status: 0, message: "invalid File type" };
                 }
             }
-            return await this.companyService.startUpdate(body, companyFile || null);
+            let param = { ...body, updatedBy: req.user.userId };
+            return await this.companyService.startUpdate(param, companyFile || null);
         } catch (err) {
             return err;
         }
@@ -68,8 +69,10 @@ export class CompanyController {
   } 
 
     @Get("company-details/:id")
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('companyList')
     async getCompany(@Param('id') param) {
-        return await this.companyService.getCompany(param)
+        return await this.companyService.getCompany(param);
     }
 
     @Get('currency-list')

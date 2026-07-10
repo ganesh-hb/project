@@ -2,6 +2,7 @@
 import { useContext, useState } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import ActivityTimeline from '@/components/activity/ActivityTimeline';
+import Header from "./Header";
 
 export default function ProfilePage({ onClose }) {
     const { isLogin, displayUser, activeAssignment, permissions } = useContext(loginContext);
@@ -41,7 +42,7 @@ export default function ProfilePage({ onClose }) {
 
     return (
         <div className="min-h-screen bg-[#f5f6f8]">
-
+            <Header />
             <div className="p-6">
                 <nav className="mb-4 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={onClose}>Home</span>

@@ -5,7 +5,7 @@ export const userLoginSchema = z.object({
         .min(1, "Email is required"),
 
     password: z.string()
-        .min(1, "Password is required")
+        .min(1, "Please enter the Password")
         .max(100, "Password must be at most 100 characters")
         .regex(
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
@@ -22,28 +22,34 @@ export const UpdateFormSchema = z.object({
         .email("Invalid email, enter valid email"),
 
     name: z.string()
-        .min(1, "UserName is required")
+        .min(1, "Please enter the UserName")
         .max(10, "UserName must be at most 10 characters")
         .regex(/^[a-zA-Z0-9]+$/, "UserName cannot contain special characters"),
 
+    status: z.enum(["active", "inactive"], {
+        errorMap: () => ({ message: "Please Select a valid status" }),
+    }),
 
     firstName: z.string()
-        .min(1, "First name is required")
-        .max(50, "First name must be at most 50 characters"),
+        .min(1, "Please enter the First name")
+        .max(50, "First name must be at most 50 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "First Name cannot contain special characters"),
 
     middleName: z.string()
         .max(50, "Middle name must be at most 50 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Middle Name cannot contain special characters")
         .optional()
         .or(z.literal("")),
 
     surname: z.string()
-        .min(1, "Last name is required")
-        .max(50, "Last name must be at most 50 characters"),
+        .min(1, "Please enter the Last name")
+        .max(50, "Last name must be at most 50 characters")
+        .regex(/^[a-zA-Z0-9]+$/, "Surname cannot contain special characters"),
 
     age: z
         .coerce
         .number({
-            required_error: "Age is required",
+            required_error: "Please enter the Age",
             invalid_type_error: "Age must be a number",
         })
         .min(18, { message: "You must be at least 18 years old" }),
@@ -72,15 +78,15 @@ export const UpdateFormSchema = z.object({
 
 export const AddFormSchema = z.object({
     email: z.string()
-        .min(2, "Email is required")
+        .min(2, "Please enter Email")
         .email("Invalid email, enter valid email"),
 
     name: z.string()
-        .min(1, "UserName is required")
+        .min(1, "Please enter the UserName ")
         .max(10, "UserName must be at most 50 characters"),
 
     firstName: z.string()
-        .min(1, "First name is required")
+        .min(1, "Please enter the First name")
         .max(50, "First name must be at most 50 characters"),
 
     middleName: z.string()
@@ -89,13 +95,17 @@ export const AddFormSchema = z.object({
         .or(z.literal("")),
 
     surname: z.string()
-        .min(1, "Last name is required")
+        .min(1, "Please enter the Last name")
         .max(50, "Last name must be at most 50 characters"),
+
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please Select a valid status" }),
+    }),
 
     age: z
         .coerce
         .number({
-            required_error: "Age is required",
+            required_error: "Please enter the Age ",
             invalid_type_error: "Age must be a number",
         })
         .min(18, { message: "You must be at least 18 years old" }),
@@ -106,7 +116,7 @@ export const AddFormSchema = z.object({
 
     password: z
         .string()
-        .min(1, "Password is required")
+        .min(1, "Please enter Password ")
         .min(8, "Password must be at least 8 characters long")
         .regex(
             /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]*$/,
@@ -138,26 +148,26 @@ export const CompanyUpdateSchema = z.object({
     companyName: z.string().min(2, "Company name must be at least 2 characters"),
     companyCode: z.string().min(2, "Company code must be at least 2 characters"),
     companyLocation: z.string().min(2, "Location is required"),
-    status: z.enum(["active", "inactive", "pending", "block"], {
-        errorMap: () => ({ message: "Select a valid status" }),
+    status: z.enum(["active", "inactive"], {
+        errorMap: () => ({ message: "Please Select a valid status" }),
     }),
     email: z.string()
         .min(2, "Email is required")
         .email("Invalid email, enter valid email"),
-    website: z.string().min(2, "Website is required"),
+    website: z.string().min(2, "Please enter Website"),
     dialCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
     phone: z
-        .string({ required_error: "Phone number is required" })
+        .string({ required_error: "Please enter Phone number" })
         .min(1, { message: "Phone number is required" })
         .max(10, { message: "Enter valid Phone number" })
         .regex(/^\d+$/, { message: "Enter valid Phone number" }),
     country: z.string(),
     state: z.string(),
     city: z.string(),
-    ownerName: z.string().min(2, "Owner Name is required"),
-    ownerEmail: z.string().min(2, "Ownwer Email is required")
+    ownerName: z.string().min(2, "Please enter Owner Name"),
+    ownerEmail: z.string().min(2, "Please enter Ownwer Email")
         .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid owner email"),
-    ownerPhone: z.string().min(2, "Owner phone is required"),
+    ownerPhone: z.string().min(2, "Please enter Owner phone "),
     companyFile: z.any()
         .optional()
         .refine((file) => {

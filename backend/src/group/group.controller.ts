@@ -22,16 +22,18 @@ export class GroupController {
     @RequirePermission('groupAdd')
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File) {
-        return await this.groupService.startInsertGroup(body);
+        let param = { ...body, addedBy: req.user.userId };
+        return await this.groupService.startInsertGroup(param);
     }
 
     @Put('group-update')
     @UseGuards(AuthGuard('jwt'))
      @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('groupUpdate')
-    async updateGroup(@Body() body: GroupUpdateDto) {
+    async updateGroup(@Req() req, @Body() body: GroupUpdateDto) {
         try {
-            return await this.groupService.startUpdate(body);
+            let param = { ...body, updatedBy: req.user.userId };
+            return await this.groupService.startUpdate(param);
         } catch (err) {
             return err;
         }
@@ -46,7 +48,8 @@ export class GroupController {
     }
 
     @Get('group-details/:id')
-    @UseGuards(AuthGuard('jwt'))
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('groupList')
     async getGroup(@Param('id') param) {
         return await this.groupService.getGroup(param);
     }
