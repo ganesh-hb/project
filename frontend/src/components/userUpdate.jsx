@@ -3,8 +3,8 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { UpdateFormSchema } from "./Zod";
-import intlTelInput from "intl-tel-input";
-import "intl-tel-input/styles";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import Header from "./Header";
 import dayjs from "dayjs";
 import { DemoContainer, DemoItem } from "@mui/x-date-pickers/internals/demo";
@@ -15,41 +15,36 @@ import { authHeaders } from "@/app/lib/auth";
 import { loginContext } from "./hooks/LoginContext";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import Select from "react-select";
+import { isValidPhoneNumber, parsePhoneNumberFromString } from "libphonenumber-js";
 
 const MySwal = withReactContent(Swal);
 
-const MIN_AGE_MS = 18 * 365 * 24 * 60 * 61 * 1000;
+const MAX_DOB = dayjs().subtract(18, "year");
 
 export default function EditUserPage({ user, onBack }) {
     const router = useRouter();
 
-    const gotoPages = (e, url) => {
+    const gotoPages = async (e, url) => {
         e.stopPropagation();
         e.preventDefault();
         if (url === "/user") {
-            onBack();
+            const result = await MySwal.fire({
+                title: "Discard changes?",
+                text: "Any unsaved data will be lost.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#6b7280",
+                confirmButtonText: "Yes, go back",
+                cancelButtonText: "Stay",
+            });
+            if (result.isConfirmed) onBack();
         } else {
             router.push(url);
         }
     };
 
-    const phoneRef = useRef(null);
-    const itiRef = useRef(null);
-
-    useEffect(() => {
-        if (phoneRef.current) {
-            itiRef.current = intlTelInput(phoneRef.current, {
-                initialCountry: "in",
-                separateDialCode: true,
-                utilsScript:
-                    "https://cdn.jsdelivr.net/npm/intl-tel-input@26.1.1/build/js/utils.js",
-            });
-        }
-        setFormData((prev) => ({ ...prev, tel: phoneRef.current?.value || "" }));
-        return () => {
-            if (itiRef.current) itiRef.current.destroy();
-        };
-    }, []);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -60,10 +55,11 @@ export default function EditUserPage({ user, onBack }) {
         email: "",
         age: "",
         phone: "",
+        dialCode: "",
         status: user?.user_status || "",
         tel: "",
         userId: "",
-        dob: dayjs(Date.now() - MIN_AGE_MS),
+        dob: MAX_DOB,
         isActive: "true",
         userFile: null,
         alternatePhone: "",
@@ -74,9 +70,11 @@ export default function EditUserPage({ user, onBack }) {
     const [groupId, setGroupId] = useState("");
 
     const [preview, setPreview] = useState("");
+    const fileInputRef = useRef(null);
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
     const { isLogin } = useContext(loginContext);
+    const [countryCode, setCountryCode] = useState("in");
 
     const [errors, setErrors] = useState({
         email: "",
@@ -125,14 +123,22 @@ export default function EditUserPage({ user, onBack }) {
         };
         fetchCompanies();
     }, []);
-
     // Populate form from user prop
     useEffect(() => {
         if (!user) return;
 
+        const savedDialCode = user.user_dialCode || "91";
+        const savedPhone = user.user_phone || "";
+        if (savedPhone) {
+            const parsed = parsePhoneNumberFromString(`+${savedDialCode}${savedPhone}`);
+            if (parsed?.country) {
+                setCountryCode(parsed.country.toLowerCase());
+            }
+        }
+
         const parsedDob = user.user_dob
             ? dayjs(user.user_dob)
-            : dayjs(Date.now() - MIN_AGE_MS);
+            : MAX_DOB;
         const calculatedAge =
             parsedDob && parsedDob.isValid() ? dayjs().diff(parsedDob, "year") : "";
 
@@ -143,7 +149,8 @@ export default function EditUserPage({ user, onBack }) {
             surname: user.surname || "",
             email: user.user_email || "",
             age: calculatedAge,
-            phone: user.user_phone || "",
+            phone: String(user.user_phone || ""),
+            dialCode: String(user.user_dialCode || "91"),
             status: user.user_status || "Active",
             tel: user.user_tel || "",
             userId: user.user_userId || "",
@@ -199,8 +206,18 @@ export default function EditUserPage({ user, onBack }) {
         }
     };
 
+    const handleRemoveImage = () => {
+        setFormData((prev) => ({ ...prev, userFile: null }));
+        setPreview("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const isPhoneValid =
+            !!formData.phone &&
+            isValidPhoneNumber(formData.phone, (countryCode || "in").toUpperCase());
+
         const result = UpdateFormSchema.safeParse(formData);
 
         let hasSelectionError = false;
@@ -213,8 +230,13 @@ export default function EditUserPage({ user, onBack }) {
             selectionErrors.groupId = "Please select a role.";
             hasSelectionError = true;
         }
-        if (hasSelectionError) {
+
+
+        if (hasSelectionError || !isPhoneValid) {
             setErrors((prev) => ({ ...prev, ...selectionErrors }));
+            if (!isPhoneValid) {
+                setErrors((prev) => ({ ...prev, phone: "Enter a valid phone number for the selected country" }));
+            }
             return;
         }
 
@@ -227,6 +249,7 @@ export default function EditUserPage({ user, onBack }) {
                     middleName: "",
                     surname: "",
                     age: "",
+                    status: "",
                     phone: "",
                     userFile: "",
                     alternatePhone: "",
@@ -247,8 +270,8 @@ export default function EditUserPage({ user, onBack }) {
             payload.append("surname", formData.surname);
             payload.append("email", formData.email);
             payload.append("age", formData.age);
-            payload.append("tel", formData.tel);
             payload.append("phone", formData.phone);
+            payload.append("dialCode", formData.dialCode);
             payload.append("status", formData.status);
             payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
             payload.append("userId", formData.userId);
@@ -258,20 +281,6 @@ export default function EditUserPage({ user, onBack }) {
             payload.append("groupId", groupId);
             if (formData.userFile) {
                 payload.append("userFile", formData.userFile);
-            }
-
-            const result = await MySwal.fire({
-                title: "Create User?",
-                text: "Are you sure you want to create this user?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Create",
-                cancelButtonText: "Cancel",
-                reverseButtons: true,
-            });
-
-            if (!result.isConfirmed) {
-                return;
             }
 
 
@@ -347,8 +356,20 @@ export default function EditUserPage({ user, onBack }) {
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Edit User</h1>
                     {onBack && (
                         <button
-                            onClick={onBack}
-                            className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                            onClick={async () => {
+                                const result = await MySwal.fire({
+                                    title: "Discard changes?",
+                                    text: "Any unsaved data will be lost.",
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonColor: "#d33",
+                                    cancelButtonColor: "#6b7280",
+                                    confirmButtonText: "Yes, go back",
+                                    cancelButtonText: "Stay",
+                                });
+                                if (result.isConfirmed) onBack();
+                            }}
+                            className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
                         >
                             ← Back
                         </button>
@@ -357,242 +378,337 @@ export default function EditUserPage({ user, onBack }) {
 
                 <div className="w-full rounded-2xl bg-white p-8 shadow-sm">
                     <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
-                        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
 
-                            {/* Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    UserName
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    readOnly
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-                            </div>
+                        {/* Basic Information */}
+                        <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Basic Information</h2>
+                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
 
-                            {/* First Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    First Name <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
-                            </div>
+                                {/* Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        UserName
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        readOnly
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                                </div>
 
-                            {/* Middle Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Middle Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="middleName"
-                                    value={formData.middleName}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
-                            </div>
+                                {/* Password (moved here from Contact Info) */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Password
+                                    </label>
+                                    <input
+                                        type="password"
+                                        name="email"
+                                        readOnly
+                                        value="abcdef@12"
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                </div>
 
-                            {/* Last Name */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Last Name <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    name="surname"
-                                    value={formData.surname}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
-                            </div>
+                                {/* First Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        First Name <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                                </div>
 
-                            {/* Email */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    readOnly
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-                            </div>
+                                {/* Middle Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Middle Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="middleName"
+                                        value={formData.middleName}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                                </div>
 
-                            {/* DOB */}
-                            <div>
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DemoContainer
-                                        components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
-                                    >
-                                        <DemoItem label="DOB *">
-                                            <DesktopDatePicker
-                                                value={formData.dob}
-                                                onChange={handleDateChange}
-                                                maxDate={dayjs(Date.now() - MIN_AGE_MS)}
+                                {/* Last Name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Last Name <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="surname"
+                                        value={formData.surname}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                                </div>
+
+                                {/* DOB */}
+                                <div>
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DemoContainer
+                                            components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
+                                        >
+                                            <DemoItem label="DOB *">
+                                                <DesktopDatePicker
+                                                    value={formData.dob}
+                                                    onChange={handleDateChange}
+                                                    maxDate={MAX_DOB}
+                                                />
+                                            </DemoItem>
+                                        </DemoContainer>
+                                    </LocalizationProvider>
+                                    {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                                </div>
+
+                                {/* Profile Image */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Profile Image
+                                    </label>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleImage}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3"
+                                    />
+                                    {errors.userFile && (
+                                        <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
+                                    )}
+                                    {preview && (
+                                        <div className="relative mt-4 h-24 w-24">
+                                            <img
+                                                src={preview}
+                                                alt="preview"
+                                                className="h-24 w-24 rounded-full object-cover border"
                                             />
-                                        </DemoItem>
-                                    </DemoContainer>
-                                </LocalizationProvider>
-                                {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveImage}
+                                                aria-label="Remove selected image"
+                                                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                        </div>
 
-                            {/* Phone */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Phone Number <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <input
-                                    type="tel"
-                                    ref={phoneRef}
-                                    name="phone"
-                                    maxLength="10"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                        {/* Contact Information */}
+                        <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Contact Information</h2>
+                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+
+                                {/* Email */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Email
+                                    </label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        readOnly
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
+                                    {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                                </div>
+
+                                {/* Phone */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Phone Number <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <PhoneInput
+                                        key={`${formData.dialCode}-${formData.phone}`}
+                                        country={countryCode}
+                                        value={`+${formData.dialCode}${formData.phone}`}
+                                        onChange={(value, countryData) => {
+                                            const dialCode = countryData.dialCode;
+                                            const phone = value.slice(dialCode.length);
+                                            setCountryCode(countryData.countryCode);
+                                            setFormData((prev) => ({ ...prev, phone, dialCode }));
+                                            setErrors((prev) => ({ ...prev, phone: "" }));
+                                        }}
+                                        inputStyle={{
+                                            width: "100%",
+                                            height: "50px",
+                                            borderRadius: "0.75rem",
+                                            border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            fontSize: "14px",
+                                            paddingLeft: "58px",
+                                        }}
+                                        buttonStyle={{
+                                            borderRadius: "0.75rem 0 0 0.75rem",
+                                            border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            background: "#f9fafb",
+                                        }}
+                                        containerStyle={{ width: "100%" }}
+                                        enableSearch
+                                        searchPlaceholder="Search country..."
+                                    />
+                                    {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                                </div>
+
+
+                                {/* Alternate Phone */}
+                                {/* <div className="w-full">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Alternate Phone Number
+                    </label>
+                    <input
+                        type="tel"
+                        name="alternatePhone"
+                        maxLength="10"
+                        value={formData.alternatePhone}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                    />
+                    {errors.alternatePhone && (
+                        <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
+                    )}
+                </div> */}
                             </div>
+                        </div>
 
-                            {/* Status */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Status <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                >
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
+                        {/* Role & Company */}
+                        <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Role &amp; Company</h2>
+                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+
+                                {/* Role dropdown */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Role <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <Select
+                                        options={groups.map((g) => ({ value: String(g.groupId), label: g.groupName }))}
+                                        value={groupId && groups.length > 0
+                                            ? { value: groupId, label: groups.find(g => String(g.groupId) === String(groupId))?.groupName || "" }
+                                            : null
+                                        }
+                                        onChange={(selected) => {
+                                            setGroupId(selected ? selected.value : "");
+                                            setErrors((prev) => ({ ...prev, groupId: "" }));
+                                        }}
+                                        isClearable
+                                        isSearchable
+                                        placeholder="Search and select role..."
+                                        classNamePrefix="react-select"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderRadius: "0.75rem",
+                                                borderColor: errors.groupId ? "#ef4444" : "#d1d5db",
+                                                padding: "4px",
+                                                boxShadow: "none",
+                                                "&:hover": { borderColor: "#3b82f6" },
+                                            }),
+                                        }}
+                                    />
+                                    {errors.groupId && <p className="mt-1 text-sm text-red-500">{errors.groupId}</p>}
+                                </div>
+
+                                {/* Company dropdown */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Company <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <Select
+                                        options={companies.map((c) => ({ value: String(c.companyId), label: c.companyName }))}
+                                        value={companyId && companies.length > 0
+                                            ? { value: companyId, label: companies.find(c => String(c.companyId) === String(companyId))?.companyName || "" }
+                                            : null
+                                        }
+                                        onChange={(selected) => {
+                                            setCompanyId(selected ? selected.value : "");
+                                            setErrors((prev) => ({ ...prev, companyId: "" }));
+                                        }}
+                                        isClearable
+                                        isSearchable
+                                        placeholder="Search and select company..."
+                                        classNamePrefix="react-select"
+                                        styles={{
+                                            control: (base) => ({
+                                                ...base,
+                                                borderRadius: "0.75rem",
+                                                borderColor: errors.companyId ? "#ef4444" : "#d1d5db",
+                                                padding: "4px",
+                                                boxShadow: "none",
+                                                "&:hover": { borderColor: "#3b82f6" },
+                                            }),
+                                        }}
+                                    />
+                                    {errors.companyId && <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>}
+                                </div>
                             </div>
+                        </div>
 
-                            {/* Alternate Phone */}
-                            {/* <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Alternate Phone Number
-                                </label>
-                                <input
-                                    type="tel"
-                                    name="alternatePhone"
-                                    maxLength="10"
-                                    value={formData.alternatePhone}
-                                    onChange={handleChange}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                />
-                                {errors.alternatePhone && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
-                                )}
-                            </div> */}
-
-                            {/* Role dropdown */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Role <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <select
-                                    value={groupId}
-                                    onChange={(e) => {
-                                        setGroupId(e.target.value);
-                                        setErrors((prev) => ({ ...prev, groupId: "" }));
-                                    }}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                >
-                                    <option value="">Select role</option>
-                                    {groups.map((g) => (
-                                        <option key={g.groupId} value={String(g.groupId)}>
-                                            {g.groupName}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.groupId && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.groupId}</p>
-                                )}
+                        {/* Status (moved to last) */}
+                        <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Status</h2>
+                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Status <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <select
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                    {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
+                                </div>
                             </div>
-
-                            {/* Company dropdown */}
-                            <div className="w-full">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Company <span className="text-red-500 text-[16px]">*</span>
-                                </label>
-                                <select
-                                    value={companyId}
-                                    onChange={(e) => {
-                                        setCompanyId(e.target.value);
-                                        setErrors((prev) => ({ ...prev, companyId: "" }));
-                                    }}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                >
-                                    <option value="">Select company</option>
-                                    {companies.map((c) => (
-                                        <option key={c.companyId} value={String(c.companyId)}>
-                                            {c.companyName}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.companyId && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>
-                                )}
-                            </div>
-
-                            {/* Profile Image */}
-                            <div className="w-full lg:col-span-2">
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Profile Image
-                                </label>
-                                <input
-                                    type="file"
-                                    onChange={handleImage}
-                                    className="w-full rounded-xl border border-gray-300 px-4 py-3"
-                                />
-                                {errors.userFile && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
-                                )}
-                                {preview && (
-                                    <div className="mt-4">
-                                        <img
-                                            src={preview}
-                                            alt="preview"
-                                            className="h-24 w-24 rounded-full object-cover border"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-
-
                         </div>
 
                         <div className="mt-10 flex justify-center gap-4">
                             <button
                                 type="button"
-                                onClick={() => onBack()}
-                                className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer"
+                                onClick={async () => {
+                                    const result = await MySwal.fire({
+                                        title: "Discard changes?",
+                                        text: "Any unsaved data will be lost.",
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonColor: "#d33",
+                                        cancelButtonColor: "#6b7280",
+                                        confirmButtonText: "Yes, discard",
+                                        cancelButtonText: "Stay",
+                                    });
+                                    if (result.isConfirmed) onBack();
+                                }}
+                                className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-300 bg-white px-8 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
                             >
                                 Cancel
                             </button>
+
                             <button
                                 type="submit"
-                                className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+                                className="inline-flex h-12 w-[150px] items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
                             >
                                 Submit
                             </button>

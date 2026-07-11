@@ -6,7 +6,6 @@ import Header from "./Header";
 
 export default function ProfilePage({ onClose }) {
     const { isLogin, displayUser, activeAssignment, permissions } = useContext(loginContext);
-    console.log(displayUser, "########################3 dispaly user")
     const [activeTab, setActiveTab] = useState("summary");
 
     if (!isLogin) return null;
@@ -125,13 +124,13 @@ export default function ProfilePage({ onClose }) {
                                     </div>
                                     <div className="mt-6 space-y-5">
                                         <div className="grid grid-cols-2"><p className="text-gray-500">User Name</p><p className="font-medium text-gray-800">{displayUser.name}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{displayUser.age ?? "N/A"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(displayUser.createdAt)}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{displayUser.createdBy || "N/A"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(displayUser.updatedDate)}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{displayUser.updatedBy || "N/A"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{displayUser.age ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(displayUser.createdAt) ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{displayUser.createdBy || "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(displayUser.updatedDate) ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{displayUser.updatedBy || "-"}</p></div>
                                     </div>
                                 </div>
 

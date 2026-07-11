@@ -151,7 +151,7 @@ export default function Header({ onSearch, page }) {
                 if (searchValue.trim() !== "") {
                     filters.push({
                         key: "name",
-                        operator: "equal",
+                        operator: "contains",
                         value: searchValue
                     });
                 }
@@ -315,16 +315,16 @@ export default function Header({ onSearch, page }) {
 
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder="Search Name..."
                                 value={searchValue}
                                 onChange={handleSearch}
                                 onKeyDown={handleEnterSearch}
                                 className="flex-1 bg-transparent px-2 text-sm outline-none text-black"
                             />
 
-                            <select className="h-full border-l border-gray-200 bg-transparent px-4 text-sm text-gray-600 outline-none">
+                            {/* <select className="h-full border-l border-gray-200 bg-transparent px-4 text-sm text-gray-600 outline-none">
                                 <option>Name</option>
-                            </select>
+                            </select> */}
                         </div>
                     )}
                 </div>

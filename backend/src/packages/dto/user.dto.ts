@@ -62,9 +62,9 @@ export class UserDto {
     @IsEnum(isStatus)
     status!: string;
 
+    @IsOptional() 
     @IsString()
-    @IsNotEmpty()
-    @Length(10)
+    @Length(4, 15)
     phone!: string;
 
     @IsNotEmpty()
@@ -135,6 +135,10 @@ export class userUpdateDto {
     surname?: string;
 
     @IsOptional()
+    dialCode: any;
+
+
+    @IsOptional()
     @IsInt()
     @Min(18)
     @Transform(({ value }) => Number(value))
@@ -147,7 +151,7 @@ export class userUpdateDto {
 
     @IsOptional()
     @IsString()
-    @Length(10)
+    @Length(4, 15)
     phone!: string;
 
     @IsOptional()

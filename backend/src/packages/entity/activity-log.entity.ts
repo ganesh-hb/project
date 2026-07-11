@@ -57,18 +57,6 @@ export class ActivityLogEntity {
     @Column({ type: 'text' })
     generatedMessage!: string;
 
-    @Column({ nullable: true })
-    ipAddress!: string;
-
-    @Column({ nullable: true })
-    browser!: string;
-
-    @Column({ nullable: true })
-    device!: string;
-
-    @Column({ nullable: true })
-    os!: string;
-
     @CreateDateColumn()
     createdAt!: Date;
 

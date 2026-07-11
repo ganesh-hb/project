@@ -199,6 +199,7 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             if (params.surname)        user.surname        = params.surname;
             if (params.email)          user.email          = params.email;
             if (params.age)            user.age            = params.age;
+            if (params.dialCode)       user.dialCode       = params.dialCode;
             if (params.phone)          user.phone          = params.phone;
             if (params.status)         user.status         = params.status;
             if (params.updatedBy)       user.updatedBy      = params.updatedBy
@@ -428,84 +429,6 @@ async getUsers(param: any, req?: any) {
     return return_data;
 }
 
-// async getUsers(param: any, req?: any) {
-//     let return_data: any = {};
-//     try {
-//         const baseQB = this.userEntity
-//             .createQueryBuilder('user')
-//             .leftJoin('user.userCompanyGroups', 'ucg')
-//             .leftJoin('ucg.company', 'company')
-//             .leftJoin('ucg.group', 'group')
-//             .orderBy('user.name', 'ASC'); 
-
-//         if (req?.user?.userId) {
-//             baseQB.andWhere('user.userId != :loggedInUserId', { loggedInUserId: req.user.userId });
-//         }
-
-//         if (req?.scopedCompanyIds?.length) {
-//             baseQB.andWhere('ucg.companyId IN (:...companyIds)', { companyIds: req.scopedCompanyIds });
-//         }
-
-//         const filterString = await this.filter.makeFilterString(
-//             param?.filters,
-//             'user',
-//             { groupName: 'group', companyName: 'company' },
-//             param?.condition === 'Any' ? 'Any' : 'All',
-//         );
-
-//         if (filterString && filterString !== '') {
-//             baseQB.andWhere(`(${filterString})`);
-//         }
-
-//         const allIdsQB = baseQB.clone().select('user.userId');
-//         const allIds = await allIdsQB.getMany();
-//         const total = allIds.length;
-
-//         const [skip, limit] = (await this.filter.calcPages(param, this.userEntity)) as [number, number];
-
-//         const pageIds = allIds.slice(skip, skip + limit).map((u: any) => u.userId);
-
-//         const data = pageIds.length
-//             ? await this.userEntity
-//                   .createQueryBuilder('user')
-//                   .whereInIds(pageIds)
-//                   .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
-//                   .leftJoinAndSelect('ucg.company', 'company')
-//                   .leftJoinAndSelect('ucg.group', 'group')
-//                   .orderBy('user.name', 'ASC')
-//                   .getMany()
-//             : [];
-
-//         const formattedData = data.map((user) => {
-//             const allAssignments = user.userCompanyGroups ?? [];
-//             const primary = allAssignments.find((a) => a.is_parent === 0) ?? allAssignments[0] ?? null;
-//             return {
-//                 userId: user.userId,
-//                 name: user.name,
-//                 email: user.email,
-//                 phone: user.phone,
-//                 status: user.status,
-//                 userFile: user.userFile,
-//                 age: user.age,
-//                 assignments: primary
-//                     ? [{
-//                           id: primary.id,
-//                           companyId: primary.companyId,
-//                           companyName: primary.company?.companyName,
-//                           groupId: primary.groupId,
-//                           groupName: primary.group?.groupName,
-//                           is_parent: primary.is_parent,
-//                       }]
-//                     : [],
-//             };
-//         });
-
-//         return_data = { success: 1, message: 'List fetched successfully', total, data: formattedData };
-//     } catch (err: any) {
-//         return_data = { success: 0, message: err.message };
-//     }
-//     return return_data;
-// }
 async getUser(query: any, req?: any) {
     try {
         const targetId = Number(query.id ?? query);
@@ -551,6 +474,7 @@ async getUser(query: any, req?: any) {
             surname: user.surname,
             email: user.email,
             age: user.age,
+            dialCode:user?.dialCode,
             phone: user.phone,
             status: user.status,
             createdBy: createdByUser?.name ?? null,

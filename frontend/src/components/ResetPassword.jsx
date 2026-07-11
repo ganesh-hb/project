@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
+import { ResetPasswordSchema } from './Zod';
 
 export default function ResetPassword() {
     const router = useRouter();
@@ -22,29 +23,6 @@ export default function ResetPassword() {
         setToken(savedToken);
     }, [router]);
 
-    const validate = () => {
-        const newErrors = { password: '', confirmPass: '' };
-        let valid = true;
-
-        if (!formData.password) {
-            newErrors.password = 'Password is required';
-            valid = false;
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
-            valid = false;
-        }
-        if (!formData.confirmPass) {
-            newErrors.confirmPass = 'Please confirm your password';
-            valid = false;
-        } else if (formData.password !== formData.confirmPass) {
-            newErrors.confirmPass = 'Passwords does not match';
-            valid = false;
-        }
-
-        setErrors(newErrors);
-        return valid;
-    };
-
     const handleChange = (e) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
         setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
@@ -52,7 +30,17 @@ export default function ResetPassword() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validate()) return;
+
+        const result = ResetPasswordSchema.safeParse(formData);
+        if (!result.success) {
+            const fieldErrors = { password: '', confirmPass: '' };
+            result.error.issues.forEach((err) => {
+                const field = err.path[0];
+                if (field && !fieldErrors[field]) fieldErrors[field] = err.message;
+            });
+            setErrors(fieldErrors);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -61,7 +49,7 @@ export default function ResetPassword() {
                 headers: {
                     'Content-Type': 'application/json',
                     endpoint: 'user-resetpass',
-                    module: 'user'
+                    module: 'user',
                 },
                 body: JSON.stringify({
                     token,
@@ -71,7 +59,6 @@ export default function ResetPassword() {
             });
 
             const data = await response.json();
-
             if (data.success === 1) {
                 toast.success('Password reset successfully!', { position: 'top-right' });
                 sessionStorage.removeItem('resetEmail');
@@ -87,20 +74,25 @@ export default function ResetPassword() {
         }
     };
 
+    const gotoSitemap = () => {
+        router.push('/')
+    }
+
+
     return (
         <div className="grid grid-cols-2 h-screen">
             <div className="relative bg-white flex flex-col justify-center px-24">
-                <div className="absolute top-6 left-6">
+                <div className="absolute top-6 left-6" onClick={(e) => {
+                    gotoSitemap(e)
+                }}>
                     <img src="/logo.png" className="h-16" alt="Logo" />
                 </div>
 
+
+
                 <div className="max-w-md ms-24">
-                    <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-                        Reset Password
-                    </h1>
-                    <p className="text-gray-500 mb-10">
-                        Choose a new strong password for your account.
-                    </p>
+                    <h1 className="text-3xl font-semibold text-gray-900 mb-2">Reset Password</h1>
+                    <p className="text-gray-500 mb-10">Choose a new strong password for your account.</p>
 
                     <form className="space-y-5" onSubmit={handleSubmit}>
                         <div className="relative">
@@ -113,10 +105,7 @@ export default function ResetPassword() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 placeholder="Enter new password"
-                                className={`text-black w-full border rounded-lg px-4 py-3 pr-20 outline-none focus:ring-2 ${errors.password
-                                    ? 'border-red-500 focus:ring-red-500'
-                                    : 'border-gray-200 focus:ring-blue-500'
-                                    }`}
+                                className={`text-black w-full border rounded-lg px-4 py-3 pr-20 outline-none focus:ring-2 ${errors.password ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'}`}
                             />
                             <button
                                 type="button"
@@ -125,9 +114,7 @@ export default function ResetPassword() {
                             >
                                 {showPassword ? 'Hide' : 'View'}
                             </button>
-                            {errors.password && (
-                                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-                            )}
+                            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                         </div>
 
                         <div className="relative">
@@ -140,10 +127,7 @@ export default function ResetPassword() {
                                 value={formData.confirmPass}
                                 onChange={handleChange}
                                 placeholder="Confirm new password"
-                                className={`text-black w-full border rounded-lg px-4 py-3 pr-20 outline-none focus:ring-2 ${errors.confirmPass
-                                    ? 'border-red-500 focus:ring-red-500'
-                                    : 'border-gray-200 focus:ring-blue-500'
-                                    }`}
+                                className={`text-black w-full border rounded-lg px-4 py-3 pr-20 outline-none focus:ring-2 ${errors.confirmPass ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-blue-500'}`}
                             />
                             <button
                                 type="button"
@@ -152,9 +136,7 @@ export default function ResetPassword() {
                             >
                                 {showConfirm ? 'Hide' : 'View'}
                             </button>
-                            {errors.confirmPass && (
-                                <p className="text-red-500 text-sm mt-1">{errors.confirmPass}</p>
-                            )}
+                            {errors.confirmPass && <p className="text-red-500 text-sm mt-1">{errors.confirmPass}</p>}
                         </div>
 
                         <button

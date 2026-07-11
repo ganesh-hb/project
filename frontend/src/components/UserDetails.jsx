@@ -111,6 +111,7 @@ export default function UserDetailsPage({ id }) {
         user_email: user.email,
         user_phone: user.phone,
         user_status: user.status,
+        user_dialCode: user.dialCode,
         user_createdBy: user.createdBy,
         user_updatedBy: user.updatedBy,
         user_userFile: user.userFile,
@@ -173,11 +174,18 @@ export default function UserDetailsPage({ id }) {
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Details</h1>
                     <div className="flex items-center gap-4">
                         {can("userUpdate") && (
-                            <button className="rounded-xl bg-blue-600 px-8 h-12 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer" onClick={() => setShowEdit(true)}>
+                            <button
+                                onClick={() => setShowEdit(true)}
+                                className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
+                            >
                                 Edit
                             </button>
                         )}
-                        <button className="px-8 h-12 rounded-md bg-gray-500 text-white font-medium hover:bg-gray-600 transition cursor-pointer" onClick={gotoBack}>
+
+                        <button
+                            onClick={gotoBack}
+                            className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-300 bg-white px-8 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
+                        >
                             Back
                         </button>
                     </div>
@@ -266,14 +274,14 @@ export default function UserDetailsPage({ id }) {
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-5">
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">UserName</p><p className="font-medium text-gray-800">{userData.user_name}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{userData.user_age ?? "N/A"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(userData.user_createdAt)}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{userData.user_createdBy}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(userData.user_updatedDate)}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{userData.user_updatedBy}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">UserName</p><p className="font-medium text-gray-800">{userData.user_name ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{userData.user_age ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(userData.user_createdAt) ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{userData.user_createdBy ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(userData.user_updatedDate) ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{userData.user_updatedBy ?? "-"}</p></div>
                                     </div>
                                 </div>
 
@@ -308,9 +316,10 @@ export default function UserDetailsPage({ id }) {
                                     {can("userUpdate") && (
                                         <button
                                             onClick={() => setShowAddProfile(true)}
-                                            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
                                         >
-                                            + Add Profile
+                                            <span className="text-base leading-none">+</span>
+                                            <span>Add Profile</span>
                                         </button>
                                     )}
                                 </div>

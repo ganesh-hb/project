@@ -21,43 +21,42 @@ export default function AppPagination({ currentPage, totalPages, onPageChange })
     }
 
     return (
-        <div className="fixed bottom-0 right-0 p-4">
-            <Pagination>
-                <PaginationContent>
-                    <PaginationItem>
-                        <PaginationPrevious
-                            href="#"
-                            onClick={(e) => { e.preventDefault(); onPageChange(currentPage - 1); }}
-                            className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                    </PaginationItem>
 
-                    {pages.map((page, i) =>
-                        page === "..." ? (
-                            <PaginationEllipsis key={`ellipsis-${i}`} />
-                        ) : (
-                            <PaginationItem key={page}>
-                                <PaginationLink
-                                    href="#"
-                                    isActive={currentPage === page}
-                                    onClick={(e) => { e.preventDefault(); onPageChange(page); }}
-                                    className="cursor-pointer"
-                                >
-                                    {page}
-                                </PaginationLink>
-                            </PaginationItem>
-                        )
-                    )}
+        <Pagination>
+            <PaginationContent>
+                <PaginationItem>
+                    <PaginationPrevious
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); onPageChange(currentPage - 1); }}
+                        className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                </PaginationItem>
 
-                    <PaginationItem>
-                        <PaginationNext
-                            href="#"
-                            onClick={(e) => { e.preventDefault(); onPageChange(currentPage + 1); }}
-                            className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                    </PaginationItem>
-                </PaginationContent>
-            </Pagination>
-        </div>
+                {pages.map((page, i) =>
+                    page === "..." ? (
+                        <PaginationEllipsis key={`ellipsis-${i}`} />
+                    ) : (
+                        <PaginationItem key={page}>
+                            <PaginationLink
+                                href="#"
+                                isActive={currentPage === page}
+                                onClick={(e) => { e.preventDefault(); onPageChange(page); }}
+                                className="cursor-pointer"
+                            >
+                                {page}
+                            </PaginationLink>
+                        </PaginationItem>
+                    )
+                )}
+
+                <PaginationItem>
+                    <PaginationNext
+                        href="#"
+                        onClick={(e) => { e.preventDefault(); onPageChange(currentPage + 1); }}
+                        className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                </PaginationItem>
+            </PaginationContent>
+        </Pagination>
     );
 }

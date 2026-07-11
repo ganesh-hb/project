@@ -26,15 +26,15 @@ function formatCompanies(assignments) {
 
 export default function UsersPage() {
     const router = useRouter();
-    const { users, setUsers } = useContext(userListContext);
+    const { users, setUsers, savedPage, setSavedPage, savedTotalPages, setSavedTotalPages } = useContext(userListContext);
     const { isLogin } = useContext(loginContext);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [searchValue, setSearchValue] = useState("");
-    const LIMIT = 8;
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
+    const [limit, setLimit] = useState(8);
+    const [currentPage, setCurrentPage] = useState(savedPage);
+    const [totalPages, setTotalPages] = useState(savedTotalPages);
     const [viewMode, setViewMode] = useState("grid");
     const [count, setCount] = useState(1);
 
@@ -55,15 +55,14 @@ export default function UsersPage() {
     };
 
     useEffect(() => {
-        fetchData(1, {});
+        fetchData(savedPage, {});
     }, []);
 
-    async function fetchData(page = currentPage, searchParams = {}) {
+    async function fetchData(page = currentPage, searchParams = {}, limitOverride = limit) {
         setLoading(true);
         setError("");
-
         try {
-            let body = { page, limit: LIMIT };
+            let body = { page, limit: limitOverride };
 
             if (searchParams.filters && searchParams.filters.length > 0) {
                 body.condition = searchParams.condition || "All";
@@ -95,7 +94,6 @@ export default function UsersPage() {
                 ? decryptResponse(payload.encrypted)
                 : payload;
 
-            console.log(data.data)
             setUsers(
                 Array.isArray(data)
                     ? data
@@ -112,7 +110,9 @@ export default function UsersPage() {
                         assignments: Array.isArray(user.assignments) ? user.assignments : [],
                     }))
             );
-            setTotalPages(Math.ceil((data?.total || 1) / LIMIT));
+            setTotalPages(Math.ceil((data?.total || 1) / limitOverride));
+            setSavedPage(page);
+            setSavedTotalPages(Math.ceil((data?.total || 1) / limitOverride));
         } catch (err) {
             toast.error(`${err}`, { position: "top-right" });
             setError(err.message);
@@ -142,7 +142,14 @@ export default function UsersPage() {
     const goToPage = (page) => {
         if (page < 1 || page > totalPages) return;
         setCurrentPage(page);
+        setSavedPage(page);
         fetchData(page);
+    };
+
+    const handleLimitChange = (newLimit) => {
+        setLimit(newLimit);
+        setCurrentPage(1);
+        fetchData(1, {}, newLimit);
     };
     const { impersonating, loginAs, stopImpersonating, can } = useContext(loginContext);
 
@@ -199,9 +206,10 @@ export default function UsersPage() {
                             {can("userAdd") && (
                                 <button
                                     onClick={() => router.push("/add-user")}
-                                    className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors cursor-pointer"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
                                 >
-                                    <span>+</span> Add User
+                                    <span className="text-base leading-none">+</span>
+                                    <span>Add User</span>
                                 </button>
 
                             )}
@@ -346,7 +354,7 @@ export default function UsersPage() {
                                                             className={`text-base font-semibold ${can("userView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
                                                             onClick={(e) => can("userView") && gotoUser(e, user)}
                                                         >
-                                                            {user.user_name}
+                                                            {user.user_fName ? user.user_fName + " " + user.user_sName : user.user_name}
                                                         </div>
                                                         <div className="text-sm text-gray-500">{user.user_phone || "-"}</div>
                                                     </div>
@@ -354,7 +362,7 @@ export default function UsersPage() {
                                             </div>
 
                                             <div>
-                                                <div className="text-sm text-gray-500 mb-1">User Name</div>
+                                                <div className="text-sm text-gray-500 mb-1">UserName</div>
                                                 <div className="text-base text-gray-800 break-all">{user.user_name}</div>
                                             </div>
 
@@ -425,9 +433,23 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            <div className="fixed bottom-0 right-0 p-4">
+
+            <div className="fixed bottom-0 right-0 p-4 flex items-center gap-3">
                 <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+                <select
+                    id="pageSize"
+                    value={limit}
+                    onChange={(e) => handleLimitChange(Number(e.target.value))}
+                    className="h-9 rounded-lg border border-blue-500 bg-white px-3 text-sm text-gray-700 outline-none cursor-pointer"
+                >
+                    <option value={5}>5</option>
+                    <option value={8}>8</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={30}>30</option>
+                </select>
             </div>
+
         </div>
     );
 }

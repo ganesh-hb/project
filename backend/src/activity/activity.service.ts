@@ -16,11 +16,7 @@ export interface LogPayload {
     executionStatus: string;
     severity?: string;
     parameters?: Record<string, any>;
-    metadata?: Record<string, any>;
-    ipAddress?: string;
-    browser?: string;
-    device?: string;
-    os?: string;
+    // metadata?: Record<string, any>;
     correlationId?: string;
 }
 
@@ -66,12 +62,8 @@ export class ActivityService {
                 severity: severity,
                 correlationId: payload.correlationId ?? undefined,
                 parameters: payload.parameters ?? undefined,
-                metadata: payload.metadata ?? undefined,
+                // metadata: payload.metadata ?? undefined,
                 generatedMessage,
-                ipAddress: payload.ipAddress ?? undefined,
-                browser: payload.browser ?? undefined,
-                device: payload.device ?? undefined,
-                os: payload.os ?? undefined,
             } as any);
         } catch (error) {
             console.error('Failed to save activity log:', error);
@@ -157,10 +149,6 @@ export class ActivityService {
                 correlationId: log.correlationId,
                 parameters: log.parameters,
                 generatedMessage: log.generatedMessage,
-                ipAddress: log.ipAddress,
-                browser: log.browser,
-                device: log.device,
-                os: log.os,
                 createdAt: log.createdAt,
                 actor: log.user ? { userId: log.user.userId, userName: log.user.name, email: log.user.email } : null,
                 company: log.company ? { companyId: log.company.companyId, companyName: log.company.companyName } : null,

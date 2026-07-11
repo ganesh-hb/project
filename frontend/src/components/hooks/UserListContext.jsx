@@ -1,13 +1,14 @@
 "use client"
-import { Children, createContext, useContext, useState } from "react"
+import { createContext, useState } from "react"
 export const userListContext = createContext()
 export default function UserListContext({ children }) {
     const [users, setUsers] = useState([]);
+    const [savedPage, setSavedPage] = useState(1);
+    const [savedTotalPages, setSavedTotalPages] = useState(1);
+
     return (
-        <>
-            <userListContext.Provider value={{ users, setUsers }}>
-                {children}
-            </userListContext.Provider>
-        </>
-    )
+        <userListContext.Provider value={{ users, setUsers, savedPage, setSavedPage, savedTotalPages, setSavedTotalPages }}>
+            {children}
+        </userListContext.Provider>
+    );
 }

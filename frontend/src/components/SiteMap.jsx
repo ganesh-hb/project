@@ -7,13 +7,14 @@ import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin } from "@/app/lib/auth";
 
 export default function SiteMap() {
-    const { isLogin, can } = useContext(loginContext);
+    const { isLogin, can, impersonating } = useContext(loginContext);
     const [superAdmin, setSuperAdmin] = useState(false);
 
     useEffect(() => {
+        const activeUser = impersonating || isLogin;
         const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        setSuperAdmin(isSuperAdmin(isLogin || storedUser));
-    }, [isLogin]);
+        setSuperAdmin(isSuperAdmin(activeUser || storedUser));
+    }, [isLogin, impersonating]);
 
     const allSections = [
         {

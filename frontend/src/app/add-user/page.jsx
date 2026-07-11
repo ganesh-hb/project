@@ -3,8 +3,8 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
-import intlTelInput from "intl-tel-input";
-import "intl-tel-input/styles";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import dayjs from "dayjs";
 import { DemoContainer, DemoItem } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -15,8 +15,13 @@ import { AddFormSchema } from "@/components/Zod";
 import { authHeaders } from "../lib/auth";
 import { loginContext } from "@/components/hooks/LoginContext";
 import RouteGuard from "@/components/RouteGuard";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import Select from "react-select";
 
-const MIN_AGE_MS = 18 * 365 * 24 * 60 * 60 * 1000;
+const MySwal = withReactContent(Swal);
+
+const MAX_DOB = dayjs().subtract(18, "year");
 
 export default function AddUserPage() {
     const router = useRouter();
@@ -27,23 +32,6 @@ export default function AddUserPage() {
         router.push(url);
     };
 
-    const phoneRef = useRef(null);
-    const itiRef = useRef(null);
-    useEffect(() => {
-        if (phoneRef.current) {
-            itiRef.current = intlTelInput(phoneRef.current, {
-                initialCountry: "in",
-                separateDialCode: true,
-                utilsScript:
-                    "https://cdn.jsdelivr.net/npm/intl-tel-input@26.1.1/build/js/utils.js",
-            });
-        }
-        setFormData((prev) => ({ ...prev, tel: phoneRef.current?.value || "" }));
-        return () => {
-            if (itiRef.current) itiRef.current.destroy();
-        };
-    }, []);
-
     const [formData, setFormData] = useState({
         name: "",
         firstName: "",
@@ -53,10 +41,11 @@ export default function AddUserPage() {
         email: "",
         age: "",
         phone: "",
+        dialCode: "91",
         password: "",
         status: "Active",
         tel: "",
-        dob: dayjs(Date.now() - MIN_AGE_MS),
+        dob: MAX_DOB.subtract(1, "day"),
         isActive: "true",
         userFile: null,
         companyId: "",
@@ -65,6 +54,7 @@ export default function AddUserPage() {
     });
 
     const [preview, setPreview] = useState("");
+    const fileInputRef = useRef(null);
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
@@ -86,8 +76,18 @@ export default function AddUserPage() {
         groupId: "",
     });
     const onBack = async () => {
-        router.back()
-    }
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) router.push("/users");
+    };
     useEffect(() => {
         const fetchGroups = async () => {
             try {
@@ -161,6 +161,12 @@ export default function AddUserPage() {
         }
     };
 
+    const handleRemoveImage = () => {
+        setFormData((prev) => ({ ...prev, userFile: null }));
+        setPreview("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const result = AddFormSchema.safeParse(formData);
@@ -202,7 +208,8 @@ export default function AddUserPage() {
             payload.append("surname", formData.surname);
             payload.append("email", formData.email);
             payload.append("age", String(formData.age));
-            payload.append("phone", phoneRef.current.value.replace(/\D/g, ""));
+            payload.append("phone", formData.phone);
+            payload.append("dialCode", formData.dialCode);
             payload.append("status", formData.status);
             payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
             payload.append("password", formData.password);
@@ -211,9 +218,7 @@ export default function AddUserPage() {
             payload.append("createdBy", isLogin?.userId || null)
             payload.append("is_parent", "0"); // always primary on add
 
-            if (itiRef.current) {
-                payload.append("dialCode", itiRef.current.getSelectedCountryData().dialCode);
-            }
+
 
             if (formData.userFile) {
                 payload.append("userFile", formData.userFile);
@@ -270,8 +275,8 @@ export default function AddUserPage() {
                     <div className="mb-8 flex items-center justify-between">
                         <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add User</h1>
                         <button
-                            onClick={() => router.push("/users")}
-                            className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                            onClick={() => onBack()}
+                            className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
                         >
                             ← Back
                         </button>
@@ -279,271 +284,335 @@ export default function AddUserPage() {
 
                     <div className="w-full rounded-2xl bg-white p-8 shadow-sm">
                         <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
-                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
 
-                                {/* Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        UserName <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        placeholder="Enter UserName"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
-                                </div>
+                            {/* Basic Information */}
+                            <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                                <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Basic Information</h2>
+                                <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
 
-                                {/* First Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        First Name <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
-                                        placeholder="Enter first name"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
-                                </div>
-
-                                {/* Middle Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Middle Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="middleName"
-                                        value={formData.middleName}
-                                        onChange={handleChange}
-                                        placeholder="Enter middle name"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
-                                </div>
-
-                                {/* Last Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Last Name <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="surname"
-                                        value={formData.surname}
-                                        onChange={handleChange}
-                                        placeholder="Enter last name"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
-                                </div>
-
-                                {/* Email */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Email <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="Enter email address"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-                                </div>
-
-                                {/* Password */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Password <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
+                                    {/* Name */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            UserName <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
                                         <input
-                                            type={showPassword ? "text" : "password"}
-                                            name="password"
-                                            value={formData.password}
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
                                             onChange={handleChange}
-                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
+                                            placeholder="Enter UserName"
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2"
-                                        >
-                                            <img
-                                                src={showPassword ? "/password/hidden.png" : "/password/eye.png"}
-                                                alt=""
-                                                className="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition mt-5"
-                                            />
-                                        </button>
+                                        {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                                     </div>
-                                    {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
-                                </div>
 
-                                {/* DOB */}
-                                <div>
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                        <DemoContainer
-                                            components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
-                                        >
-                                            <DemoItem label="DOB *">
-                                                <DesktopDatePicker
-                                                    value={formData.dob}
-                                                    onChange={handleDateChange}
-                                                    maxDate={dayjs(Date.now() - MIN_AGE_MS)}
-                                                />
-                                            </DemoItem>
-                                        </DemoContainer>
-                                    </LocalizationProvider>
-                                    {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
-                                </div>
+                                    {/* First Name */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            First Name <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="firstName"
+                                            value={formData.firstName}
+                                            onChange={handleChange}
+                                            placeholder="Enter first name"
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        />
+                                        {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                                    </div>
 
-                                {/* Phone */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Phone Number <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        ref={phoneRef}
-                                        name="phone"
-                                        maxLength="10"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
-                                </div>
+                                    {/* Middle Name */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Middle Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="middleName"
+                                            value={formData.middleName}
+                                            onChange={handleChange}
+                                            placeholder="Enter middle name"
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        />
+                                        {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                                    </div>
 
+                                    {/* Last Name */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Last Name <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="surname"
+                                            value={formData.surname}
+                                            onChange={handleChange}
+                                            placeholder="Enter last name"
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        />
+                                        {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                                    </div>
 
-                                {/* Status */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Status <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <select
-                                        name="status"
-                                        value={formData.status}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    >
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
-                                </div>
-
-                                {/* Alternate Phone */}
-                                {/* <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Alternate Phone Number
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="alternatePhone"
-                                        maxLength="10"
-                                        value={formData.alternatePhone}
-                                        onChange={handleChange}
-                                        placeholder="Enter alternate number"
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.alternatePhone && (
-                                        <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
-                                    )}
-                                </div> */}
-
-                                {/* Role dropdown */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Role <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <select
-                                        onChange={(e) => {
-                                            setFormData((prev) => ({ ...prev, groupId: e.target.value }));
-                                            setErrors((prev) => ({ ...prev, groupId: "" }));
-                                        }}
-                                        value={formData.groupId}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    >
-                                        <option value="">Select role</option>
-                                        {groups.map((g) => (
-                                            <option key={g.groupId} value={String(g.groupId)}>
-                                                {g.groupName}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.groupId && (
-                                        <p className="mt-1 text-sm text-red-500">{errors.groupId}</p>
-                                    )}
-                                </div>
-
-                                {/* Company dropdown */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Company <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <select
-                                        onChange={(e) => {
-                                            setFormData((prev) => ({ ...prev, companyId: e.target.value }));
-                                            setErrors((prev) => ({ ...prev, companyId: "" }));
-                                        }}
-                                        value={formData.companyId}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    >
-                                        <option value="">Select company</option>
-                                        {companies.map((c) => (
-                                            <option key={c.companyId} value={String(c.companyId)}>
-                                                {c.companyName}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.companyId && (
-                                        <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>
-                                    )}
-                                </div>
-
-                                {/* Profile Image */}
-                                <div className="w-full lg:col-span-2">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Profile Image
-                                    </label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImage}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3"
-                                    />
-                                    {errors.userFile && (
-                                        <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
-                                    )}
-                                    {preview && (
-                                        <div className="mt-4">
-                                            <img
-                                                src={preview}
-                                                alt="preview"
-                                                className="h-24 w-24 rounded-full object-cover border"
+                                    {/* Password */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Password <span className="text-red-500">*</span>
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                name="password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2"
+                                            >
+                                                <img
+                                                    src={showPassword ? "/password/hidden.png" : "/password/eye.png"}
+                                                    alt=""
+                                                    className="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition "
+                                                />
+                                            </button>
                                         </div>
-                                    )}
+                                        {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+                                    </div>
+
+                                    {/* DOB */}
+                                    <div>
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DemoContainer
+                                                components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
+                                            >
+                                                <DemoItem label="DOB *">
+                                                    <DesktopDatePicker
+                                                        value={formData.dob}
+                                                        onChange={handleDateChange}
+                                                        maxDate={MAX_DOB}
+                                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
+                                                    />
+                                                </DemoItem>
+                                            </DemoContainer>
+                                        </LocalizationProvider>
+                                        {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                                    </div>
+
+                                    {/* Profile Image */}
+                                    <div className="w-full lg:col-span-2">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Profile Image
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            ref={fileInputRef}
+                                            onChange={handleImage}
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        />
+                                        {errors.userFile && (
+                                            <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
+                                        )}
+                                        {preview && (
+                                            <div className="relative mt-4 h-24 w-24">
+                                                <img
+                                                    src={preview}
+                                                    alt="preview"
+                                                    className="h-24 w-24 rounded-full object-cover border"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveImage}
+                                                    aria-label="Remove selected image"
+                                                    className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Contact Information */}
+                            <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                                <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Contact Information</h2>
+                                <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+
+                                    {/* Email */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Email <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            placeholder="Enter email address"
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        />
+                                        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+                                    </div>
+
+                                    {/* Phone */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Phone Number <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <PhoneInput
+                                            country="in"
+                                            value={formData.dialCode + formData.phone}
+                                            onChange={(value, countryData) => {
+                                                const dialCode = countryData.dialCode;
+                                                const phone = value.slice(dialCode.length);
+                                                setFormData((prev) => ({ ...prev, phone, dialCode }));
+                                                setErrors((prev) => ({ ...prev, phone: "" }));
+                                            }}
+                                            inputStyle={{
+                                                width: "100%",
+                                                height: "50px",
+                                                borderRadius: "0.75rem",
+                                                border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                                fontSize: "14px",
+                                                paddingLeft: "58px",
+                                            }}
+                                            buttonStyle={{
+                                                borderRadius: "0.75rem 0 0 0.75rem",
+                                                border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                                background: "#f9fafb",
+                                            }}
+                                            containerStyle={{ width: "100%" }}
+                                            enableSearch
+                                            searchPlaceholder="Search country..."
+                                        />
+                                        {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                                    </div>
+
+                                    {/* Alternate Phone */}
+                                    {/* <div className="w-full">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Alternate Phone Number
+                    </label>
+                    <input
+                        type="text"
+                        name="alternatePhone"
+                        maxLength="10"
+                        value={formData.alternatePhone}
+                        onChange={handleChange}
+                        placeholder="Enter alternate number"
+                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                    />
+                    {errors.alternatePhone && (
+                        <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
+                    )}
+                </div> */}
+                                </div>
+                            </div>
+
+                            {/* Role & Company */}
+                            <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                                <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Role &amp; Company</h2>
+                                <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+
+                                    {/* Role dropdown */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Role <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <Select
+                                            options={groups.map((g) => ({ value: String(g.groupId), label: g.groupName }))}
+                                            value={formData.groupId ? { value: formData.groupId, label: groups.find(g => String(g.groupId) === formData.groupId)?.groupName } : null}
+                                            onChange={(selected) => {
+                                                setFormData((prev) => ({ ...prev, groupId: selected ? selected.value : "" }));
+                                                setErrors((prev) => ({ ...prev, groupId: "" }));
+                                            }}
+                                            isClearable
+                                            isSearchable
+                                            placeholder="Search and select role..."
+                                            classNamePrefix="react-select"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.75rem",
+                                                    borderColor: errors.groupId ? "#ef4444" : "#d1d5db",
+                                                    padding: "4px",
+                                                    boxShadow: "none",
+                                                    "&:hover": { borderColor: "#3b82f6" },
+                                                }),
+                                            }}
+                                        />
+                                        {errors.groupId && <p className="mt-1 text-sm text-red-500">{errors.groupId}</p>}
+                                    </div>
+
+                                    {/* Company dropdown */}
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Company <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <Select
+                                            options={companies.map((c) => ({ value: String(c.companyId), label: c.companyName }))}
+                                            value={formData.companyId ? { value: formData.companyId, label: companies.find(c => String(c.companyId) === formData.companyId)?.companyName } : null}
+                                            onChange={(selected) => {
+                                                setFormData((prev) => ({ ...prev, companyId: selected ? selected.value : "" }));
+                                                setErrors((prev) => ({ ...prev, companyId: "" }));
+                                            }}
+                                            isClearable
+                                            isSearchable
+                                            placeholder="Search and select company..."
+                                            classNamePrefix="react-select"
+                                            styles={{
+                                                control: (base) => ({
+                                                    ...base,
+                                                    borderRadius: "0.75rem",
+                                                    borderColor: errors.companyId ? "#ef4444" : "#d1d5db",
+                                                    padding: "4px",
+                                                    boxShadow: "none",
+                                                    "&:hover": { borderColor: "#3b82f6" },
+                                                }),
+                                            }}
+                                        />
+                                        {errors.companyId && <p className="mt-1 text-sm text-red-500">{errors.companyId}</p>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Status (moved to last) */}
+                            <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                                <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Status</h2>
+                                <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Status <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <select
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleChange}
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        >
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="mt-10 flex justify-center gap-4">
                                 <button
                                     type="button"
                                     onClick={() => onBack()}
-                                    className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer "
+                                    className="inline-flex min-w-[150px] items-center justify-center rounded-xl border border-gray-300 bg-white px-8 py-3.5 text-base font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
                                 >
                                     Cancel
                                 </button>
+
                                 <button
                                     type="submit"
-                                    className="w-[150px] cursor-pointer max-w-md rounded-xl bg-blue-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all duration-200 hover:bg-blue-700 hover:shadow-blue-200 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+                                    className="inline-flex min-w-[150px] items-center justify-center rounded-xl bg-blue-600 px-8 py-3.5 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
                                 >
                                     Submit
                                 </button>

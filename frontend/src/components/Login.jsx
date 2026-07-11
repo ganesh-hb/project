@@ -188,10 +188,15 @@ export default function LoginPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-11 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                className="absolute right-3 top-1/2 -translate-y-1/2"
                             >
-                                {showPassword ? "Hide" : "View"}
+                                <img
+                                    src={showPassword ? "/password/hidden.png" : "/password/eye.png"}
+                                    alt=""
+                                    className="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition mt-5"
+                                />
                             </button>
+
                             {errors.password && (
                                 <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                             )}
