@@ -523,6 +523,26 @@ async getUser(query: any, req?: any) {
         }
     }
 
+   async adminResetPassword(body: { userId: number; newPassword: string }) {
+        try {
+            if (!body.userId || !body.newPassword) {
+                return { success: 0, message: 'Required fields missing' };
+            }
+
+            const user = await this.userEntity.findOne({ where: { userId: body.userId } });
+            if (!user) return { success: 0, message: 'User not found' };
+
+            await this.userEntity.update(
+                { userId: user.userId },
+                { password: await bcrypt.hash(body.newPassword, 10) },
+            );
+
+            return { success: 1, message: 'Password reset successfully' };
+        } catch (error) {
+            return { success: 0, message: 'Something went wrong', error };
+        }
+    }
+
     async startForgotPass(body: any) {
         try {
             if (!body.email) return { success: 0, message: 'Email required' };

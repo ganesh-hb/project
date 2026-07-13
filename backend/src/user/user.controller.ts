@@ -15,6 +15,7 @@ import { UserService } from './user.service';
 import { FileInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from 'src/packages/config/multer.config';
 import {
+    adminResetPass,
     changePass,
     confirmOtp,
     forgotPass,
@@ -68,6 +69,12 @@ export class UserController {
     async ChangePass(@Body() body: changePass) {
         // console.log(body,"##########################controller")
         return await this.userService.startChangePass(body);
+    }
+    @Put('user-admin-reset-pass')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles('superAdmin')
+    async adminResetPassword(@Body() body: adminResetPass) {
+        return await this.userService.adminResetPassword(body);
     }
 
     @Put('user-forgotpass')

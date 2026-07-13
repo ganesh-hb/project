@@ -5,6 +5,9 @@ import Header from "../Header";
 import { authHeaders } from "@/app/lib/auth";
 import { CompanyUpdateSchema } from "../Zod";
 import { City, Country, State } from "country-state-city";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+const MySwal = withReactContent(Swal);
 
 export default function CompanyUpdate({ id, onBack }) {
     const [loading, setLoading] = useState(false);
@@ -223,7 +226,19 @@ export default function CompanyUpdate({ id, onBack }) {
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Edit Company</h1>
                     <button
-                        onClick={() => onBack()}
+                        onClick={async () => {
+                            const result = await MySwal.fire({
+                                title: "Discard changes?",
+                                text: "Any unsaved data will be lost.",
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonColor: "#d33",
+                                cancelButtonColor: "#6b7280",
+                                confirmButtonText: "Yes, go back",
+                                cancelButtonText: "Stay",
+                            });
+                            if (result.isConfirmed) onBack();
+                        }}
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
@@ -413,7 +428,19 @@ export default function CompanyUpdate({ id, onBack }) {
                     <div className="mt-8 mb-10 flex justify-center gap-4">
                         <button
                             type="button"
-                            onClick={() => onBack()}
+                            onClick={async () => {
+                                const result = await MySwal.fire({
+                                    title: "Discard changes?",
+                                    text: "Any unsaved data will be lost.",
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonColor: "#d33",
+                                    cancelButtonColor: "#6b7280",
+                                    confirmButtonText: "Yes, discard",
+                                    cancelButtonText: "Stay",
+                                });
+                                if (result.isConfirmed) onBack();
+                            }}
                             className="rounded-xl bg-gray-200 px-8 py-3 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer"
                         >
                             Cancel

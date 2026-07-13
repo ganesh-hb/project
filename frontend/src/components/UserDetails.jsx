@@ -40,6 +40,7 @@ export default function UserDetailsPage({ id }) {
         });
         const res = await allData.json();
         setUser(res);
+        console.log(res)
     };
 
     useEffect(() => {
@@ -261,8 +262,8 @@ export default function UserDetailsPage({ id }) {
                                                 </div>
                                             )}
                                         </div>
-                                        <div>
-                                            <h2 className="text-2xl font-semibold capitalize text-gray-800">{userData.user_name}</h2>
+                                        <div className="min-w-0">
+                                            <h2 className="text-2xl font-semibold capitalize text-gray-800 truncate max-w-full"> {user.firstName ? `${user.firstName} ${user.surname}` : user.name}</h2>
                                             <span className={userData.user_status === "Active"
                                                 ? "mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-sm text-green-700"
                                                 : userData.user_status === "Inactive"

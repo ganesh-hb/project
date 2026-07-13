@@ -6,6 +6,9 @@ import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { CompanyUpdateSchema } from "../Zod";
 import { City, Country, State } from "country-state-city";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+const MySwal = withReactContent(Swal);
 
 
 export default function AddCompany() {
@@ -89,6 +92,20 @@ export default function AddCompany() {
         setPreview(URL.createObjectURL(file));
     };
 
+    const onBack = async () => {
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) router.push("/company-list");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -162,7 +179,7 @@ export default function AddCompany() {
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add Company</h1>
                     <button
-                        onClick={() => router.push("/company-list")}
+                        onClick={() => onBack()}
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back

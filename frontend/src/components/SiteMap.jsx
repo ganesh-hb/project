@@ -7,16 +7,28 @@ import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin } from "@/app/lib/auth";
 
 export default function SiteMap() {
-    const { isLogin, can, impersonating } = useContext(loginContext);
+    const router = useRouter();
+    const { isLogin, can, impersonating, permissions, authReady } = useContext(loginContext);
     const [superAdmin, setSuperAdmin] = useState(false);
 
     useEffect(() => {
         const activeUser = impersonating || isLogin;
         const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
         setSuperAdmin(isSuperAdmin(activeUser || storedUser));
-    }, [isLogin, impersonating]);
+    }, [isLogin, impersonating, permissions]);
 
-    const allSections = [
+    if (!authReady) {
+        return (
+            <main className="min-h-screen">
+                <Header page="sitemap" />
+                <div className="flex items-center justify-center py-20 text-gray-400 text-sm">
+                    Loading...
+                </div>
+            </main>
+        );
+    }
+
+    const dashboardSections = [
         {
             title: "Dashboards",
             items: ["Sitemap"],
@@ -27,19 +39,19 @@ export default function SiteMap() {
             title: "Users",
             items: ["User List"],
             redirectTo: '/users',
-            show: can("userList"),
+            show: permissions.includes("userList"),
         },
         {
             title: "Companies",
             items: ["Company List"],
             redirectTo: '/company-list',
-            show: can("companyList"),
+            show: permissions.includes("companyList"),
         },
         {
             title: "Groups",
             items: ["Group List"],
             redirectTo: '/group-list',
-            show: can("groupList"),
+            show: permissions.includes("groupList"),
         },
         {
             title: "Settings",
@@ -47,20 +59,19 @@ export default function SiteMap() {
             redirectTo: '/capabilities',
             show: superAdmin,
         },
-    ];
+    ].filter((s) => s.show);
 
-    const dashboardSections = allSections.filter((s) => s.show);
-
-    const router = useRouter();
     const gotoPage = (e, item) => {
         router.push(item);
     };
+
     const gotoPages = (e, url) => {
         e.preventDefault();
         e.stopPropagation();
     };
 
     return (
+
         <main className="min-h-screen">
             <Header
                 page="user-details"

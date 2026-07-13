@@ -11,6 +11,8 @@ import { isSuperAdmin, isCompanyAdmin, authHeaders } from "../app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import AppPagination from "./ui/AppPagination";
 import { ChevronDown } from "lucide-react";
+import CompanySidePanel from "./company/CompanySidePanel";
+import { createPortal } from "react-dom";
 
 function formatRoles(assignments) {
     if (!Array.isArray(assignments) || assignments.length === 0) return "N/A";
@@ -19,9 +21,20 @@ function formatRoles(assignments) {
         .join(", ");
 }
 
-function formatCompanies(assignments) {
-    if (!Array.isArray(assignments) || assignments.length === 0) return "-";
-    return [...new Set(assignments.map((a) => a.companyName).filter(Boolean))].join(", ");
+function formatCompanies(assignments, onCompanyClick) {
+    if (!Array.isArray(assignments) || assignments.length === 0) return <span>-</span>;
+    const unique = [...new Map(assignments.filter(a => a.companyName).map(a => [a.companyId, a])).values()];
+    return unique.map((a, i) => (
+        <span key={a.companyId}>
+            <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={(e) => { e.stopPropagation(); onCompanyClick(a.companyId); }}
+            >
+                {a.companyName}
+            </span>
+            {i < unique.length - 1 && ", "}
+        </span>
+    ));
 }
 
 export default function UsersPage() {
@@ -35,8 +48,10 @@ export default function UsersPage() {
     const [limit, setLimit] = useState(8);
     const [currentPage, setCurrentPage] = useState(savedPage);
     const [totalPages, setTotalPages] = useState(savedTotalPages);
+    const [totalRecords, setTotalRecords] = useState(0);
     const [viewMode, setViewMode] = useState("grid");
     const [count, setCount] = useState(1);
+    const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
 
     const [superAdmin, setSuperAdmin] = useState(false);
@@ -49,6 +64,18 @@ export default function UsersPage() {
     }, [isLogin]);
 
     const [expandedRows, setExpandedRows] = useState({});
+    const [previewUser, setPreviewUser] = useState(null);
+    const [openActionMenu, setOpenActionMenu] = useState(null);
+
+    useEffect(() => {
+        const closeMenu = (e) => {
+            if (!e.target.closest(".user-action-menu")) {
+                setOpenActionMenu(null);
+            }
+        };
+        document.addEventListener("mousedown", closeMenu);
+        return () => document.removeEventListener("mousedown", closeMenu);
+    }, []);
 
     const toggleRow = (id) => {
         setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -111,6 +138,7 @@ export default function UsersPage() {
                     }))
             );
             setTotalPages(Math.ceil((data?.total || 1) / limitOverride));
+            setTotalRecords(data?.total || 0);
             setSavedPage(page);
             setSavedTotalPages(Math.ceil((data?.total || 1) / limitOverride));
         } catch (err) {
@@ -163,7 +191,11 @@ export default function UsersPage() {
             toast.error("Failed to switch user", { position: "top-right" });
         }
     };
-
+    const handleResetPassword = (e, user) => {
+        e.stopPropagation();
+        setOpenActionMenu(null);
+        router.push(`/admin-reset-pass?userId=${user.user_userId}`);
+    };
 
     return (
         <div className="w-full min-h-screen bg-[#f5f6fa] overflow-x-hidden">
@@ -256,7 +288,11 @@ export default function UsersPage() {
                                             <img
                                                 src={`http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`}
                                                 alt="userImage"
-                                                className="h-full w-full object-cover"
+                                                className="h-full w-full object-cover cursor-pointer"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPreviewUser(user);
+                                                }}
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -282,13 +318,40 @@ export default function UsersPage() {
                                                 {user.user_status}
                                             </div>
                                             {superAdmin && !impersonating && user.user_userId !== isLogin?.userId && (
-                                                <button
-                                                    onClick={(e) => handleLoginAs(e, user)}
-                                                    className="mt-2 inline-block rounded-full px-3 py-1 cursor-pointer bg-blue-200 float-right"
-                                                >
-                                                    Login As
-                                                </button>
+                                                <div className="user-action-menu relative mt-2 float-right" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenActionMenu((prev) =>
+                                                                prev === user.user_userId ? null : user.user_userId
+                                                            );
+                                                        }}
+                                                        className="flex items-center gap-1 rounded-full border border-blue-500 px-3 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50 cursor-pointer"
+                                                    >
+                                                        Login As
+                                                        <ChevronDown
+                                                            className={`h-4 w-4 transition-transform ${openActionMenu === user.user_userId ? "rotate-180" : ""
+                                                                }`}
+                                                        />
+                                                    </button>
 
+                                                    {openActionMenu === user.user_userId && (
+                                                        <div className="absolute right-0 z-10 mt-2 w-44 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                                                            <button
+                                                                onClick={(e) => handleLoginAs(e, user)}
+                                                                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                                                            >
+                                                                Login As
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => handleResetPassword(e, user)}
+                                                                className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                                                            >
+                                                                Reset Password
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -313,7 +376,7 @@ export default function UsersPage() {
                                         </div>
                                         <div className="text-sm text-gray-600">
                                             <span className="font-medium">Company:</span>{" "}
-                                            {formatCompanies(user.assignments)}
+                                            {formatCompanies(user.assignments, setSelectedCompanyId)}
                                         </div>
                                     </div>
                                 </div>
@@ -335,7 +398,7 @@ export default function UsersPage() {
                                 return (
                                     <div key={rowId} className="px-6 py-6 border border-gray-200 bg-gray-50/2 rounded-xl">
                                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start">
-                                            <div>
+                                            <div className="min-w-0">
                                                 <div className="text-sm text-gray-500 mb-1">Name</div>
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-10 w-10 min-w-[40px] items-center justify-center overflow-hidden rounded-full bg-blue-600 text-base font-bold uppercase text-white">
@@ -343,15 +406,19 @@ export default function UsersPage() {
                                                             <img
                                                                 src={`http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`}
                                                                 alt="userImage"
-                                                                className="h-full w-full object-cover"
+                                                                className="h-full w-full object-cover cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewUser(user);
+                                                                }}
                                                             />
                                                         ) : (
                                                             (user.user_name || "?").charAt(0)
                                                         )}
                                                     </div>
-                                                    <div>
+                                                    <div className="min-w-0">
                                                         <div
-                                                            className={`text-base font-semibold ${can("userView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
+                                                            className={`text-base font-semibold truncate ${can("userView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
                                                             onClick={(e) => can("userView") && gotoUser(e, user)}
                                                         >
                                                             {user.user_fName ? user.user_fName + " " + user.user_sName : user.user_name}
@@ -385,7 +452,7 @@ export default function UsersPage() {
                                                 <div>
                                                     <div className="text-sm text-gray-500 mb-1">Company Name</div>
                                                     <div className="text-base text-[#3563e9] font-medium">
-                                                        {formatCompanies(user.assignments)}
+                                                        {formatCompanies(user.assignments, setSelectedCompanyId)}
                                                     </div>
                                                 </div>
                                                 <button
@@ -434,22 +501,58 @@ export default function UsersPage() {
             </div>
 
 
-            <div className="fixed bottom-0 right-0 p-4 flex items-center gap-3">
-                <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
-                <select
-                    id="pageSize"
-                    value={limit}
-                    onChange={(e) => handleLimitChange(Number(e.target.value))}
-                    className="h-9 rounded-lg border border-blue-500 bg-white px-3 text-sm text-gray-700 outline-none cursor-pointer"
-                >
-                    <option value={5}>5</option>
-                    <option value={8}>8</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={30}>30</option>
-                </select>
+            <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3">
+                <div className="text-sm font-medium text-gray-800">
+                    {totalRecords > 0
+                        ? `View ${(currentPage - 1) * limit + 1} - ${Math.min(currentPage * limit, totalRecords)} of ${totalRecords}`
+                        : "View 0 of 0"}
+                </div>
+                <div className="flex items-center gap-3">
+                    <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+                    <select
+                        id="pageSize"
+                        value={limit}
+                        onChange={(e) => handleLimitChange(Number(e.target.value))}
+                        className="h-9 rounded-lg border border-blue-500 bg-white px-3 text-sm text-gray-700 outline-none cursor-pointer"
+                    >
+                        <option value={5}>5</option>
+                        <option value={8}>8</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={30}>30</option>
+                    </select>
+                </div>
             </div>
-
+            {selectedCompanyId && typeof document !== "undefined" && createPortal(
+                <CompanySidePanel
+                    companyId={selectedCompanyId}
+                    onClose={() => setSelectedCompanyId(null)}
+                />,
+                document.body
+            )}
+            {previewUser && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+                    onClick={() => setPreviewUser(null)}
+                >
+                    <div
+                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
+                            onClick={() => setPreviewUser(null)}
+                        >
+                            ✕
+                        </button>
+                        <img
+                            src={`http://localhost:4000/upload/${previewUser.user_userId}/${previewUser.user_userFile}`}
+                            alt="preview"
+                            className="w-full rounded-xl object-contain max-h-80"
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

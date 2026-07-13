@@ -1,8 +1,9 @@
 import z from "zod";
 
 export const userLoginSchema = z.object({
-    email: z.email('Invalid email.')
-        .min(1, "Email is required."),
+    email: z.string()
+        .min(2, "Please enter Email.")
+        .email('Invalid email.'),
 
     password: z.string()
         .min(1, "Please enter the Password.")
@@ -15,19 +16,18 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 export const UpdateFormSchema = z.object({
     email: z.string()
         .min(2, "Please enter Email.")
-        .email("Invalid email, enter valid email."),
+        .email("Please enter valid Email."),
 
     name: z.string()
         .min(1, "Please enter the UserName.")
-        .max(10, "UserName must be at most 10 characters.")
-        .regex(/^[a-zA-Z0-9]+$/, "UserName cannot contain special characters."),
+        .max(10, "UserName must be at most 10 characters."),
 
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please Select a valid status." }),
     }),
 
     firstName: z.string()
-        .min(1, "Please enter the First name.")
+        .min(1, "Please enter the First Name.")
         .max(50, "First name must be at most 50 characters.")
         .regex(/^[a-zA-Z0-9]+$/, "First Name cannot contain special characters."),
 
@@ -46,11 +46,11 @@ export const UpdateFormSchema = z.object({
         .coerce
         .number({
             required_error: "Please enter the Age.",
-            invalid_type_error: "Age must be a number.",
+            invalid_type_error: "Age must be a Number.",
         })
         .min(18, { message: "You must be at least 18 years old." }),
 
-    phone: z.string().min(1, "Phone number is required"),
+    phone: z.string().min(1, "Please Enter Phone number "),
     dialCode: z.string().optional().or(z.literal("")),
 
     alternatePhone: z.string()
@@ -75,7 +75,7 @@ export const UpdateFormSchema = z.object({
 export const AddFormSchema = z.object({
     email: z.string()
         .min(2, "Please enter Email.")
-        .email("Invalid email, enter valid email."),
+        .email("Invalid email, enter valid Email."),
 
     name: z.string()
         .min(1, "Please enter UserName. ")
@@ -95,7 +95,7 @@ export const AddFormSchema = z.object({
         .max(50, "Last name must be at most 50 characters."),
 
     status: z.enum(["Active", "Inactive"], {
-        errorMap: () => ({ message: "Please Select a valid status." }),
+        errorMap: () => ({ message: "Please Select a valid Status." }),
     }),
 
     // age: z
@@ -106,7 +106,7 @@ export const AddFormSchema = z.object({
     //     })
     //     .min(18, { message: "You must be at least 18 years old." }),
     phone: z.string()
-        .min(1, "Please enter phone number")
+        .min(1, "Please enter Phone Number")
     // .max(10, "Enter valid phone number.")
     ,
 
@@ -122,11 +122,11 @@ export const AddFormSchema = z.object({
         .optional()
         .or(z.literal(""))
         .refine((val) => !val || /^[6-9]\d{9}$/.test(val), {
-            message: "Invalid phone number.",
+            message: "Invalid Phone Number.",
         }),
 
-    groupId: z.string().min(1, "Please select role."),
-    companyId: z.string().min(1, "Please select company."),
+    groupId: z.string().min(1, "Please select Role."),
+    companyId: z.string().min(1, "Please select Company."),
 
     userFile: z.any()
         .refine((file) => !!file, "Profile image is required.")
@@ -145,18 +145,18 @@ export const CompanyUpdateSchema = z.object({
     companyCode: z.string().min(2, "Company code must be at least 2 characters."),
     companyLocation: z.string().min(2, "Address line 1 is required."),
     status: z.enum(["active", "inactive"], {
-        errorMap: () => ({ message: "Please Select a valid status." }),
+        errorMap: () => ({ message: "Please Select a valid Status." }),
     }),
     email: z.string()
-        .min(2, "Email is required")
-        .email("Invalid email, enter valid email."),
+        .min(2, "Please enter Email")
+        .email("Invalid email, enter valid Email."),
     website: z.string().min(2, "Please enter Website."),
     dialCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
     phone: z
         .string({ required_error: "Please enter Phone number." })
-        .min(1, { message: "Phone number is required." })
-        .max(10, { message: "Enter valid Phone number." })
-        .regex(/^\d+$/, { message: "Enter valid Phone number." }),
+        .min(1, { message: "Please enter Phone Number." })
+        .max(10, { message: "Enter valid Phone Number." })
+        .regex(/^\d+$/, { message: "Enter valid Phone Number." }),
     country: z.string(),
     state: z.string(),
     city: z.string(),

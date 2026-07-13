@@ -4,7 +4,7 @@ import {
 } from "./pagination";
 
 export default function AppPagination({ currentPage, totalPages, onPageChange }) {
-    if (totalPages <= 1) return null;
+    if (totalPages < 1) return null;
 
     const pages = [];
 

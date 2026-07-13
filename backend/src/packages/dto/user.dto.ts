@@ -286,3 +286,12 @@ export class getUserListDto {
     @Type(() => filterDto)
     filters: any;
 }
+
+export class adminResetPass {
+    @IsInt()
+    userId!: number;
+
+    @IsString()
+    @IsNotEmpty()
+    newPassword!: string;
+}

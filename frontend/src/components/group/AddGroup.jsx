@@ -3,6 +3,9 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Header from "../Header";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+const MySwal = withReactContent(Swal);
 
 export default function AddGroup() {
     const router = useRouter();
@@ -34,6 +37,20 @@ export default function AddGroup() {
         if (!formData.groupCode.trim()) newErrors.groupCode = "Group code is required.";
         if (!formData.status) newErrors.status = "Status is required.";
         return newErrors;
+    };
+
+    const onBack = async () => {
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) router.push("/group-list");
     };
 
     const handleSubmit = async (e) => {
@@ -91,7 +108,7 @@ export default function AddGroup() {
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800 ">Add Group</h1>
                     <button
-                        onClick={() => router.push("/group-list")}
+                        onClick={() => onBack()}
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back

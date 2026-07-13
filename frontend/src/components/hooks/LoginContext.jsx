@@ -9,6 +9,7 @@ export default function LoginContext({ children }) {
     const [activeAssignment, setActiveAssignment] = useState(null);
     const [permissions, setPermissions] = useState([]);
     const [impersonating, setImpersonating] = useState(null);
+    const [authReady, setAuthReady] = useState(false);
 
     useEffect(() => {
         async function restoreSession() {
@@ -90,6 +91,9 @@ export default function LoginContext({ children }) {
                 }
             } catch (err) {
                 console.error("Session restore failed:", err);
+            }
+            finally {
+                setAuthReady(true);
             }
         }
         restoreSession();
@@ -197,7 +201,7 @@ export default function LoginContext({ children }) {
             activeAssignment, switchProfile,
             permissions, can, canAny,
             impersonating, loginAs, stopImpersonating,
-            logout,
+            logout, authReady,
         }}>
             {children}
         </loginContext.Provider>
