@@ -57,7 +57,7 @@ export class UserController {
             return { status: 0, message: "Invalid file type" };
         }
 
-        const result = await this.userService.startInsertUser(body,userFile);
+        const result = await this.userService.startInsertUser(body, userFile, req);
         return {
             encrypted: encryptResponse(result),
         };
@@ -90,6 +90,7 @@ export class UserController {
     @RequirePermission('userUpdate')
     @UseInterceptors(FileInterceptor('userFile', multerConfig))
     async updateUser(
+        @Req() req,
         @Body() body: userUpdateDto,
         @UploadedFile() userFile: Express.Multer.File,
     ) {
@@ -102,7 +103,7 @@ export class UserController {
             }
             // console.log(body,",############################## in the update controller")
 
-            const result = await this.userService.startUpdate(body,userFile);
+            const result = await this.userService.startUpdate(body, userFile, req);
 
             return {
                 encrypted: encryptResponse(result),
@@ -136,10 +137,11 @@ export class UserController {
     }
 
     @Get("user-details/:id")
-    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-    @RequirePermission('userList')
-    async getUser(@Param('id') id: string, @Query('profileId') profileId?: string) {
-        const result = await this.userService.getUser({ id, profileId });
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard, RolesGuard)
+    @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+    @RequirePermission('userView')
+    async getUser(@Param('id') id: string, @Query('profileId') profileId: string, @Req() req: any) {
+        const result = await this.userService.getUser({ id, profileId }, req);
         return { encrypted: encryptResponse(result) };
     }
 
@@ -169,8 +171,8 @@ export class UserController {
     @Post('user-add-profile')
     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('userUpdate')
-    async addProfile(@Body() body: { userId: number; groupId: number; companyId: number; isActive: string }) {
-        const result = await this.userService.addProfile(body);
+    async addProfile(@Req() req, @Body() body: { userId: number; groupId: number; companyId: number; isActive: string }) {
+        const result = await this.userService.addProfile(body, req);
         return { encrypted: encryptResponse(result) };
     }
 
@@ -183,4 +185,11 @@ export class UserController {
         );
         return { encrypted: encryptResponse(result) };
     }
+
+    @Get('user-me')
+    @UseGuards(AuthGuard('jwt'))
+    async getMyProfile(@Req() req: any) {
+    const result = await this.userService.getUser({ id: String(req.user.userId) }, req);
+    return { encrypted: encryptResponse(result) };
+}
 }

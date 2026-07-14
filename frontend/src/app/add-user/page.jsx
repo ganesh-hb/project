@@ -42,10 +42,11 @@ export default function AddUserPage() {
         age: "",
         phone: "",
         dialCode: "91",
+        remarks: "",
         password: "",
         status: "Active",
         tel: "",
-        dob: MAX_DOB.subtract(1, "day"),
+        dob: null,
         isActive: "true",
         userFile: null,
         companyId: "",
@@ -200,49 +201,64 @@ export default function AddUserPage() {
                 setErrors(fieldErrors);
 
                 return;
-            }
-            const payload = new FormData();
-            payload.append("name", formData.name);
-            payload.append("firstName", formData.firstName);
-            payload.append("middleName", formData.middleName);
-            payload.append("surname", formData.surname);
-            payload.append("email", formData.email);
-            payload.append("age", String(formData.age));
-            payload.append("phone", formData.phone);
-            payload.append("dialCode", formData.dialCode);
-            payload.append("status", formData.status);
-            payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
-            payload.append("password", formData.password);
-            payload.append("companyId", formData.companyId);
-            payload.append("groupId", formData.groupId);
-            payload.append("createdBy", isLogin?.userId || null)
-            payload.append("is_parent", "0"); // always primary on add
-
-
-
-            if (formData.userFile) {
-                payload.append("userFile", formData.userFile);
-            }
-
-            const response = await fetch("http://localhost:3000/relayapi", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                    endpoint: "user-add", module: "user"
-                },
-                body: payload,
-            });
-
-            if (response.ok) {
-                toast.success("User created successfully", { position: "top-right" });
-                setTimeout(() => router.push("/users"), 1000);
             } else {
-                const errText = await response.text();
-                toast.error(`Create failed: ${errText}`, { position: "top-right" });
+                const result = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: "Do you want to add this user?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, add user'
+                });
+
+                if (result.isConfirmed) {
+                    const payload = new FormData();
+                    payload.append("name", formData.name);
+                    payload.append("firstName", formData.firstName);
+                    payload.append("middleName", formData.middleName);
+                    payload.append("surname", formData.surname);
+                    payload.append("email", formData.email);
+                    payload.append("age", String(formData.age));
+                    payload.append("phone", formData.phone);
+                    payload.append("dialCode", formData.dialCode);
+                    payload.append("remarks", formData.remarks || "");
+                    payload.append("status", formData.status);
+                    payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
+                    payload.append("password", formData.password);
+                    payload.append("companyId", formData.companyId);
+                    payload.append("groupId", formData.groupId);
+                    payload.append("createdBy", isLogin?.userId || null)
+                    payload.append("is_parent", "0"); // always primary on add
+
+
+
+                    if (formData.userFile) {
+                        payload.append("userFile", formData.userFile);
+                    }
+
+                    const response = await fetch("http://localhost:3000/relayapi", {
+                        method: "POST",
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                            endpoint: "user-add", module: "user"
+                        },
+                        body: payload,
+                    });
+
+                    if (response.ok) {
+                        toast.success("User created successfully", { position: "top-right" });
+                        setTimeout(() => router.push("/users"), 1000);
+                    } else {
+                        const errText = await response.text();
+                        toast.error(`Create failed: ${errText}`, { position: "top-right" });
+                    }
+                }
             }
         } catch (error) {
             toast.error(`${error}`, { position: "top-right" });
         }
+
     };
 
     return (
@@ -274,12 +290,12 @@ export default function AddUserPage() {
                 <div className="px-6">
                     <div className="mb-8 flex items-center justify-between">
                         <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add User</h1>
-                        <button
+                        {/* <button
                             onClick={() => onBack()}
                             className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
                         >
                             ← Back
-                        </button>
+                        </button> */}
                     </div>
 
                     <div className="w-full rounded-2xl bg-white p-8 shadow-sm">
@@ -293,65 +309,59 @@ export default function AddUserPage() {
                                     {/* Name */}
                                     <div className="w-full">
                                         <label className="mb-2 block text-sm font-medium text-gray-700">
-                                            UserName <span className="text-red-500 text-[16px]">*</span>
+                                            User Name <span className="text-red-500 text-[16px]">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleChange}
-                                            placeholder="Enter UserName"
+                                            placeholder="Enter User Name"
                                             className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                         />
                                         {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
                                     </div>
 
-                                    {/* First Name */}
+                                    {/* full name */}
                                     <div className="w-full">
                                         <label className="mb-2 block text-sm font-medium text-gray-700">
-                                            First Name <span className="text-red-500 text-[16px]">*</span>
+                                            Name <span className="text-red-500 text-[16px]">*</span>
                                         </label>
-                                        <input
-                                            type="text"
-                                            name="firstName"
-                                            value={formData.firstName}
-                                            onChange={handleChange}
-                                            placeholder="Enter first name"
-                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                        />
-                                        {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
-                                    </div>
-
-                                    {/* Middle Name */}
-                                    <div className="w-full">
-                                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                                            Middle Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="middleName"
-                                            value={formData.middleName}
-                                            onChange={handleChange}
-                                            placeholder="Enter middle name"
-                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                        />
-                                        {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
-                                    </div>
-
-                                    {/* Last Name */}
-                                    <div className="w-full">
-                                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                                            Last Name <span className="text-red-500 text-[16px]">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="surname"
-                                            value={formData.surname}
-                                            onChange={handleChange}
-                                            placeholder="Enter last name"
-                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                        />
-                                        {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                                        <div className="flex gap-3">
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    name="firstName"
+                                                    value={formData.firstName}
+                                                    onChange={handleChange}
+                                                    placeholder="First Name"
+                                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                                />
+                                                {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    name="middleName"
+                                                    value={formData.middleName}
+                                                    onChange={handleChange}
+                                                    placeholder="Middle Name"
+                                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                                />
+                                                {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    name="surname"
+                                                    value={formData.surname}
+                                                    onChange={handleChange}
+                                                    placeholder="Last Name"
+                                                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                                />
+                                                {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Password */}
@@ -490,6 +500,22 @@ export default function AddUserPage() {
                                             searchPlaceholder="Search country..."
                                         />
                                         {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                                    </div>
+
+                                    {/* Remarks */}
+                                    <div className="w-full lg:col-span-2">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Remarks
+                                        </label>
+                                        <textarea
+                                            name="remarks"
+                                            rows={2}
+                                            value={formData.remarks}
+                                            onChange={handleChange}
+                                            placeholder="Enter any remarks..."
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-2 outline-none focus:border-blue-500 resize-none"
+                                        />
+                                        {errors.remarks && <p className="mt-1 text-sm text-red-500">{errors.remarks}</p>}
                                     </div>
 
                                     {/* Alternate Phone */}

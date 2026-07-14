@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -15,6 +15,7 @@ import bcrypt from 'bcrypt';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { JwtService } from '@nestjs/jwt';
 import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { resolveAuthContext } from 'src/utilities/auth-helper';
 
 @Injectable()
 export class UserService {
@@ -66,18 +67,18 @@ export class UserService {
         await this.ucgEntity.save(rows);
     }
 
-    private async loadUserWithAssignments(userId: number) {
-        return this.userEntity.findOne({
-            where: { userId },
-            relations: [
-                'userCompanyGroups',
-                'userCompanyGroups.company',
-                'userCompanyGroups.group',
-            ],
-        });
-    }
+    // private async loadUserWithAssignments(userId: number) {
+    //     return this.userEntity.findOne({
+    //         where: { userId },
+    //         relations: [
+    //             'userCompanyGroups',
+    //             'userCompanyGroups.company',
+    //             'userCompanyGroups.group',
+    //         ],
+    //     });
+    // }
 
-    async startInsertUser(params: any, userFile: any) {
+    async startInsertUser(params: any, userFile: any, req?: any) {
         const res = await this.insertUser(params, userFile);
         if (res.success === 1) {
             return this.finishSuccess(res, params, userFile);
@@ -94,6 +95,7 @@ export class UserService {
                 surname: params.surname,
                 email: params.email,
                 age: params.age,
+                remarks: params.remarks || null,
                 password: await bcrypt.hash(params.password, 10),
                 phone: params.phone,
                 status: params.status,
@@ -117,12 +119,13 @@ export class UserService {
                 );
             }
 
-            // Emit user creation activity after commit
-            this.eventEmitter.emit('activity.log', {
+          this.eventEmitter.emit('activity.log', {
                 activityCode: ActivityCode.USER_CREATE,
-                userId: saved.userId,
+                userId: params.createdBy ?? saved.userId,
                 companyId: params.companyId,
                 actorType: 'USER',
+                targetType: 'USER',
+                targetId: String(saved.userId),
                 executionStatus: 'SUCCESS',
                 severity: 'INFO',
                 parameters: { email: saved.email, name: saved.name },
@@ -199,6 +202,7 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             if (params.surname)        user.surname        = params.surname;
             if (params.email)          user.email          = params.email;
             if (params.age)            user.age            = params.age;
+            if (params.remarks !== undefined) user.remarks = params.remarks;
             if (params.dialCode)       user.dialCode       = params.dialCode;
             if (params.phone)          user.phone          = params.phone;
             if (params.status)         user.status         = params.status;
@@ -229,15 +233,25 @@ async startUpdate(params: any, userFile?: any, req?: any) {
                 );
             }
 
-            // Emit user update activity after commit
+           // Emit user update activity after commit
+            const actorUser = params.updatedBy
+                ? await this.userEntity.findOne({ where: { userId: params.updatedBy }, select: ['email'] })
+                : null;
+
             this.eventEmitter.emit('activity.log', {
                 activityCode: ActivityCode.USER_UPDATE,
-                userId: params.userId,
+                userId: params.updatedBy ?? params.userId,
                 companyId: params.companyId,
                 actorType: 'USER',
+                targetType: 'USER',
+                targetId: String(params.userId),
                 executionStatus: 'SUCCESS',
                 severity: 'INFO',
-                parameters: { updatedFields: Object.keys(params) },
+                parameters: {
+                    userEmail: actorUser?.email ?? 'Unknown',
+                    targetEmail: user.email,
+                    updatedFields: Object.keys(params),
+                },
                 metadata: {},
             });
 
@@ -313,15 +327,14 @@ async startUpdate(params: any, userFile?: any, req?: any) {
 
             const permissions = groupPerms.map((gp) => gp.permission?.permissionName).filter(Boolean);
 
-            // Emit login activity after successful authentication
-            this.eventEmitter.emit('activity.log', {
+         this.eventEmitter.emit('activity.log', {
                 activityCode: ActivityCode.USER_LOGIN,
                 userId: user.userId,
                 companyId: primary?.company?.companyId,
                 actorType: 'USER',
                 executionStatus: 'SUCCESS',
                 severity: 'INFO',
-                parameters: { email: user.email },
+                parameters: { userEmail: user.email },
                 metadata: {},
             });
 
@@ -406,6 +419,7 @@ async getUsers(param: any, req?: any) {
                 firstName:user?.firstName,
                 surname:user?.surname,
                 phone: user.phone,
+                dialCode : user?.dialCode,
                 status: user.status,
                 userFile: user.userFile,
                 age: user.age,
@@ -441,6 +455,14 @@ async getUser(query: any, req?: any) {
 
         if (!user) return { success: 0, message: 'User not found' };
 
+        if (!req?.isSuperAdmin && req?.scopedCompanyIds?.length) {
+            const userCompanyIds = (user.userCompanyGroups ?? []).map((ucg) => ucg.companyId);
+            const hasAccess = userCompanyIds.some((id) => req.scopedCompanyIds.includes(id));
+            if (!hasAccess) {
+                return { success: 0, message: 'Access denied. This user does not belong to your company.' };
+            }
+        }
+
         const [createdByUser, updatedByUser] = await Promise.all([
             user.createdBy ? this.userEntity.findOne({ where: { userId: user.createdBy }, select: ['name'] }) : null,
             user.updatedBy ? this.userEntity.findOne({ where: { userId: user.updatedBy }, select: ['name'] }) : null,
@@ -462,11 +484,11 @@ async getUser(query: any, req?: any) {
         });
 
         const primary =
-    allAssignments.find((u) => u.is_parent === 0) ??
-    allAssignments[0] ??
-    null;
+            allAssignments.find((u) => u.is_parent === 0) ??
+            allAssignments[0] ??
+            null;
 
-        return {
+      return {
             userId: user.userId,
             name: user.name,
             firstName: user.firstName,
@@ -477,8 +499,11 @@ async getUser(query: any, req?: any) {
             dialCode:user?.dialCode,
             phone: user.phone,
             status: user.status,
+            remarks: user.remarks,
             createdBy: createdByUser?.name ?? null,
+            createdById: user.createdBy ?? null,
             updatedBy: updatedByUser?.name ?? null,
+            updatedById: user.updatedBy ?? null,
             userFile: user.userFile,
             createdAt: user.createdAt,
             updatedDate: user.updatedDate,
@@ -633,7 +658,7 @@ async getUser(query: any, req?: any) {
         }
     }
 
-    async addProfile(body: { userId: number; groupId: number; companyId: number; isActive: string }) {
+    async addProfile(body: { userId: number; groupId: number; companyId: number; isActive: string }, req?: any) {
     try {
         const { userId, groupId, companyId, isActive } = body;
         if (!userId || !groupId || !companyId) {

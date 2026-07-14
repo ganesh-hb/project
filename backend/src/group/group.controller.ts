@@ -17,41 +17,38 @@ export class GroupController {
     async hello() { return 'hello'; }
 
     @Post('group-add')
-    @UseGuards(AuthGuard('jwt'))
     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('groupAdd')
     @UseInterceptors(FileInterceptor('groupFile', multerConfig))
     async insertGroup(@Req() req, @Body() body: GroupDto, @UploadedFile() groupFile: Express.Multer.File) {
         let param = { ...body, addedBy: req.user.userId };
-        return await this.groupService.startInsertGroup(param);
+        return await this.groupService.startInsertGroup(param, req);
     }
 
     @Put('group-update')
-    @UseGuards(AuthGuard('jwt'))
-     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('groupUpdate')
     async updateGroup(@Req() req, @Body() body: GroupUpdateDto) {
         try {
             let param = { ...body, updatedBy: req.user.userId };
-            return await this.groupService.startUpdate(param);
+            return await this.groupService.startUpdate(param, req);
         } catch (err) {
             return err;
         }
     }
 
     @Post('group-list')
-    @UseGuards(AuthGuard('jwt'))
-        @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('groupList')
-    async getGroups(@Body() body: getGroupListDto) {
-        return await this.groupService.getGroups(body);
+    async getGroups(@Req() req, @Body() body: getGroupListDto) {
+        return await this.groupService.getGroups(body, req);
     }
 
     @Get('group-details/:id')
     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-    @RequirePermission('groupList')
-    async getGroup(@Param('id') param) {
-        return await this.groupService.getGroup(param);
+    @RequirePermission('groupView')
+    async getGroup(@Req() req, @Param('id') param) {
+        return await this.groupService.getGroup(param, req);
     }
 
 @Get('permissions-all')

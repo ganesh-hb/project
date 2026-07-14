@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -12,6 +12,7 @@ import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.e
 import { CurrencyEntity } from 'src/packages/entity/currency.entity';
 import { CompanyCurrencyEntity } from 'src/packages/entity/company.currency.entity';
 import { UserEntity } from 'src/packages/entity/user.entity';
+import { resolveAuthContext } from 'src/utilities/auth-helper';
 
 @Injectable()
 export class CompanyService {
@@ -35,15 +36,15 @@ export class CompanyService {
     @InjectRepository(CompanyCurrencyEntity)
     protected companyCurrencyEntity!: Repository<CompanyCurrencyEntity>;
 
-   async startInsertCompany(params: any, companyFile: any) {
-        const res = await this.insertCompany(params, companyFile);
+   async startInsertCompany(params: any, companyFile: any, req?: any) {
+        const res = await this.insertCompany(params, companyFile, req);
         if (res.success === 1) {
             return this.finishSuccess(res, params, companyFile);
         }
         return this.finishFailure(res);
     }
 
-async insertCompany(params: any, companyFile: any) {
+async insertCompany(params: any, companyFile: any, req?: any) {
     const queryParams: any = {};
     try {
         if (params.companyName)     queryParams.companyName     = params.companyName;
@@ -71,17 +72,6 @@ async insertCompany(params: any, companyFile: any) {
             await this.companyCurrencyEntity.insert({ companyId: insertId, curId: Number(params.curId) });
         }
 
-        // Emit activity after successful company creation
-        // this.eventEmitter.emit('activity.log', {
-        //   activityCode: ActivityCode.COMPANY_CREATE,
-        //   userId: params.createdBy ?? null,
-        //   companyId: insertId,
-        //   actorType: 'USER',
-        //   executionStatus: 'SUCCESS',
-        //   severity: 'INFO',
-        //   parameters: { companyName: params.companyName },
-        //   metadata: {},
-        // });
         return { success: 1, message: 'Inserted successfully', data: { insertData: insertId } };
     } catch (err: any) {
         return { success: 0, message: err?.message };
@@ -107,20 +97,32 @@ async insertCompany(params: any, companyFile: any) {
         return res;
     }
 
-   async startUpdate(params: any, companyFile: any) {
-        const res = await this.updateCompany(params, companyFile);
+   async startUpdate(params: any, companyFile: any, req?: any) {
+        const authCtx = await resolveAuthContext(req, this.ucgEntity);
+        if (!authCtx.isSuperAdmin) {
+            if (Number(params.companyId) !== authCtx.activeCompanyId) {
+                return { success: 0, message: 'Access denied: cannot modify another company' };
+            }
+        }
+        const res = await this.updateCompany(params, companyFile, req);
         if (res.success === 1) {
             return this.updateSuccess(res, params);
         }
         return this.finishFailure(res);
     }
 
-    async updateCompany(params: any, companyFile: any) {
-    const queryParams: any = {};
-
+    async updateCompany(params: any, companyFile: any, req?: any) {
     if (!params.companyId) return { success: 0, message: 'companyId is mandatory' };
 
     try {
+        const authCtx = await resolveAuthContext(req, this.ucgEntity);
+        if (!authCtx.isSuperAdmin) {
+            if (Number(params.companyId) !== authCtx.activeCompanyId) {
+                return { success: 0, message: 'Access denied: cannot modify another company' };
+            }
+        }
+
+        const queryParams: any = {};
         if (params.companyName)     queryParams.companyName     = params.companyName;
         if (params.companyCode)     queryParams.companyCode     = params.companyCode;
         if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
@@ -156,17 +158,6 @@ async insertCompany(params: any, companyFile: any) {
             }
         }
 
-        // Emit activity after successful company update
-        // this.eventEmitter.emit('activity.log', {
-        //   activityCode: ActivityCode.COMPANY_UPDATE,
-        //   userId: params.updatedBy ?? null,
-        //   companyId: params.companyId,
-        //   actorType: 'USER',
-        //   executionStatus: 'SUCCESS',
-        //   severity: 'INFO',
-        //   parameters: { updatedFields: Object.keys(params) },
-        //   metadata: {},
-        // });
         return { success: 1, message: 'Updated successfully' };
     } catch (err: any) {
         return { success: 0, message: err?.message };
@@ -176,11 +167,16 @@ async insertCompany(params: any, companyFile: any) {
         return { status: result, data: params };
     }
 
-   async getCompanies(param: any) {
+   async getCompanies(param: any, req?: any) {
         let return_data: any = {};
         try {
+            const authCtx = await resolveAuthContext(req, this.ucgEntity);
             const queryBuilder = this.companyEntity.createQueryBuilder('company');
             const alias = 'company';
+
+            if (!authCtx.isSuperAdmin) {
+                queryBuilder.andWhere('company.companyId = :activeCompanyId', { activeCompanyId: authCtx.activeCompanyId });
+            }
 
             const queryString = await this.filter.makeFilterString(
                 param?.filters,
@@ -213,10 +209,16 @@ async insertCompany(params: any, companyFile: any) {
     }
 
 
-    async getCompany(query: any) {
+    async getCompany(query: any, req?: any) {
         try {
+            const authCtx = await resolveAuthContext(req, this.ucgEntity);
+            const targetCompanyId = Number(query);
+            if (!authCtx.isSuperAdmin && targetCompanyId !== authCtx.activeCompanyId) {
+                throw new ForbiddenException('Access denied: cannot access another company');
+            }
+
             const company = await this.companyEntity.findOne({
-                where: { companyId: Number(query) },
+                where: { companyId: targetCompanyId },
             });
 
             if (!company) {
@@ -225,8 +227,8 @@ async insertCompany(params: any, companyFile: any) {
 
             const userRepo = this.companyEntity.manager.getRepository(UserEntity);
             const [assignments, currencyMapping, allCurrencies, addedByUser, updatedByUser] = await Promise.all([
-                this.ucgEntity.find({ where: { companyId: Number(query) }, relations: ['user', 'group'] }),
-                this.companyCurrencyEntity.findOne({ where: { companyId: Number(query) }, relations: ['currency'] }),
+                this.ucgEntity.find({ where: { companyId: targetCompanyId }, relations: ['user', 'group'] }),
+                this.companyCurrencyEntity.findOne({ where: { companyId: targetCompanyId }, relations: ['currency'] }),
                 this.currencyEntity.find({ order: { name: 'ASC' } }),
                 company.addedBy ? userRepo.findOne({ where: { userId: company.addedBy }, select: ['name'] }) : null,
                 company.updatedBy ? userRepo.findOne({ where: { userId: company.updatedBy }, select: ['name'] }) : null,
@@ -253,10 +255,8 @@ async insertCompany(params: any, companyFile: any) {
         }
     }
 
-    async getCurrencies() {
+   async getCurrencies(req?: any) {
         return this.currencyEntity.find({ order: { name: 'ASC' } });
     }
-
-
 
 }

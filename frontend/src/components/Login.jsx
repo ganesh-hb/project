@@ -112,7 +112,6 @@ export default function LoginPage() {
 
             const payload = await response.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
-            console.log(data?.user, "########################3 this is login")
             if (response.ok && data.success === 1 && data.user?.userId) {
                 const jwt = data.accessToken || data.token;
                 localStorage.setItem("accessToken", jwt);
@@ -125,7 +124,7 @@ export default function LoginPage() {
                 document.cookie = `session=yes`;
                 document.cookie = `loggedIn=${data.user.userId}`;
 
-                route.push("/");
+                window.location.href = "/";
             } else {
                 const msg = data.message || "Login failed";
                 toast.error(msg, { position: "top-right" });

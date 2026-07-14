@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
+import { resolveAuthContext } from './auth-helper';
 
 export const PERMISSION_KEY = 'permission';
 export const RequirePermission = (permission: string) =>
@@ -23,23 +24,21 @@ export class PermissionsGuard implements CanActivate {
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
+        const req = context.switchToHttp().getRequest();
+
+        // Always resolve auth context so req.isSuperAdmin and req.scopedCompanyIds are set
+        const authCtx = await resolveAuthContext(req, this.ucgRepo);
+
+        // SuperAdmin bypasses all permission checks
+        if (authCtx.isSuperAdmin) return true;
+
         const permission = this.reflector.get<string>(PERMISSION_KEY, context.getHandler());
         if (!permission) return true;
-
-        const req = context.switchToHttp().getRequest();
-        const userId = req.user?.userId;
-        if (!userId) throw new ForbiddenException('Not authenticated');
-
-        const ucg =
-            await this.ucgRepo.findOne({ where: { userId, is_parent: 0 } }) ??
-            await this.ucgRepo.findOne({ where: { userId } });
-
-        if (!ucg) throw new ForbiddenException('No profile assigned');
 
         const perm = await this.gpRepo
             .createQueryBuilder('gp')
             .innerJoin('gp.permission', 'p')
-            .where('gp.groupId = :groupId', { groupId: ucg.groupId })
+            .where('gp.groupId = :groupId', { groupId: authCtx.activeGroupId })
             .andWhere('p.permissionName = :name', { name: permission })
             .getOne();
 

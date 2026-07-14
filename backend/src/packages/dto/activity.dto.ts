@@ -32,4 +32,14 @@ export class GetActivityListDto {
     @ValidateNested({ each: true })
     @Type(() => ActivityFilterDto)
     filters?: ActivityFilterDto[];
+
+    // Date-range filter (inclusive), expected as 'YYYY-MM-DD' strings from the
+    // react-date-range picker on the frontend.
+    @IsOptional()
+    @IsString()
+    startDate?: string;
+
+    @IsOptional()
+    @IsString()
+    endDate?: string;
 }

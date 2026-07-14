@@ -1,9 +1,22 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 import { authHeaders } from '@/app/lib/auth';
 import { decryptResponse } from '@/app/lib/crypto';
 import { toast } from 'react-toastify';
 import AppPagination from '@/components/ui/AppPagination';
+
+const toIsoDate = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offsetMs).toISOString().split('T')[0];
+};
+
+const formatDisplay = (date) =>
+  date ? new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
 
 export default function ActivityTimeline({ userId }) {
   const LIMIT = 10;
@@ -13,7 +26,28 @@ export default function ActivityTimeline({ userId }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchData = async (page = 1) => {
+  // ── Date range filter state ──
+  const [showPicker, setShowPicker] = useState(false);
+  const [draftRange, setDraftRange] = useState({
+    startDate: new Date(),
+    endDate: new Date(),
+    key: 'selection',
+  });
+  const [appliedRange, setAppliedRange] = useState(null); // { startDate, endDate } once "Apply" is clicked
+  const pickerRef = useRef(null);
+
+  useEffect(() => {
+    if (!showPicker) return;
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPicker]);
+
+  const fetchData = async (page = 1, range = appliedRange) => {
     setLoading(true);
     setError('');
     try {
@@ -24,6 +58,8 @@ export default function ActivityTimeline({ userId }) {
         ...(userId ? {
           filters: [{ key: 'userProfileId', value: String(userId), operator: 'eq' }]
         } : {}),
+        ...(range?.startDate ? { startDate: toIsoDate(range.startDate) } : {}),
+        ...(range?.endDate ? { endDate: toIsoDate(range.endDate) } : {}),
       };
 
       const response = await fetch('/relayapi', {
@@ -56,13 +92,26 @@ export default function ActivityTimeline({ userId }) {
   };
 
   useEffect(() => {
-    fetchData(1);
-  }, [userId]);
+    setCurrentPage(1);
+    fetchData(1, appliedRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, appliedRange]);
 
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
-    fetchData(page);
+    fetchData(page, appliedRange);
+  };
+
+  const handleApplyRange = () => {
+    setAppliedRange({ startDate: draftRange.startDate, endDate: draftRange.endDate });
+    setShowPicker(false);
+  };
+
+  const handleClearRange = () => {
+    setDraftRange({ startDate: new Date(), endDate: new Date(), key: 'selection' });
+    setAppliedRange(null);
+    setShowPicker(false);
   };
 
   const severityColor = (severity) => {
@@ -73,6 +122,71 @@ export default function ActivityTimeline({ userId }) {
 
   return (
     <div className="w-full">
+      {/* ── Date range filter ── */}
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+        <div className="relative" ref={pickerRef}>
+          <button
+            type="button"
+            onClick={() => {
+              if (!showPicker && appliedRange) {
+                setDraftRange({ ...appliedRange, key: 'selection' });
+              }
+              setShowPicker((s) => !s);
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+          >
+            <span>📅</span>
+            {appliedRange ? (
+              <span>
+                {formatDisplay(appliedRange.startDate)} - {formatDisplay(appliedRange.endDate)}
+              </span>
+            ) : (
+              <span>Filter by Date</span>
+            )}
+          </button>
+
+          {appliedRange && (
+            <button
+              type="button"
+              onClick={handleClearRange}
+              className="ml-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-500 shadow-sm transition hover:bg-gray-50 hover:text-red-600"
+              title="Clear date filter"
+            >
+              ✕
+            </button>
+          )}
+
+          {showPicker && (
+            <div className="absolute left-0 z-40 mt-2 rounded-2xl border border-gray-200 bg-white shadow-xl">
+              <DateRange
+                ranges={[draftRange]}
+                onChange={(item) => setDraftRange(item.selection)}
+                moveRangeOnFirstSelection={false}
+                editableDateInputs={true}
+                maxDate={new Date()}
+                rangeColors={['#2563eb']}
+              />
+              <div className="flex items-center justify-end gap-3 border-t border-gray-100 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPicker(false)}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplyRange}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {loading && (
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">
           Loading activity logs...
@@ -95,11 +209,11 @@ export default function ActivityTimeline({ userId }) {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-bold text-sm flex-shrink-0">
-                    {a.activityMaster?.activityCode?.charAt(0) ?? 'A'}
+                    {a.activityCode?.charAt(0) ?? 'A'}
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800">
-                      {a.activityMaster?.activityName ?? 'Activity'}
+                      {a.activityName ?? 'Activity'}
                     </p>
                     <p className="text-sm text-gray-500 mt-0.5">
                       {a.generatedMessage}
@@ -129,7 +243,7 @@ export default function ActivityTimeline({ userId }) {
 
           {activities.length === 0 && (
             <div className="text-center text-gray-400 py-16 bg-white rounded-xl border border-gray-200">
-              No activity records found.
+              No activity records found{appliedRange ? ' for the selected date range' : ''}.
             </div>
           )}
         </div>

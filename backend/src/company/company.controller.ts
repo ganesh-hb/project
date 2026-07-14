@@ -16,7 +16,6 @@ export class CompanyController {
     }
 
     @Post('company-add')
-    @UseGuards(AuthGuard('jwt'))
     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('companyAdd')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
@@ -34,13 +33,12 @@ export class CompanyController {
               return "File required!!!"
             }
             let param = { ...body, addedBy: req.user.userId };
-            return await this.companyService.startInsertCompany(param,companyFile)
+            return await this.companyService.startInsertCompany(param, companyFile, req)
     }
 
 
     @Put('company-update')
-    @UseGuards(AuthGuard('jwt'))
-     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
     @RequirePermission('companyUpdate')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
     async updateCompany(@Req() req, @Body() body: CompanyUpdateDto, @UploadedFile() companyFile: Express.Multer.File) {
@@ -52,7 +50,7 @@ export class CompanyController {
                 }
             }
             let param = { ...body, updatedBy: req.user.userId };
-            return await this.companyService.startUpdate(param, companyFile || null);
+            return await this.companyService.startUpdate(param, companyFile || null, req);
         } catch (err) {
             return err;
         }
@@ -60,25 +58,23 @@ export class CompanyController {
 
 
     @Post('company-list')
-    @UseGuards(AuthGuard('jwt'))
-     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-    @RequirePermission('companyList')
+    @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+    @RequirePermission('companyView')
     @UseInterceptors(FileInterceptor('companyFile', multerConfig))
-    async getCompanys(@Body() body:getCompanyListDto) {
-    return await this.companyService.getCompanies(body)
+    async getCompanys(@Req() req, @Body() body:getCompanyListDto) {
+    return await this.companyService.getCompanies(body, req)
   } 
 
     @Get("company-details/:id")
     @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-    @RequirePermission('companyList')
-    async getCompany(@Param('id') param) {
-        return await this.companyService.getCompany(param);
+   @RequirePermission('companyView')
+    async getCompany(@Req() req, @Param('id') param) {
+        return await this.companyService.getCompany(param, req);
     }
 
     @Get('currency-list')
     @UseGuards(AuthGuard('jwt'))
-    async getCurrencies() {
-        return this.companyService.getCurrencies();
+    async getCurrencies(@Req() req) {
+        return this.companyService.getCurrencies(req);
     }
-
 }

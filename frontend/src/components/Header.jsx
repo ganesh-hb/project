@@ -18,11 +18,13 @@ import ProfilePanel from "./ProfilePanel";
 
 export default function Header({ onSearch, page }) {
     const router = useRouter();
-    const { isLogin, setLogin, displayUser } = useContext(loginContext);
+    const { isLogin, setLogin, displayUser, activeAssignment } = useContext(loginContext);
 
     // console.log(isLogin, "################################ is login header")
     const primaryAssignment =
-        // Prefer explicit primaryProfile if provided, else find assignment with is_parent === 0
+        // Prefer whichever profile is actively selected (handles profile-switching / non-primary logins),
+        // then fall back to the account's default primaryProfile, then any is_parent === 0 assignment
+        activeAssignment ||
         (displayUser?.primaryProfile) ||
         displayUser?.assignments?.find(a => a.is_parent === 0) ||
         null;
@@ -76,7 +78,7 @@ export default function Header({ onSearch, page }) {
                 method: "GET",
                 headers: {
                     ...authHeaders(),
-                    endpoint: `user-details/${loggedIn}`,
+                    endpoint: `user-me`,
                     module: "user"
                 },
             });

@@ -17,7 +17,7 @@ export default function AddCompany() {
     const [formData, setFormData] = useState({
         companyName: "",
         companyCode: "",
-        companyLocation: "",
+        AddressLineOne: "",
         status: "active",
         email: "",
         website: "",
@@ -113,7 +113,10 @@ export default function AddCompany() {
         if (!result.success) {
             const fieldErrors = {};
             result.error.issues.forEach((err) => {
-                if (err.path[0]) fieldErrors[err.path[0]] = err.message;
+                const field = err.path[0];
+                if (field && !fieldErrors[field]) {
+                    fieldErrors[field] = err.message;
+                }
             });
             setErrors(fieldErrors);
             return;
@@ -214,20 +217,14 @@ export default function AddCompany() {
                                     </select>
                                     {errors.status && <p className={errorClass}>{errors.status}</p>}
                                 </div>
-
                                 <div>
-                                    <label className={labelClass}>Location</label>
-                                    <input type="text" name="companyLocation" value={formData.companyLocation} onChange={handleChange} placeholder="Enter company location" className={inputClass} />
-                                    {errors.companyLocation && <p className={errorClass}>{errors.companyLocation}</p>}   </div>
-
-                                <div>
-                                    <label className={labelClass}>Email</label>
+                                    <label className={labelClass}>Email <span className="text-red-500">*</span></label>
                                     <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="company@email.com" className={inputClass} />
                                     {errors.email && <p className={errorClass}>{errors.email}</p>}
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Website</label>
+                                    <label className={labelClass}>Website <span className="text-red-500">*</span></label>
                                     <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={inputClass} />
                                     {errors.website && <p className={errorClass}>{errors.website}</p>}     </div>
 
@@ -251,12 +248,12 @@ export default function AddCompany() {
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
                                 <div>
-                                    <label className={labelClass}>Dial Code</label>
+                                    <label className={labelClass}>Dial Code <span className="text-red-500">*</span></label>
                                     <input type="number" name="dialCode" value={formData.dialCode} onChange={handleChange} placeholder="e.g. 91" className={inputClass} />
                                     {errors.dialCode && <p className={errorClass}>{errors.dialCode}</p>}      </div>
 
                                 <div>
-                                    <label className={labelClass}>Phone</label>
+                                    <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
                                     <input type="number" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className={inputClass} />
                                     {errors.phone && <p className={errorClass}>{errors.phone}</p>}      </div>
                             </div>
@@ -268,7 +265,7 @@ export default function AddCompany() {
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
                                 <div>
-                                    <label className={labelClass}>Country</label>
+                                    <label className={labelClass}>Country <span className="text-red-500">*</span></label>
                                     <select
                                         name="country"
                                         value={formData.country}
@@ -286,7 +283,7 @@ export default function AddCompany() {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>State</label>
+                                    <label className={labelClass}>State <span className="text-red-500">*</span></label>
                                     <select
                                         name="state"
                                         value={formData.state}
@@ -305,7 +302,7 @@ export default function AddCompany() {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>City</label>
+                                    <label className={labelClass}>City <span className="text-red-500">*</span></label>
                                     <select
                                         name="city"
                                         value={formData.city}
@@ -320,7 +317,15 @@ export default function AddCompany() {
                                             </option>
                                         ))}
                                     </select>
-                                    {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}      </div>
+                                    {errors.city && <p className={errorClass}>{errors.city}</p>}      </div>
+
+
+                                <div>
+                                    <label className={labelClass}>AddressLineOne <span className="text-red-500">*</span></label>
+                                    <input type="text" name="AddressLineOne" value={formData.AddressLineOne} disabled={!formData.city} onChange={handleChange} placeholder="Enter Address Line 1" className={inputClass} />
+                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}   </div>
+
+
                             </div>
                         </div>
 
@@ -330,25 +335,28 @@ export default function AddCompany() {
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
                                 <div>
-                                    <label className={labelClass}>Owner Name</label>
+                                    <label className={labelClass}>Owner Name <span className="text-red-500">*</span></label>
                                     <input type="text" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Owner full name" className={inputClass} />
                                     {errors.ownerName && <p className={errorClass}>{errors.ownerName}</p>}      </div>
 
                                 <div>
-                                    <label className={labelClass}>Owner Email</label>
+                                    <label className={labelClass}>Owner Email <span className="text-red-500">*</span></label>
                                     <input type="email" name="ownerEmail" value={formData.ownerEmail} onChange={handleChange} placeholder="owner@email.com" className={inputClass} />
                                     {errors.ownerEmail && <p className={errorClass}>{errors.ownerEmail}</p>}
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Owner Phone</label>
+                                    <label className={labelClass}>Owner Phone <span className="text-red-500">*</span></label>
                                     <input type="text" name="ownerPhone" value={formData.ownerPhone} onChange={handleChange} placeholder="Owner phone number" className={inputClass} />
                                     {errors.ownerPhone && <p className={errorClass}>{errors.ownerPhone}</p>}   </div>
                             </div>
-                        </div>
 
-                        <div>
-                            <label className={labelClass}>Currency</label>
+
+                        </div>
+                        <div className="rounded-2xl bg-white p-8 shadow-sm">
+                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Currency</h2>
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"></div>
+                            <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
                             <select name="curId" value={formData.curId} onChange={handleChange} className={inputClass}>
                                 <option value="" >Select currency</option>
                                 {currencies.map((c) => (
@@ -360,9 +368,18 @@ export default function AddCompany() {
                             {errors.curId && <p className={errorClass}>{errors.curId}</p>}
                         </div>
 
+
+
                     </div>
 
-                    <div className="mt-8 mb-10 flex justify-center"> {/* Changed justify-end to justify-center */}
+                    <div className="mt-8 mb-10 flex justify-center gap-4">
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            className="px-6 py-2 rounded-md font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
+                        >
+                            Cancel
+                        </button>
                         <button
                             type="submit"
                             disabled={loading}

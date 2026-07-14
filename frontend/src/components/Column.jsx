@@ -1,10 +1,11 @@
 "use client";
-
-import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { loginContext } from "@/components/hooks/LoginContext";
+import { isSuperAdmin } from "@/app/lib/auth";
+import { toast } from "react-toastify";
+import { ArrowUpDown, LogIn, RotateCw } from "lucide-react";
 
 function StatusBadge({ status }) {
     if (!status) return <span className="text-gray-400 text-sm">-</span>;
@@ -45,6 +46,54 @@ function RoleCell({ row }) {
                     {r.replace(/([A-Z])/g, " $1").trim()}
                 </span>
             ))}
+        </div>
+    );
+}
+
+function LoginAsCell({ row }) {
+    const router = useRouter();
+    const { isLogin, impersonating, loginAs } = useContext(loginContext);
+    const user = row.original;
+
+    const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    const superAdmin = isSuperAdmin(isLogin || storedUser);
+
+    const canLoginAs = superAdmin && !impersonating && user.user_userId !== isLogin?.userId;
+
+    if (!canLoginAs) return <span className="text-gray-400 text-sm">-</span>;
+
+    const handleLoginAs = async (e) => {
+        e.stopPropagation();
+        const success = await loginAs(user.user_userId);
+        if (success) {
+            toast.success(`Now acting as ${user.user_name}`, { position: "top-right" });
+            window.location.href = "/";
+        } else {
+            toast.error("Failed to switch user", { position: "top-right" });
+        }
+    };
+
+    const handleResetPassword = (e) => {
+        e.stopPropagation();
+        router.push(`/admin-reset-pass?userId=${user.user_userId}`);
+    };
+
+    return (
+        <div className="flex items-center gap-3">
+            <button
+                onClick={handleLoginAs}
+                title="Login As"
+                className="text-gray-500 hover:text-blue-600 transition cursor-pointer"
+            >
+                <LogIn className="h-4 w-4" />
+            </button>
+            <button
+                onClick={handleResetPassword}
+                title="Reset Password"
+                className="text-gray-500 hover:text-blue-600 transition cursor-pointer"
+            >
+                <RotateCw className="h-4 w-4" />
+            </button>
         </div>
     );
 }
@@ -135,5 +184,10 @@ export const columns = [
         header: sortableHeader("Status"),
         cell: ({ row }) => <StatusBadge status={row.getValue("user_status")} />,
         filterFn: "includesString",
+    },
+    {
+        id: "loginAs",
+        header: () => <span className="font-semibold text-gray-600 text-sm">Login As</span>,
+        cell: ({ row }) => <LoginAsCell row={row} />,
     },
 ];

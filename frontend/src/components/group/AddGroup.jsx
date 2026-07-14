@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "../Header";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { GroupFormSchema } from "../Zod";
 const MySwal = withReactContent(Swal);
 
 export default function AddGroup() {
@@ -31,14 +32,6 @@ export default function AddGroup() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const validate = () => {
-        const newErrors = {};
-        if (!formData.groupName.trim()) newErrors.groupName = "Group name is required.";
-        if (!formData.groupCode.trim()) newErrors.groupCode = "Group code is required.";
-        if (!formData.status) newErrors.status = "Status is required.";
-        return newErrors;
-    };
-
     const onBack = async () => {
         const result = await MySwal.fire({
             title: "Discard changes?",
@@ -55,9 +48,14 @@ export default function AddGroup() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const validationErrors = validate();
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
+        const result = GroupFormSchema.safeParse(formData);
+        if (!result.success) {
+            const fieldErrors = {};
+            result.error.issues.forEach((err) => {
+                const field = err.path[0];
+                if (field && !fieldErrors[field]) fieldErrors[field] = err.message;
+            });
+            setErrors(fieldErrors);
             return;
         }
 
@@ -145,6 +143,13 @@ export default function AddGroup() {
                     </div>
 
                     <div className="mt-8 mb-10 flex justify-center gap-4">
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            className="px-6 py-2 rounded-md font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition-colors"
+                        >
+                            Cancel
+                        </button>
                         <button
                             type="submit"
                             disabled={loading}

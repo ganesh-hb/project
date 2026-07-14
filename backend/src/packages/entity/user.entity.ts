@@ -60,6 +60,9 @@ export class UserEntity {
     @Column({ nullable: true })
     alternatePhone!: string;
 
+    @Column({ type: 'text', nullable: true })
+    remarks!: string;
+    
     @Column({ nullable: true })
     createdBy!: number;
 

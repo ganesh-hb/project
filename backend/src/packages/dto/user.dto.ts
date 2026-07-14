@@ -137,6 +137,10 @@ export class userUpdateDto {
     @IsOptional()
     dialCode: any;
 
+    @IsOptional()
+    @IsString()
+    @Length(0, 1000)
+    remarks?: string;
 
     @IsOptional()
     @IsInt()

@@ -13,6 +13,7 @@ import AppPagination from "./ui/AppPagination";
 import { ChevronDown } from "lucide-react";
 import CompanySidePanel from "./company/CompanySidePanel";
 import { createPortal } from "react-dom";
+import { ArrowUpDown, LogIn, RotateCw } from "lucide-react";
 
 function formatRoles(assignments) {
     if (!Array.isArray(assignments) || assignments.length === 0) return "N/A";
@@ -130,6 +131,7 @@ export default function UsersPage() {
                         user_fName: user.firstName,
                         user_sName: user.surname,
                         user_email: user.email,
+                        user_dialCode: user.dialCode,
                         user_phone: user.phone,
                         user_status: user.status,
                         user_userFile: user.userFile,
@@ -216,16 +218,6 @@ export default function UsersPage() {
                     <span className="text-gray-800" onClick={(e) => gotoPages(e, "/users")}>
                         Users
                     </span>
-                    {/* {(superAdmin || companyAdmin) && (
-                        <span
-                            className={`ml-4 inline-block rounded-full px-3 py-1 text-xs font-semibold ${superAdmin
-                                ? "bg-purple-100 text-purple-700"
-                                : "bg-blue-100 text-blue-700"
-                                }`}
-                        >
-                            {superAdmin ? "Super Admin" : "Company Admin"}
-                        </span>
-                    )} */}
                 </nav>
 
                 <div className="w-full">
@@ -238,6 +230,7 @@ export default function UsersPage() {
                             {can("userAdd") && (
                                 <button
                                     onClick={() => router.push("/add-user")}
+                                    title="Add user"
                                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
                                 >
                                     <span className="text-base leading-none">+</span>
@@ -372,7 +365,7 @@ export default function UsersPage() {
                                         </div>
                                         <div className="text-sm text-gray-600">
                                             <span className="font-medium">Phone:</span>{" "}
-                                            {user.user_phone || "-"}
+                                            {"+"}{user.user_dialCode ? user.user_dialCode : 0}{" "}{user.user_phone || "-"}
                                         </div>
                                         <div className="text-sm text-gray-600">
                                             <span className="font-medium">Company:</span>{" "}
@@ -423,7 +416,7 @@ export default function UsersPage() {
                                                         >
                                                             {user.user_fName ? user.user_fName + " " + user.user_sName : user.user_name}
                                                         </div>
-                                                        <div className="text-sm text-gray-500">{user.user_phone || "-"}</div>
+                                                        <div className="text-sm text-gray-500">{"+"}{user.user_dialCode ? user.user_dialCode : 0}{" "}{user.user_phone || "-"}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -476,7 +469,7 @@ export default function UsersPage() {
                                                 </div>
                                                 <div>
                                                     <div className="text-sm text-gray-500 mb-1">Phone</div>
-                                                    <div className="text-base text-gray-800 break-all">{user.user_phone}</div>
+                                                    <div className="text-base text-gray-800 break-all">{"+"}{user.user_dialCode ? user.user_dialCode : 0}{" "}{user.user_phone}</div>
                                                 </div>
                                                 <div>
                                                     <div className="text-sm text-gray-500 mb-1">Group Name</div>

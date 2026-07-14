@@ -53,7 +53,7 @@ export default function LoginContext({ children }) {
                 const res = await fetch(`/relayapi`, {
                     method: "GET",
                     headers: {
-                        endpoint: `user-details/${loggedIn}`,
+                        endpoint: "user-me",
                         module: "user",
                         Authorization: `Bearer ${token}`,
                     },

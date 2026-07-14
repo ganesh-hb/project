@@ -47,9 +47,6 @@ export class CompanyEntity {
     status!:string;
 
     @Column()
-    postalCode!:number;
-
-    @Column()
     AddressLineOne!:string;
 
     @Column()

@@ -1,3 +1,4 @@
+import { min } from "date-fns";
 import z from "zod";
 
 export const userLoginSchema = z.object({
@@ -20,7 +21,8 @@ export const UpdateFormSchema = z.object({
 
     name: z.string()
         .min(1, "Please enter the UserName.")
-        .max(10, "UserName must be at most 10 characters."),
+        .max(10, "UserName must be at most 10 characters.")
+        .regex(/^\S+$/, "UserName cannot contain spaces."),
 
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please Select a valid status." }),
@@ -98,16 +100,8 @@ export const AddFormSchema = z.object({
         errorMap: () => ({ message: "Please Select a valid Status." }),
     }),
 
-    // age: z
-    //     .coerce
-    //     .number({
-    //         required_error: "Please enter Age. ",
-    //         invalid_type_error: "Age must be a number.",
-    //     })
-    //     .min(18, { message: "You must be at least 18 years old." }),
     phone: z.string()
         .min(1, "Please enter Phone Number")
-    // .max(10, "Enter valid phone number.")
     ,
 
     password: z
@@ -141,27 +135,46 @@ export const AddFormSchema = z.object({
 });
 
 export const CompanyUpdateSchema = z.object({
-    companyName: z.string().min(2, "Company name must be at least 2 characters."),
-    companyCode: z.string().min(2, "Company code must be at least 2 characters."),
-    companyLocation: z.string().min(2, "Address line 1 is required."),
+    companyName: z.string().
+        min(1, "Please enter Company Name."),
+    companyCode: z.string()
+        .min(1, "Please enter Company Code.")
+        .min(2, "Company Code should be more that 2 Letters"),
+    AddressLineOne: z.string().
+        min(1, "please enter Address Line 1.")
+        .min(2, "Address Line should be more than 2 letters"),
     status: z.enum(["active", "inactive"], {
         errorMap: () => ({ message: "Please Select a valid Status." }),
     }),
+    companyFile: z.any()
+        .refine((file) => !!file, "Profile image is required.")
+        .refine((file) => {
+            if (!file) return true;
+            return file.size <= MAX_FILE_SIZE;
+        }, "Max file size is 5MB.")
+        .refine((file) => {
+            if (!file) return true;
+            return ACCEPTED_IMAGE_TYPES.includes(file.type);
+        }, ".jpg, .jpeg, .png and .webp files are accepted."),
     email: z.string()
         .min(2, "Please enter Email")
         .email("Invalid email, enter valid Email."),
-    website: z.string().min(2, "Please enter Website."),
-    dialCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]),
+    website: z.string()
+        .min(2, "Please enter Website."),
+    dialCode: z.union([z.coerce.number("Please enter DialCode"), z.literal(""), z.undefined()]),
     phone: z
         .string({ required_error: "Please enter Phone number." })
         .min(1, { message: "Please enter Phone Number." })
         .max(10, { message: "Enter valid Phone Number." })
         .regex(/^\d+$/, { message: "Enter valid Phone Number." }),
-    country: z.string(),
-    state: z.string(),
-    city: z.string(),
+    country: z.string()
+        .min(1, "Please select Country "),
+    state: z.string()
+        .min(1, "Please select State "),
+    city: z.string()
+        .min(1, "Please select City "),
     ownerName: z.string().min(2, "Please enter Owner Name."),
-    ownerEmail: z.string().min(2, "Please enter Ownwer Email.")
+    ownerEmail: z.string().min(2, "Please enter Owner Email.")
         .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid owner email."),
     ownerPhone: z.string().min(2, "Please enter Owner phone. "),
     companyFile: z.any()
@@ -209,4 +222,20 @@ export const ChangePasswordSchema = z.object({
 }).refine((data) => data.currentPassword !== data.newPassword, {
     message: "New password must be different from current password",
     path: ["newPassword"],
+});
+
+export const GroupFormSchema = z.object({
+    groupName: z.string()
+        .trim()
+        .min(2, "Group name must be at least 2 characters.")
+        .max(50, "Group name must be at most 50 characters."),
+
+    groupCode: z.string()
+        .trim()
+        .min(2, "Group code must be at least 2 characters.")
+        .max(20, "Group code must be at most 20 characters."),
+
+    status: z.enum(["active", "inactive"], {
+        errorMap: () => ({ message: "Status is required." }),
+    }),
 });

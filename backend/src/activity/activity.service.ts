@@ -108,21 +108,28 @@ export class ActivityService {
                 }
             }
 
-            // Custom composite user profile tracking (actor OR subject)
+            // Only show activities performed BY this user (actor) — not activities done TO them.
             if (profileIdFilter) {
-                queryBuilder.andWhere(
-                    '(activity_log.userId = :profileId OR (activity_log.targetType = "USER" AND activity_log.targetId = :profileIdStr))',
-                    {
-                        profileId: Number(profileIdFilter),
-                        profileIdStr: String(profileIdFilter),
-                    },
-                );
+                queryBuilder.andWhere('activity_log.userId = :profileId', {
+                    profileId: Number(profileIdFilter),
+                });
             }
 
             // Process other standard filters using custom filter helper
             const filterStr = await this.filterHelper.makeFilterString(otherFilters, 'activity_log');
             if (filterStr && filterStr.trim() !== '') {
                 queryBuilder.andWhere(filterStr);
+            }
+
+            // Date range filter (inclusive of the full end day), driven by the
+            // react-date-range picker on the frontend (values arrive as 'YYYY-MM-DD').
+            if (query.startDate) {
+                const start = new Date(`${query.startDate}T00:00:00.000`);
+                queryBuilder.andWhere('activity_log.createdAt >= :startDate', { startDate: start });
+            }
+            if (query.endDate) {
+                const end = new Date(`${query.endDate}T23:59:59.999`);
+                queryBuilder.andWhere('activity_log.createdAt <= :endDate', { endDate: end });
             }
 
             // Pagination calculation

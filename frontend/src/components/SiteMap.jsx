@@ -37,19 +37,19 @@ export default function SiteMap() {
         },
         {
             title: "Users",
-            items: ["User List"],
+            items: ["Users"],
             redirectTo: '/users',
             show: permissions.includes("userList"),
         },
         {
             title: "Companies",
-            items: ["Company List"],
+            items: ["Companies"],
             redirectTo: '/company-list',
             show: permissions.includes("companyList"),
         },
         {
             title: "Groups",
-            items: ["Group List"],
+            items: ["Groups"],
             redirectTo: '/group-list',
             show: permissions.includes("groupList"),
         },

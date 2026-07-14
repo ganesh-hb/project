@@ -6,6 +6,9 @@ import { useContext } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import Header from "./Header";
 import { authHeaders } from "@/app/lib/auth";
+import { createPortal } from "react-dom";
+import CompanySidePanel from "./company/CompanySidePanel";
+import UserSidePanel from "./UserSidePanel";
 
 import ActivityTimeline from '@/components/activity/ActivityTimeline';
 export default function UserDetailsPage({ id }) {
@@ -24,6 +27,8 @@ export default function UserDetailsPage({ id }) {
     const route = useRouter();
     const { switchProfile } = useContext(loginContext);
     const [imgPreview, setImgPreview] = useState(false);
+    const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+    const [selectedUserPanelId, setSelectedUserPanelId] = useState(null);
 
     const gotoPages = (e, url) => {
         e.preventDefault();
@@ -40,7 +45,6 @@ export default function UserDetailsPage({ id }) {
         });
         const res = await allData.json();
         setUser(res);
-        console.log(res)
     };
 
     useEffect(() => {
@@ -117,6 +121,7 @@ export default function UserDetailsPage({ id }) {
         user_updatedBy: user.updatedBy,
         user_userFile: user.userFile,
         user_age: user.age,
+        user_remarks: user.remarks,
         user_createdAt: user.createdAt,
         user_updatedDate: user.updatedDate,
         assignments: user.assignments || [],
@@ -278,11 +283,35 @@ export default function UserDetailsPage({ id }) {
                                         <div className="grid grid-cols-2"><p className="text-gray-500">UserName</p><p className="font-medium text-gray-800">{userData.user_name ?? "-"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Age</p><p className="font-medium text-gray-800">{userData.user_age ?? "-"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Role</p><p className="font-medium text-gray-800">{formattedGroupName ?? "-"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Company</p><p className="font-medium text-gray-800">{formattedCompanyName ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2">
+                                            <p className="text-gray-500">Company</p>
+                                            <p
+                                                className={`font-medium ${selectedAssignment?.companyId ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                                onClick={() => selectedAssignment?.companyId && setSelectedCompanyId(selectedAssignment.companyId)}
+                                            >
+                                                {formattedCompanyName ?? "-"}
+                                            </p>
+                                        </div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Created Date</p><p className="font-medium text-gray-800">{formatDate(userData.user_createdAt) ?? "-"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Created By</p><p className="font-medium text-gray-800">{userData.user_createdBy ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2">
+                                            <p className="text-gray-500">Created By</p>
+                                            <p
+                                                className={`font-medium ${user.createdById ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                                onClick={() => user.createdById && setSelectedUserPanelId(user.createdById)}
+                                            >
+                                                {userData.user_createdBy ?? "-"}
+                                            </p>
+                                        </div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Updated Date</p><p className="font-medium text-gray-800">{formatDate(userData.user_updatedDate) ?? "-"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{userData.user_updatedBy ?? "-"}</p></div>
+                                        <div className="grid grid-cols-2">
+                                            <p className="text-gray-500">Updated By</p>
+                                            <p
+                                                className={`font-medium ${user.updatedById ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                                onClick={() => user.updatedById && setSelectedUserPanelId(user.updatedById)}
+                                            >
+                                                {userData.user_updatedBy ?? "-"}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -296,10 +325,12 @@ export default function UserDetailsPage({ id }) {
                                             <div><p className="text-sm text-gray-500">Alternate Phone Number</p><p className="font-medium text-gray-800">{userData.user_Alternatephone || "-"}</p></div>
                                         </div>
                                     </div>
-                                    <div className="rounded-2xl bg-white p-6 shadow-sm">
-                                        <h3 className="mb-6 text-xl font-semibold text-gray-800">Remarks</h3>
-                                        <div className="flex flex-col items-center justify-center py-10 text-center text-gray-400">
-                                            <p>No Remarks found.</p>
+                                    <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col h-[204px]">
+                                        <h3 className="mb-3 text-xl font-semibold text-gray-800">Remarks</h3>
+                                        <div className="flex-1 overflow-y-auto text-sm text-gray-600 whitespace-pre-wrap break-words">
+                                            {userData.user_remarks ? userData.user_remarks : (
+                                                <p className="flex h-full items-center justify-center text-gray-400">No Remarks found.</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -311,8 +342,8 @@ export default function UserDetailsPage({ id }) {
 
                         {/* ── OTHER PROFILES TAB ── */}
                         {activeTab === "profiles" && (
-                            <div className="rounded-2xl bg-white p-6 shadow-sm">
-                                <div className="mb-6 flex items-center justify-between">
+                            <div className="rounded-2xl bg-white p-6 shadow-sm flex flex-col max-h-[calc(100vh-260px)]">
+                                <div className="mb-6 flex items-center justify-between flex-shrink-0">
                                     <h3 className="text-xl font-semibold text-gray-800">Profiles</h3>
                                     {can("userUpdate") && (
                                         <button
@@ -331,7 +362,7 @@ export default function UserDetailsPage({ id }) {
                                         <p className="text-sm mt-1">Click "Add Profile" to assign this user to a company and role.</p>
                                     </div>
                                 ) : (
-                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 overflow-y-auto pr-2">
                                         {assignments.map((a, i) => (
                                             <div
                                                 key={a.id || i}
@@ -354,19 +385,6 @@ export default function UserDetailsPage({ id }) {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                {/* {selectedProfileIndex !== i && (
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedProfileIndex(i);
-                                                            switchProfile(a);
-                                                            fetchUser(a.id);
-                                                            setActiveTab("summary");
-                                                        }}
-                                                        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 transition"
-                                                    >
-                                                        Set as Active
-                                                    </button>
-                                                )} */}
                                             </div>
                                         ))}
                                     </div>
@@ -443,6 +461,22 @@ export default function UserDetailsPage({ id }) {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {selectedCompanyId && typeof document !== "undefined" && createPortal(
+                <CompanySidePanel
+                    companyId={selectedCompanyId}
+                    onClose={() => setSelectedCompanyId(null)}
+                />,
+                document.body
+            )}
+
+            {selectedUserPanelId && typeof document !== "undefined" && createPortal(
+                <UserSidePanel
+                    userId={selectedUserPanelId}
+                    onClose={() => setSelectedUserPanelId(null)}
+                />,
+                document.body
             )}
         </div>
     );

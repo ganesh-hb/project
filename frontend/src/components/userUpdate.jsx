@@ -54,6 +54,7 @@ export default function EditUserPage({ user, onBack }) {
         email: "",
         email: "",
         age: "",
+        remarks: "",
         phone: "",
         dialCode: "",
         status: user?.user_status || "",
@@ -149,6 +150,7 @@ export default function EditUserPage({ user, onBack }) {
             surname: user.surname || "",
             email: user.user_email || "",
             age: calculatedAge,
+            remarks: user.user_remarks || "",
             phone: String(user.user_phone || ""),
             dialCode: String(user.user_dialCode || "91"),
             status: user.user_status || "Active",
@@ -206,110 +208,135 @@ export default function EditUserPage({ user, onBack }) {
         }
     };
 
-    const handleRemoveImage = () => {
-        setFormData((prev) => ({ ...prev, userFile: null }));
-        setPreview("");
-        if (fileInputRef.current) fileInputRef.current.value = "";
+    const handleRemoveImage = async () => {
+        const result = await Swal.fire({
+            title: 'Remove Profile Photo?',
+            text: "This will delete the current image. You can upload a new one later.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!'
+        });
+
+        if (result.isConfirmed) {
+            setFormData((prev) => ({ ...prev, userFile: null }));
+            setPreview("");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const isPhoneValid =
-            !!formData.phone &&
-            isValidPhoneNumber(formData.phone, (countryCode || "in").toUpperCase());
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "Do you want to save the changes to this user?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, update it!'
+        });
 
-        const result = UpdateFormSchema.safeParse(formData);
+        if (result.isConfirmed) {
+            const isPhoneValid =
+                !!formData.phone &&
+                isValidPhoneNumber(formData.phone, (countryCode || "in").toUpperCase());
 
-        let hasSelectionError = false;
-        const selectionErrors = { companyId: "", groupId: "" };
-        if (!companyId) {
-            selectionErrors.companyId = "Please select a company.";
-            hasSelectionError = true;
-        }
-        if (!groupId) {
-            selectionErrors.groupId = "Please select a role.";
-            hasSelectionError = true;
-        }
+            const result = UpdateFormSchema.safeParse(formData);
 
-
-        if (hasSelectionError || !isPhoneValid) {
-            setErrors((prev) => ({ ...prev, ...selectionErrors }));
-            if (!isPhoneValid) {
-                setErrors((prev) => ({ ...prev, phone: "Enter a valid phone number for the selected country" }));
+            let hasSelectionError = false;
+            const selectionErrors = { companyId: "", groupId: "" };
+            if (!companyId) {
+                selectionErrors.companyId = "Please select a company.";
+                hasSelectionError = true;
             }
-            return;
-        }
+            if (!groupId) {
+                selectionErrors.groupId = "Please select a role.";
+                hasSelectionError = true;
+            }
 
-        try {
-            if (!result.success) {
-                const fieldErrors = {
-                    email: "",
-                    name: "",
-                    firstName: "",
-                    middleName: "",
-                    surname: "",
-                    age: "",
-                    status: "",
-                    phone: "",
-                    userFile: "",
-                    alternatePhone: "",
-                    companyId: "",
-                    groupId: "",
-                };
-                result.error.issues.forEach((err) => {
-                    if (err.path[0]) fieldErrors[err.path[0]] = err.message;
-                });
-                setErrors(fieldErrors);
+
+            if (hasSelectionError || !isPhoneValid) {
+                setErrors((prev) => ({ ...prev, ...selectionErrors }));
+                if (!isPhoneValid) {
+                    setErrors((prev) => ({ ...prev, phone: "Enter a valid phone number for the selected country" }));
+                }
                 return;
             }
 
-            const payload = new FormData();
-            payload.append("name", formData.name);
-            payload.append("firstName", formData.firstName);
-            payload.append("middleName", formData.middleName);
-            payload.append("surname", formData.surname);
-            payload.append("email", formData.email);
-            payload.append("age", formData.age);
-            payload.append("phone", formData.phone);
-            payload.append("dialCode", formData.dialCode);
-            payload.append("status", formData.status);
-            payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
-            payload.append("userId", formData.userId);
-            payload.append("isActive", formData.isActive);
-            payload.append("companyId", companyId);
-            payload.append("updatedBy", isLogin?.userId || null)
-            payload.append("groupId", groupId);
-            if (formData.userFile) {
-                payload.append("userFile", formData.userFile);
-            }
-
-
-            const response = await fetch("/relayapi", {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                    endpoint: "user-update",
-                    module: 'user',
-                },
-                body: payload,
-            });
-
-            const data = await response.json();
-
-            if (data?.success != undefined && data?.success == 0) {
-                toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
-            } else if (data?.statusCode != undefined && data?.statusCode != 200) {
-                toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
-            } else {
-                if (response.ok) {
-                    toast.success("User profile updated successfully", { position: "top-right" });
-                    setTimeout(() => onBack(), 1000);
-                } else {
-                    toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
+            try {
+                if (!result.success) {
+                    const fieldErrors = {
+                        email: "",
+                        name: "",
+                        firstName: "",
+                        middleName: "",
+                        surname: "",
+                        age: "",
+                        status: "",
+                        phone: "",
+                        userFile: "",
+                        alternatePhone: "",
+                        companyId: "",
+                        groupId: "",
+                    };
+                    result.error.issues.forEach((err) => {
+                        if (err.path[0]) fieldErrors[err.path[0]] = err.message;
+                    });
+                    setErrors(fieldErrors);
+                    return;
                 }
+
+                const payload = new FormData();
+                // payload.append("name", formData.name);
+                payload.append("firstName", formData.firstName);
+                payload.append("middleName", formData.middleName);
+                payload.append("surname", formData.surname);
+                // payload.append("email", formData.email);
+                payload.append("age", formData.age);
+                payload.append("phone", formData.phone);
+                payload.append("dialCode", formData.dialCode);
+                payload.append("status", formData.status);
+                payload.append("dob", formData.dob ? formData.dob.format("YYYY-MM-DD") : "");
+                payload.append("userId", formData.userId);
+                payload.append("remarks", formData.remarks || "");
+                payload.append("isActive", formData.isActive);
+                payload.append("companyId", companyId);
+                payload.append("updatedBy", isLogin?.userId || null)
+                payload.append("groupId", groupId);
+                if (formData.userFile) {
+                    payload.append("userFile", formData.userFile);
+                }
+
+
+                const response = await fetch("/relayapi", {
+                    method: "PUT",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                        endpoint: "user-update",
+                        module: 'user',
+                    },
+                    body: payload,
+                });
+
+                const data = await response.json();
+
+                if (data?.success != undefined && data?.success == 0) {
+                    toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
+                } else if (data?.statusCode != undefined && data?.statusCode != 200) {
+                    toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
+                } else {
+                    if (response.ok) {
+                        toast.success("User profile updated successfully", { position: "top-right" });
+                        setTimeout(() => onBack(), 1000);
+                    } else {
+                        toast.error(`Update failed: ${data?.message}`, { position: "top-right" });
+                    }
+                }
+            } catch (error) {
+                toast.error(`${error}`, { position: "top-right" });
             }
-        } catch (error) {
-            toast.error(`${error}`, { position: "top-right" });
         }
     };
 
@@ -387,17 +414,59 @@ export default function EditUserPage({ user, onBack }) {
                                 {/* Name */}
                                 <div className="w-full">
                                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        UserName
+                                        User Name
                                     </label>
                                     <input
                                         type="text"
                                         name="name"
                                         readOnly
                                         value={formData.name}
-                                        onChange={handleChange}
+                                        // onChange={handleChange}
                                         className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                     />
                                     {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+                                </div>
+
+                                {/* full name */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Name <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <div className="flex gap-3">
+                                        <div className="flex-1">
+                                            <input
+                                                type="text"
+                                                name="firstName"
+                                                value={formData.firstName}
+                                                onChange={handleChange}
+                                                placeholder="First Name"
+                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                            />
+                                            {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="text"
+                                                name="middleName"
+                                                value={formData.middleName}
+                                                onChange={handleChange}
+                                                placeholder="Middle Name"
+                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                            />
+                                            {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="text"
+                                                name="surname"
+                                                value={formData.surname}
+                                                onChange={handleChange}
+                                                placeholder="Last Name"
+                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                            />
+                                            {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Password (moved here from Contact Info) */}
@@ -414,50 +483,6 @@ export default function EditUserPage({ user, onBack }) {
                                     />
                                 </div>
 
-                                {/* First Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        First Name <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        value={formData.firstName}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.firstName && <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>}
-                                </div>
-
-                                {/* Middle Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Middle Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="middleName"
-                                        value={formData.middleName}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.middleName && <p className="mt-1 text-sm text-red-500">{errors.middleName}</p>}
-                                </div>
-
-                                {/* Last Name */}
-                                <div className="w-full">
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                                        Last Name <span className="text-red-500 text-[16px]">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="surname"
-                                        value={formData.surname}
-                                        onChange={handleChange}
-                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-                                    />
-                                    {errors.surname && <p className="mt-1 text-sm text-red-500">{errors.surname}</p>}
-                                </div>
 
                                 {/* DOB */}
                                 <div>
@@ -567,6 +592,23 @@ export default function EditUserPage({ user, onBack }) {
                                         searchPlaceholder="Search country..."
                                     />
                                     {errors.phone && <p className="mt-1 text-sm text-red-500">{errors.phone}</p>}
+                                </div>
+
+                                {/* Remarks */}
+                                {/* Remarks */}
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Remarks
+                                    </label>
+                                    <textarea
+                                        name="remarks"
+                                        rows={2}
+                                        value={formData.remarks}
+                                        onChange={handleChange}
+                                        placeholder="Enter any remarks..."
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-2 outline-none focus:border-blue-500 resize-none"
+                                    />
+                                    {errors.remarks && <p className="mt-1 text-sm text-red-500">{errors.remarks}</p>}
                                 </div>
 
 

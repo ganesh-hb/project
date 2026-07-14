@@ -5,6 +5,7 @@ import Header from "../Header";
 import { authHeaders } from "@/app/lib/auth";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import { GroupFormSchema } from "../Zod";
 const MySwal = withReactContent(Swal);
 
 export default function GroupUpdate({ id, onBack }) {
@@ -54,21 +55,16 @@ export default function GroupUpdate({ id, onBack }) {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const validate = () => {
-        const errs = {};
-        if (!formData.groupName || formData.groupName.length < 2)
-            errs.groupName = "Group name must be at least 2 characters.";
-        if (!formData.groupCode || formData.groupCode.length < 2)
-            errs.groupCode = "Group code must be at least 2 characters.";
-        if (!formData.status) errs.status = "Status is required.";
-        return errs;
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const validationErrors = validate();
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
+        const result = GroupFormSchema.safeParse(formData);
+        if (!result.success) {
+            const fieldErrors = {};
+            result.error.issues.forEach((err) => {
+                const field = err.path[0];
+                if (field && !fieldErrors[field]) fieldErrors[field] = err.message;
+            });
+            setErrors(fieldErrors);
             return;
         }
 
@@ -158,8 +154,8 @@ export default function GroupUpdate({ id, onBack }) {
 
                             <div>
                                 <label className={labelClass}>Group Code <span className="text-red-500">*</span></label>
-                                <input type="text" name="groupCode" value={formData.groupCode} onChange={handleChange} placeholder="e.g. GRP01" className={inputClass} />
-                                {errors.groupCode && <p className={errorClass}>{errors.groupCode}</p>}
+                                <input type="text" name="groupCode" value={formData.groupCode} readOnly placeholder="e.g. GRP01" className={inputClass} />
+                                {/* {errors.groupCode && <p className={errorClass}>{errors.groupCode}</p>} */}
                             </div>
 
                             <div>

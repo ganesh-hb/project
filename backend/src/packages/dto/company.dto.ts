@@ -58,10 +58,10 @@ export class CompanyDto {
     @IsString()
     state?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => Number(value))
-    postalCode?: number;
+    // @IsOptional()
+    // @IsNumber()
+    // @Transform(({ value }) => Number(value))
+    // postalCode?: number;
 
     @IsOptional()
     @IsString()
@@ -140,10 +140,10 @@ export class CompanyUpdateDto {
     @IsString()
     state?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => Number(value))
-    postalCode?: number;
+    // @IsOptional()
+    // @IsNumber()
+    // @Transform(({ value }) => Number(value))
+    // postalCode?: number;
 
     @IsOptional()
     @IsString()
