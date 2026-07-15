@@ -19,11 +19,11 @@ export class CompanyEntity {
     @Column()
     companyCode!: string;
 
-    @Column()
-    companyLocation!: string;
+    // @Column()
+    // companyLocation!: string;
 
-    @Column()
-    companyFile!: string;
+    @Column({ type: 'varchar', nullable: true })
+    companyFile!: string | null;
 
     @Column()
     email! : string;
@@ -69,6 +69,12 @@ export class CompanyEntity {
 
     @Column({ nullable: true })
     updatedBy!: number;
+
+    @Column({ nullable: true })
+    city!: string;
+
+    // @Column({ nullable: true })
+    // postalCode!: number;
 
     @OneToMany(
         () => UserCompanyGroupEntity,

@@ -14,7 +14,12 @@ import { ChevronDown } from "lucide-react";
 import CompanySidePanel from "./company/CompanySidePanel";
 import { createPortal } from "react-dom";
 import { ArrowUpDown, LogIn, RotateCw } from "lucide-react";
-
+function getInitials(name) {
+    if (!name) return "?";
+    const parts = name.split(" ");
+    const initials = parts.map(p => p[0] || "").join("");
+    return initials.substring(0, 2).toUpperCase();
+}
 function formatRoles(assignments) {
     if (!Array.isArray(assignments) || assignments.length === 0) return "N/A";
     return [...new Set(assignments.map((a) => a.groupName).filter(Boolean))]
@@ -201,7 +206,7 @@ export default function UsersPage() {
 
     return (
         <div className="w-full min-h-screen bg-[#f5f6fa] overflow-x-hidden">
-            <Header onSearch={handleSearch} page="users" />
+            <Header onSearch={handleSearch} page="users" viewMode={viewMode} onViewModeChange={setViewMode} />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
                 <nav
@@ -240,7 +245,7 @@ export default function UsersPage() {
                             )}
 
 
-                            <div className="flex border rounded-md overflow-hidden bg-white ">
+                            {/* <div className="flex border rounded-md overflow-hidden bg-white ">
                                 {["grid", "list", "table"].map((mode) => (
                                     <button
                                         key={mode}
@@ -253,7 +258,7 @@ export default function UsersPage() {
                                         {mode === "table" ? "Data Table" : mode.charAt(0).toUpperCase() + mode.slice(1)}
                                     </button>
                                 ))}
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
@@ -278,15 +283,19 @@ export default function UsersPage() {
                                 >
                                     <div className="flex items-start gap-4 mb-4">
                                         <div className="flex h-20 w-20 min-w-[80px] items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md">
-                                            <img
-                                                src={`http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`}
-                                                alt="userImage"
-                                                className="h-full w-full object-cover cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setPreviewUser(user);
-                                                }}
-                                            />
+                                            {user.user_userFile ? (
+                                                <img
+                                                    src={`http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`}
+                                                    alt="userImage"
+                                                    className="h-full w-full object-cover cursor-pointer"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setPreviewUser(user);
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span className="text-blue-600">{getInitials(user.user_name)}</span>
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div
@@ -406,7 +415,9 @@ export default function UsersPage() {
                                                                 }}
                                                             />
                                                         ) : (
-                                                            (user.user_name || "?").charAt(0)
+                                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white text-base font-bold uppercase">
+                                                                {getInitials(user.user_name)}
+                                                            </div>
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
@@ -533,7 +544,7 @@ export default function UsersPage() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
-                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
+                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer"
                             onClick={() => setPreviewUser(null)}
                         >
                             ✕

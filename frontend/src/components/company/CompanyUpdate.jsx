@@ -1,11 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Header from "../Header";
 import { authHeaders } from "@/app/lib/auth";
 import { CompanyUpdateSchema } from "../Zod";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { City, Country, State } from "country-state-city";
 import Swal from "sweetalert2";
+import Select from "react-select";
 import withReactContent from "sweetalert2-react-content";
 const MySwal = withReactContent(Swal);
 
@@ -13,18 +17,27 @@ export default function CompanyUpdate({ id, onBack }) {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [errors, setErrors] = useState({});
+
+    function getInitials(name) {
+        if (!name) return "?";
+        return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
     const [companyFile, setCompanyFile] = useState(null);
     const [preview, setPreview] = useState("");
+    const [imageRemoved, setImageRemoved] = useState(false);
+    const fileInputRef = useRef(null);
     const [currencies, setCurrencies] = useState([]);
+    // Ensure ownerPhoneDialCode is included in state when loading data
 
     const [countries] = useState(Country.getAllCountries());
     const [states, setStates] = useState([]);
     const [cities, setCities] = useState([]);
 
+    const [companyCountryCode, setCompanyCountryCode] = useState("in");
+    const [ownerCountryCode, setOwnerCountryCode] = useState("in");
     const [formData, setFormData] = useState({
         companyName: "",
         companyCode: "",
-        companyLocation: "",
         status: "active",
         email: "",
         website: "",
@@ -33,12 +46,12 @@ export default function CompanyUpdate({ id, onBack }) {
         country: "",
         state: "",
         city: "",
-        postalCode: "",
         AddressLineOne: "",
         ownerName: "",
         ownerEmail: "",
         curId: "",
         ownerPhone: "",
+        ownerPhoneDialCode: "",
     });
 
     useEffect(() => {
@@ -79,7 +92,6 @@ export default function CompanyUpdate({ id, onBack }) {
                 setFormData({
                     companyName: data.companyName || "",
                     companyCode: data.companyCode || "",
-                    companyLocation: data.companyLocation || "",
                     status: data.status || "active",
                     email: data.email || "",
                     website: data.website || "",
@@ -88,11 +100,11 @@ export default function CompanyUpdate({ id, onBack }) {
                     country: "",
                     state: "",
                     city: data.city || "",
-                    postalCode: data.postalCode || "",
                     AddressLineOne: data.AddressLineOne || "",
                     ownerName: data.ownerName || "",
                     ownerEmail: data.ownerEmail || "",
                     ownerPhone: data.ownerPhone || "",
+                    ownerPhoneDialCode: data.ownerPhoneDialCode || "",
                     curId: data.curId || "",
                 });
 
@@ -140,11 +152,52 @@ export default function CompanyUpdate({ id, onBack }) {
         setErrors((prev) => ({ ...prev, companyFile: "" }));
         setCompanyFile(file);
         setPreview(URL.createObjectURL(file));
+        setImageRemoved(false);
+    };
+
+    const handleRemoveImage = async () => {
+        const result = await Swal.fire({
+            title: 'Remove Company Logo?',
+            text: "This will delete the current logo. You can upload a new one later.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!'
+        });
+
+        if (result.isConfirmed) {
+            setCompanyFile(null);
+            setPreview("");
+            setImageRemoved(true);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const res = await MySwal.fire({
+            title: 'Update Company?',
+            text: "Are you sure you want to save these changes?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#2563eb',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, update it!'
+        });
+
+        if (!res.isConfirmed) return;
+        // Validate phone numbers before schema validation
+        const isCompanyPhoneValid = !!formData.phone && isValidPhoneNumber(formData.phone, (companyCountryCode || "in").toUpperCase());
+        const isOwnerPhoneValid = !!formData.ownerPhone && isValidPhoneNumber(formData.ownerPhone, (ownerCountryCode || "in").toUpperCase());
+        if (!isCompanyPhoneValid || !isOwnerPhoneValid) {
+            const phoneErr = {};
+            if (!isCompanyPhoneValid) phoneErr.phone = "Enter a valid phone number for the selected country";
+            if (!isOwnerPhoneValid) phoneErr.ownerPhone = "Enter a valid owner phone number for the selected country";
+            setErrors((prev) => ({ ...prev, ...phoneErr }));
+            return;
+        }
         const result = CompanyUpdateSchema.safeParse({
             ...formData,
             companyFile: companyFile || undefined,
@@ -165,17 +218,23 @@ export default function CompanyUpdate({ id, onBack }) {
             payload.append("companyId", String(id));
 
             Object.entries(formData).forEach(([key, value]) => {
-                if (["country", "state"].includes(key)) return;
+                if (["country", "state", "dialCode", "ownerPhoneDialCode"].includes(key)) return;
                 if (value !== "" && value !== null && value !== undefined) {
                     payload.append(key, String(value));
                 }
             });
+
+            // Append phone dial codes separately
+            if (formData.dialCode) payload.append("dialCode", formData.dialCode);
+            if (formData.ownerPhoneDialCode) payload.append("ownerPhoneDialCode", formData.ownerPhoneDialCode);
+
 
             const countryName = Country.getAllCountries().find(c => c.isoCode === formData.country)?.name || formData.country;
             const stateName = State.getStatesOfCountry(formData.country).find(s => s.isoCode === formData.state)?.name || formData.state;
             if (countryName) payload.append("country", countryName);
             if (stateName) payload.append("state", stateName);
             if (companyFile) payload.append("companyFile", companyFile);
+            if (imageRemoved && !companyFile) payload.append("removeCompanyFile", "true");
 
             const response = await fetch("http://localhost:3000/relayapi", {
                 method: "PUT",
@@ -219,7 +278,11 @@ export default function CompanyUpdate({ id, onBack }) {
             <Header page="company-update" />
 
             <nav className="p-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
-                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={() => onBack()}>← Back to Details</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
+                <span className="text-gray-400">{">>"}</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/company-list")}>Companies</span>
+                <span className="text-gray-400">{">>"}</span>
+                <span className="text-gray-800 cursor-pointer">Edit Company</span>
             </nav>
 
             <div className="px-6">
@@ -276,38 +339,78 @@ export default function CompanyUpdate({ id, onBack }) {
 
 
                                 <div>
-                                    <label className={labelClass}>Email</label>
+                                    <label className={labelClass}>Email <span className="text-red-500">*</span></label>
                                     <input type="email" name="email" value={formData.email} readOnly onChange={handleChange} placeholder="company@email.com" className={inputClass} />
                                     {errors.email && <p className={errorClass}>{errors.email}</p>}
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Website</label>
+                                    <label className={labelClass}>Website <span className="text-red-500">*</span></label>
                                     <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={inputClass} />
                                     {errors.website && <p className={errorClass}>{errors.website}</p>}
                                 </div>
 
                                 <div className="lg:col-span-2">
                                     <label className={labelClass}>Company Logo</label>
-                                    <input type="file" accept="image/*" onChange={handleImage} className={inputClass} />
+                                    <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImage} className={inputClass} />
                                     {errors.companyFile && <p className={errorClass}>{errors.companyFile}</p>}
-                                    {preview && (
-                                        <div className="mt-4">
-                                            <img src={preview} alt="preview" className="h-24 w-24 rounded-xl object-cover border" />
-                                        </div>
-                                    )}
+                                    <div className="relative mt-4 h-24 w-24 rounded-xl overflow-hidden border bg-blue-100">
+                                        {preview
+                                            ? <img
+                                                src={preview}
+                                                alt="preview"
+                                                className="h-full w-full object-cover"
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                            />
+                                            : null
+                                        }
+                                        <span
+                                            style={{ display: preview ? 'none' : 'flex' }}
+                                            className="h-full w-full items-center justify-center text-2xl font-bold text-blue-600 absolute inset-0"
+                                        >
+                                            {getInitials(formData.companyName)}
+                                        </span>
+                                        {preview && (
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveImage}
+                                                aria-label="Remove selected logo"
+                                                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Currency</label>
-                                    <select name="curId" value={formData.curId} onChange={handleChange} className={inputClass}>
-                                        <option value="">Select currency</option>
-                                        {currencies.map((c) => (
-                                            <option key={c.curId} value={c.curId}>
-                                                {c.name} ({c.code}) {c.symbol}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
+                                    <Select
+                                        name="curId"
+                                        options={currencies.map((c) => ({
+                                            value: c.curId,
+                                            label: `(${c.code}) ${c.symbol}`,//${c.name}
+                                        }))}
+                                        value={
+                                            currencies.find((c) => c.curId === formData.curId)
+                                                ? {
+                                                    value: formData.curId,
+                                                    label: ` (${currencies.find((c) => c.curId === formData.curId).code}) ${currencies.find((c) => c.curId === formData.curId).symbol}`,//${currencies.find((c) => c.curId === formData.curId).name}
+                                                }
+                                                : null
+                                        }
+                                        onChange={(selected) => {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                curId: selected ? selected.value : "",
+                                            }));
+                                            setErrors((prev) => ({ ...prev, curId: "" }));
+                                        }}
+                                        isSearchable
+                                        isClearable
+                                        placeholder="Select currency"
+                                        classNamePrefix="react-select"
+                                    />
                                     {errors.curId && <p className={errorClass}>{errors.curId}</p>}
                                 </div>
 
@@ -318,15 +421,36 @@ export default function CompanyUpdate({ id, onBack }) {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Contact Information</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                                <div>
-                                    <label className={labelClass}>Dial Code</label>
-                                    <input type="number" name="dialCode" value={formData.dialCode} onChange={handleChange} placeholder="e.g. 91" className={inputClass} />
-                                    {errors.dialCode && <p className={errorClass}>{errors.dialCode}</p>}
-                                </div>
-                                <div>
-                                    <label className={labelClass}>Phone</label>
-                                    <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength="10" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className={inputClass} />
-                                    {errors.phone && <p className={errorClass}>{errors.phone}</p>}
+                                {/* Phone */}
+                                <div className="w-full">
+                                    <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
+                                    <PhoneInput
+                                        country={companyCountryCode}
+                                        value={formData.phone ? `+${formData.dialCode}${formData.phone}` : ""}
+                                        onChange={(value, countryData) => {
+                                            const dial = countryData?.dialCode || "";
+                                            const phone = value.slice(dial.length);
+                                            setCompanyCountryCode(countryData?.countryCode);
+                                            setFormData((prev) => ({ ...prev, phone, dialCode: dial }));
+                                            setErrors((prev) => ({ ...prev, phone: "" }));
+                                        }}
+                                        inputStyle={{
+                                            width: "100%",
+                                            height: "50px",
+                                            borderRadius: "0.75rem",
+                                            border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            fontSize: "14px",
+                                        }}
+                                        buttonStyle={{
+                                            borderRadius: "0.75rem 0 0 0.75rem",
+                                            border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            background: "#f9fafb",
+                                        }}
+                                        containerStyle={{ width: "100%" }}
+                                        enableSearch
+                                        searchPlaceholder="Search country..."
+                                    />
+                                    {errors.phone && (<p className={errorClass}>{errors.phone}</p>)}
                                 </div>
                             </div>
                         </div>
@@ -337,7 +461,7 @@ export default function CompanyUpdate({ id, onBack }) {
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 
                                 <div>
-                                    <label className={labelClass}>Country</label>
+                                    <label className={labelClass}>Country <span className="text-red-500">*</span></label>
                                     <select
                                         name="country"
                                         value={formData.country}
@@ -355,7 +479,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>State</label>
+                                    <label className={labelClass}>State <span className="text-red-500">*</span></label>
                                     <select
                                         name="state"
                                         value={formData.state}
@@ -374,7 +498,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>City</label>
+                                    <label className={labelClass}>City <span className="text-red-500">*</span></label>
                                     <select
                                         name="city"
                                         value={formData.city}
@@ -389,12 +513,13 @@ export default function CompanyUpdate({ id, onBack }) {
                                             </option>
                                         ))}
                                     </select>
+                                    {errors.city && <p className={errorClass}>{errors.city}</p>}
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Address Line 1</label>
-                                    <input type="text" name="companyLocation" value={formData.companyLocation} onChange={handleChange} disabled={!formData.city} placeholder="Enter company location" className={`${inputClass} disabled:bg-gray-100`} />
-                                    {errors.companyLocation && <p className={errorClass}>{errors.companyLocation}</p>}
+                                    <label className={labelClass}>Address Line 1 <span className="text-red-500">*</span></label>
+                                    <input type="text" name="AddressLineOne" value={formData.AddressLineOne} onChange={handleChange} disabled={!formData.city} placeholder="Enter Address Line 1" className={`${inputClass} disabled:bg-gray-100`} />
+                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
                                 </div>
 
 
@@ -406,19 +531,45 @@ export default function CompanyUpdate({ id, onBack }) {
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Owner Information</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <div>
-                                    <label className={labelClass}>Owner Name</label>
+                                    <label className={labelClass}>Owner Name <span className="text-red-500">*</span></label>
                                     <input type="text" name="ownerName" value={formData.ownerName} onChange={handleChange} placeholder="Owner full name" className={inputClass} />
                                     {errors.ownerName && <p className={errorClass}>{errors.ownerName}</p>}
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Owner Email</label>
+                                    <label className={labelClass}>Owner Email <span className="text-red-500">*</span></label>
                                     <input type="email" name="ownerEmail" value={formData.ownerEmail} onChange={handleChange} placeholder="owner@email.com" className={inputClass} />
                                     {errors.ownerEmail && <p className={errorClass}>{errors.ownerEmail}</p>}
                                 </div>
-                                <div>
-                                    <label className={labelClass}>Owner Phone</label>
-                                    <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength="10" name="ownerPhone" value={formData.ownerPhone} onChange={handleChange} placeholder="Owner phone number" className={inputClass} />
-                                    {errors.ownerPhone && <p className={errorClass}>{errors.ownerPhone}</p>}
+                                {/* Owner Phone */}
+                                <div className="w-full">
+                                    <label className={labelClass}>Owner Phone <span className="text-red-500">*</span></label>
+                                    <PhoneInput
+                                        country={ownerCountryCode}
+                                        value={formData.ownerPhone ? `+${formData.ownerPhoneDialCode}${formData.ownerPhone}` : ""}
+                                        onChange={(value, countryData) => {
+                                            const dial = countryData?.dialCode || "";
+                                            const phone = value.slice(dial.length);
+                                            setOwnerCountryCode(countryData?.countryCode);
+                                            setFormData((prev) => ({ ...prev, ownerPhone: phone, ownerPhoneDialCode: dial }));
+                                            setErrors((prev) => ({ ...prev, ownerPhone: "" }));
+                                        }}
+                                        inputStyle={{
+                                            width: "100%",
+                                            height: "50px",
+                                            borderRadius: "0.75rem",
+                                            border: errors.ownerPhone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            fontSize: "14px",
+                                        }}
+                                        buttonStyle={{
+                                            borderRadius: "0.75rem 0 0 0.75rem",
+                                            border: errors.ownerPhone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            background: "#f9fafb",
+                                        }}
+                                        containerStyle={{ width: "100%" }}
+                                        enableSearch
+                                        searchPlaceholder="Search country..."
+                                    />
+                                    {errors.ownerPhone && (<p className={errorClass}>{errors.ownerPhone}</p>)}
                                 </div>
                             </div>
                         </div>

@@ -172,6 +172,16 @@ export default function LoginContext({ children }) {
     }
 
     function logout() {
+        fetch("/relayapi", {
+            method: "POST",
+            headers: { ...authHeaders(), endpoint: "user-logout", module: "user" },
+            body: JSON.stringify({
+                userId: isLogin?.userId,
+                companyId: activeAssignment?.companyId,
+                email: isLogin?.email,
+            }),
+        }).catch(() => { });
+
         setLogin(null);
         setActiveAssignment(null);
         setPermissions([]);

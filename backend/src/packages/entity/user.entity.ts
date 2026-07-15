@@ -69,8 +69,8 @@ export class UserEntity {
     @Column({ nullable: true })
     updatedBy!: number;
 
-    @Column({ nullable: true })
-    userFile!: string;
+    @Column({ type: 'varchar', nullable: true })
+    userFile!: string | null;
 
     @CreateDateColumn()
     createdAt!: Date;

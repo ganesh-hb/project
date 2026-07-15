@@ -1,19 +1,30 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { CompanyUpdateSchema } from "../Zod";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { City, Country, State } from "country-state-city";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+import Select from "react-select";
 const MySwal = withReactContent(Swal);
 
 
 export default function AddCompany() {
     const router = useRouter();
 
+    function getInitials(name) {
+        if (!name) return "?";
+        return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    const [companyCountryCode, setCompanyCountryCode] = useState("in");
+    const [ownerCountryCode, setOwnerCountryCode] = useState("in");
     const [formData, setFormData] = useState({
         companyName: "",
         companyCode: "",
@@ -29,10 +40,12 @@ export default function AddCompany() {
         ownerName: "",
         ownerEmail: "",
         ownerPhone: "",
+        curId: "",
     });
 
     const [companyFile, setCompanyFile] = useState(null);
     const [preview, setPreview] = useState("");
+    const fileInputRef = useRef(null);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
@@ -60,10 +73,22 @@ export default function AddCompany() {
         }
     }, [formData.state, formData.country]);
 
-    const gotoPages = (e, url) => {
+    const gotoPages = async (e, url) => {
         e.stopPropagation();
         e.preventDefault();
-        router.push(url);
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) {
+            router.push(url);
+        }
     };
 
     const handleChange = (e) => {
@@ -90,6 +115,24 @@ export default function AddCompany() {
         setErrors((prev) => ({ ...prev, companyFile: "" }));
         setCompanyFile(file);
         setPreview(URL.createObjectURL(file));
+    };
+
+    const handleRemoveImage = async () => {
+        const result = await MySwal.fire({
+            title: 'Remove Company Logo?',
+            text: "This will discard the selected logo.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, remove it!'
+        });
+
+        if (result.isConfirmed) {
+            setCompanyFile(null);
+            setPreview("");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
     const onBack = async () => {
@@ -121,44 +164,54 @@ export default function AddCompany() {
             setErrors(fieldErrors);
             return;
         }
+        const res = await MySwal.fire({
+            title: 'Register New Company?',
+            text: "Are you sure you want to add this company to the system?",
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#2563eb', // blue-600
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, register it!',
+            cancelButtonText: 'Cancel'
+        });
 
-        setLoading(true);
-        try {
-            const payload = new FormData();
-            Object.entries(formData).forEach(([key, value]) => {
-                if (value !== "" && value !== null && value !== undefined) {
-                    payload.append(key, String(value));
+        if (result.isConfirmed) {
+            setLoading(true);
+            try {
+                const payload = new FormData();
+                Object.entries(formData).forEach(([key, value]) => {
+                    if (value !== "" && value !== null && value !== undefined) {
+                        payload.append(key, String(value));
+                    }
+                });
+                if (companyFile) payload.append("companyFile", companyFile);
+
+                const response = await fetch("/relayapi", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+                        endpoint: "company-add",
+                        module: "company",
+                    },
+                    body: payload,
+                });
+
+                const data = await response.json();
+                if (response.status === 401 || response.status === 403) {
+                    router.push("/forbidden");
+                    return;
                 }
-            });
-            if (companyFile) payload.append("companyFile", companyFile);
-
-            // console.log(...payload)
-
-            const response = await fetch("/relayapi", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                    endpoint: "company-add",
-                    module: "company",
-                },
-                body: payload,
-            });
-
-            const data = await response.json();
-            if (response.status === 401 || response.status === 403) {
-                router.push("/forbidden");
-                return;
+                if (response.ok && data?.settings?.success === 1) {
+                    toast.success("Company created successfully", { position: "top-right" });
+                    setTimeout(() => router.push("/company-list"), 1000);
+                } else {
+                    toast.error(data?.message || "Failed to create company.", { position: "top-right" });
+                }
+            } catch (err) {
+                toast.error(`${err}`, { position: "top-right" });
+            } finally {
+                setLoading(false);
             }
-            if (response.ok && data?.settings?.success === 1) {
-                toast.success("Company created successfully", { position: "top-right" });
-                setTimeout(() => router.push("/company-list"), 1000);
-            } else {
-                toast.error(data?.message || "Failed to create company.", { position: "top-right" });
-            }
-        } catch (err) {
-            toast.error(`${err}`, { position: "top-right" });
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -230,14 +283,36 @@ export default function AddCompany() {
 
                                 {/* Logo */}
                                 <div className="lg:col-span-2">
-                                    <label className={labelClass}>Company Logo <span className="text-red-500">*</span></label>
-                                    <input type="file" accept="image/*" onChange={handleImage} className={inputClass} />
+                                    <label className={labelClass}>Company Logo</label>
+                                    <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImage} className={inputClass} />
                                     {errors.companyFile && <p className={errorClass}>{errors.companyFile}</p>}
-                                    {preview && (
-                                        <div className="mt-4">
-                                            <img src={preview} alt="preview" className="h-24 w-24 rounded-xl object-cover border" />
-                                        </div>
-                                    )}
+                                    <div className="relative mt-4 h-24 w-24 rounded-xl overflow-hidden border bg-blue-100">
+                                        {preview
+                                            ? <img
+                                                src={preview}
+                                                alt="preview"
+                                                className="h-full w-full object-cover"
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                            />
+                                            : null
+                                        }
+                                        <span
+                                            style={{ display: preview ? 'none' : 'flex' }}
+                                            className="h-full w-full items-center justify-center text-2xl font-bold text-blue-600 absolute inset-0"
+                                        >
+                                            {getInitials(formData.companyName)}
+                                        </span>
+                                        {preview && (
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveImage}
+                                                aria-label="Remove selected logo"
+                                                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -246,16 +321,37 @@ export default function AddCompany() {
                         <div className="rounded-2xl bg-white p-8 shadow-sm">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Contact Information</h2>
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-                                <div>
-                                    <label className={labelClass}>Dial Code <span className="text-red-500">*</span></label>
-                                    <input type="number" name="dialCode" value={formData.dialCode} onChange={handleChange} placeholder="e.g. 91" className={inputClass} />
-                                    {errors.dialCode && <p className={errorClass}>{errors.dialCode}</p>}      </div>
-
-                                <div>
-                                    <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
-                                    <input type="number" name="phone" value={formData.phone} onChange={handleChange} placeholder="Enter phone number" className={inputClass} />
-                                    {errors.phone && <p className={errorClass}>{errors.phone}</p>}      </div>
+                                {/* Phone */}
+                                <div className="w-full">
+                                    <label className={labelClass}>Phone</label>
+                                    <PhoneInput
+                                        country={companyCountryCode}
+                                        value={formData.phone ? `+${formData.dialCode}${formData.phone}` : ""}
+                                        onChange={(value, countryData) => {
+                                            const dial = countryData?.dialCode || "";
+                                            const phone = value.slice(dial.length);
+                                            setCompanyCountryCode(countryData?.countryCode);
+                                            setFormData((prev) => ({ ...prev, phone, dialCode: dial }));
+                                            setErrors((prev) => ({ ...prev, phone: "" }));
+                                        }}
+                                        inputStyle={{
+                                            width: "100%",
+                                            height: "50px",
+                                            borderRadius: "0.75rem",
+                                            border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            fontSize: "14px",
+                                        }}
+                                        buttonStyle={{
+                                            borderRadius: "0.75rem 0 0 0.75rem",
+                                            border: errors.phone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            background: "#f9fafb",
+                                        }}
+                                        containerStyle={{ width: "100%" }}
+                                        enableSearch
+                                        searchPlaceholder="Search country..."
+                                    />
+                                    {errors.phone && (<p className={errorClass}>{errors.phone}</p>)}
+                                </div>
                             </div>
                         </div>
 
@@ -321,10 +417,10 @@ export default function AddCompany() {
 
 
                                 <div>
-                                    <label className={labelClass}>AddressLineOne <span className="text-red-500">*</span></label>
+                                    <label className={labelClass}>Address Line 1 <span className="text-red-500">*</span></label>
                                     <input type="text" name="AddressLineOne" value={formData.AddressLineOne} disabled={!formData.city} onChange={handleChange} placeholder="Enter Address Line 1" className={inputClass} />
-                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}   </div>
-
+                                    {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
+                                </div>
 
                             </div>
                         </div>
@@ -345,28 +441,71 @@ export default function AddCompany() {
                                     {errors.ownerEmail && <p className={errorClass}>{errors.ownerEmail}</p>}
                                 </div>
 
-                                <div>
-                                    <label className={labelClass}>Owner Phone <span className="text-red-500">*</span></label>
-                                    <input type="text" name="ownerPhone" value={formData.ownerPhone} onChange={handleChange} placeholder="Owner phone number" className={inputClass} />
-                                    {errors.ownerPhone && <p className={errorClass}>{errors.ownerPhone}</p>}   </div>
+                                {/* Owner Phone */}
+                                <div className="w-full">
+                                    <label className={labelClass}>Owner Phone</label>
+                                    <PhoneInput
+                                        country={ownerCountryCode}
+                                        value={formData.ownerPhone ? `+${formData.ownerPhoneDialCode}${formData.ownerPhone}` : ""}
+                                        onChange={(value, countryData) => {
+                                            const dial = countryData?.dialCode || "";
+                                            const phone = value.slice(dial.length);
+                                            setOwnerCountryCode(countryData?.countryCode);
+                                            setFormData((prev) => ({ ...prev, ownerPhone: phone, ownerPhoneDialCode: dial }));
+                                            setErrors((prev) => ({ ...prev, ownerPhone: "" }));
+                                        }}
+                                        inputStyle={{
+                                            width: "100%",
+                                            height: "50px",
+                                            borderRadius: "0.75rem",
+                                            border: errors.ownerPhone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            fontSize: "14px",
+                                        }}
+                                        buttonStyle={{
+                                            borderRadius: "0.75rem 0 0 0.75rem",
+                                            border: errors.ownerPhone ? "1px solid #ef4444" : "1px solid #d1d5db",
+                                            background: "#f9fafb",
+                                        }}
+                                        containerStyle={{ width: "100%" }}
+                                        enableSearch
+                                        searchPlaceholder="Search country..."
+                                    />
+                                    {errors.ownerPhone && (<p className={errorClass}>{errors.ownerPhone}</p>)}
+                                </div>
                             </div>
-
-
                         </div>
-                        <div className="rounded-2xl bg-white p-8 shadow-sm">
-                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Currency</h2>
-                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2"></div>
+
+                        <div>
                             <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
-                            <select name="curId" value={formData.curId} onChange={handleChange} className={inputClass}>
-                                <option value="" >Select currency</option>
-                                {currencies.map((c) => (
-                                    <option key={c.curId} value={c.curId}>
-                                        {c.name} ({c.code}) {c.symbol}
-                                    </option>
-                                ))}
-                            </select>
+                            <Select
+                                name="curId"
+                                options={currencies.map((c) => ({
+                                    value: c.curId,
+                                    label: `(${c.code}) ${c.symbol}`,//${c.name}
+                                }))}
+                                value={
+                                    currencies.find((c) => c.curId === formData.curId)
+                                        ? {
+                                            value: formData.curId,
+                                            label: ` (${currencies.find((c) => c.curId === formData.curId).code}) ${currencies.find((c) => c.curId === formData.curId).symbol}`,//${currencies.find((c) => c.curId === formData.curId).name}
+                                        }
+                                        : null
+                                }
+                                onChange={(selected) => {
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        curId: selected ? selected.value : "",
+                                    }));
+                                    setErrors((prev) => ({ ...prev, curId: "" }));
+                                }}
+                                isSearchable
+                                isClearable
+                                placeholder="Select currency"
+                                classNamePrefix="react-select"
+                            />
                             {errors.curId && <p className={errorClass}>{errors.curId}</p>}
                         </div>
+
 
 
 

@@ -3,22 +3,19 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import { useRouter } from "next/navigation";
+import { Menu, Table as TableIcon, List, LayoutGrid } from "lucide-react";
 
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuLabel,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { authHeaders } from "@/app/lib/auth";
-import ProfilePanel from "./ProfilePanel";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
-export default function Header({ onSearch, page }) {
+export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
     const router = useRouter();
     const { isLogin, setLogin, displayUser, activeAssignment } = useContext(loginContext);
+
+    function getInitials(name) {
+        if (!name) return "?";
+        return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
 
     // console.log(isLogin, "################################ is login header")
     const primaryAssignment =
@@ -36,34 +33,67 @@ export default function Header({ onSearch, page }) {
     const formattedCompanyName = primaryAssignment?.companyName || 'N/A';
 
 
+    const fieldsConfig = page === "companies"
+        ? [
+            { id: "companyName", label: "Company Name" },
+            { id: "email", label: "Email" },
+            { id: "phone", label: "Phone" },
+            { id: "status", label: "Status" }
+        ]
+        : [
+            { id: "name", label: "Name" },
+            { id: "email", label: "Email" },
+            { id: "phone", label: "Phone" },
+            { id: "groupName", label: "Group Name" },
+            { id: "status", label: "Status" }
+        ];
+
+    const defaultField = fieldsConfig[0]?.id || "name";
+    const isListPage = page === "users" || page === "companies";
+
     const [openProfile, setOpenProfile] = useState(false);
     const [searchValue, setSearchValue] = useState("");
     const [showSearchPopup, setShowSearchPopup] = useState(false);
     const [showSidePanel, setShowSidePanel] = useState(false);
     const [filterCondition, setFilterCondition] = useState("All");
-    const [position, setPosition] = React.useState("grid")
     const { impersonating, stopImpersonating } = useContext(loginContext);
-    const [showProfilePanel, setShowProfilePanel] = useState(false);
+    // const [showProfilePanel, setShowProfilePanel] = useState(false);
 
     const [filterRows, setFilterRows] = useState([
         {
-            field: "name",
+            field: defaultField,
             operator: "equal",
             value: ""
         }
     ]);
 
-    const [sidePanelFilters, setSidePanelFilters] = useState({
-        name: "",
-        email: "",
-        groupName: "",
-        companyName: "",
-        status: ""
+    const [sidePanelFilters, setSidePanelFilters] = useState(() => {
+        const obj = {};
+        fieldsConfig.forEach(f => {
+            obj[f.id] = "";
+        });
+        return obj;
     });
 
     const profileRef = useRef(null);
     const searchPopupRef = useRef(null);
     const debounceRef = useRef(null);
+
+    useEffect(() => {
+        setFilterRows([
+            {
+                field: defaultField,
+                operator: "equal",
+                value: ""
+            }
+        ]);
+        const obj = {};
+        fieldsConfig.forEach(f => {
+            obj[f.id] = "";
+        });
+        setSidePanelFilters(obj);
+        setSearchValue("");
+    }, [page]);
 
     useEffect(() => {
         async function Page() {
@@ -152,7 +182,7 @@ export default function Header({ onSearch, page }) {
 
                 if (searchValue.trim() !== "") {
                     filters.push({
-                        key: "name",
+                        key: defaultField,
                         operator: "contains",
                         value: searchValue
                     });
@@ -170,7 +200,7 @@ export default function Header({ onSearch, page }) {
         let temp = [...filterRows];
 
         temp.push({
-            field: "name",
+            field: defaultField,
             operator: "equal",
             value: ""
         });
@@ -223,7 +253,7 @@ export default function Header({ onSearch, page }) {
     const handlePopupReset = () => {
         setFilterRows([
             {
-                field: "name",
+                field: defaultField,
                 operator: "equal",
                 value: ""
             }
@@ -251,7 +281,7 @@ export default function Header({ onSearch, page }) {
             let filters = [];
 
             for (let item in temp) {
-                if (temp[item].trim() !== "") {
+                if (temp[item] && temp[item].trim() !== "") {
                     filters.push({
                         key: item,
                         operator: "contains",
@@ -270,13 +300,11 @@ export default function Header({ onSearch, page }) {
     };
 
     const handleSidePanelReset = () => {
-        setSidePanelFilters({
-            name: "",
-            email: "",
-            groupName: "",
-            companyName: "",
-            status: ""
+        const obj = {};
+        fieldsConfig.forEach(f => {
+            obj[f.id] = "";
         });
+        setSidePanelFilters(obj);
 
         if (onSearch) {
             onSearch({
@@ -309,7 +337,7 @@ export default function Header({ onSearch, page }) {
                         </div>
                     </div>
 
-                    {page === "users" && (
+                    {isListPage && (
                         <div className="flex h-12 w-[520px] items-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                             <div className="px-4 text-gray-500 text-lg">
                                 ⌕
@@ -317,7 +345,7 @@ export default function Header({ onSearch, page }) {
 
                             <input
                                 type="text"
-                                placeholder="Search Name..."
+                                placeholder={`Search ${fieldsConfig[0]?.label || "Name"}...`}
                                 value={searchValue}
                                 onChange={handleSearch}
                                 onKeyDown={handleEnterSearch}
@@ -332,13 +360,14 @@ export default function Header({ onSearch, page }) {
                 </div>
 
                 <div className="flex items-center gap-5">
-                    {page === "users" && <div className="flex items-center gap-4 text-gray-500">
+                    {isListPage && <div className="flex items-center gap-4 text-gray-500">
                         <div
                             className="relative"
                             ref={searchPopupRef}
                         >
                             <button
                                 className="text-lg hover:text-blue-600 cursor-pointer"
+                                title="Search"
                                 onClick={() =>
                                     setShowSearchPopup(!showSearchPopup)
                                 }
@@ -401,25 +430,11 @@ export default function Header({ onSearch, page }) {
                                                     }
                                                     className="border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-700 outline-none flex-1"
                                                 >
-                                                    <option value="name">
-                                                        Name
-                                                    </option>
-
-                                                    <option value="email">
-                                                        Email
-                                                    </option>
-
-                                                    <option value="phone">
-                                                        Phone
-                                                    </option>
-
-                                                    <option value="groupName">
-                                                        Group Name
-                                                    </option>
-
-                                                    <option value="status">
-                                                        Status
-                                                    </option>
+                                                    {fieldsConfig.map((field) => (
+                                                        <option key={field.id} value={field.id}>
+                                                            {field.label}
+                                                        </option>
+                                                    ))}
                                                 </select>
 
                                                 <select
@@ -505,6 +520,7 @@ export default function Header({ onSearch, page }) {
 
                         <button
                             className={`text-lg hover:text-blue-600 cursor-pointer ${showSidePanel ? "text-blue-600" : ""}`}
+                            title="Filters"
                             onClick={() =>
                                 setShowSidePanel(!showSidePanel)
                             }
@@ -512,64 +528,68 @@ export default function Header({ onSearch, page }) {
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                 <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z" />
                             </svg>
-                        </button>
 
-                        {/* <div className="mt-1">
+                        </button>
+                    </div>}
+                    {onViewModeChange && (
+                        <div className="relative group">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <div variant="outline"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm8.5 0v8H15V2zm0 9v3H15v-3zm-1-9H1v3h6.5zM1 14h6.5V6H1z" />
-                                    </svg></div>
+                                    <span className="inline-flex text-lg hover:text-blue-600 cursor-pointer">
+                                        <Menu size={18} />
+                                    </span>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-32">
-                                    <DropdownMenuGroup>
-                                        <DropdownMenuLabel>View Preference</DropdownMenuLabel>
-                                        <DropdownMenuRadioGroup value={position} onValueChange={setPosition}>
-                                            <DropdownMenuRadioItem value="list">List</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="grid">Grid</DropdownMenuRadioItem>
-                                            <DropdownMenuRadioItem value="table">Table</DropdownMenuRadioItem>
-                                        </DropdownMenuRadioGroup>
-                                    </DropdownMenuGroup>
+                                <DropdownMenuContent align="end" className="w-40">
+                                    <DropdownMenuRadioGroup value={viewMode} onValueChange={onViewModeChange}>
+                                        <DropdownMenuRadioItem
+                                            value="table"
+                                            className={`gap-2 ${viewMode === "table" ? "text-blue-600 font-semibold" : ""}`}
+                                        >
+                                            <TableIcon size={16} /> Table View
+                                        </DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem
+                                            value="list"
+                                            className={`gap-2 ${viewMode === "list" ? "text-blue-600 font-semibold" : ""}`}
+                                        >
+                                            <List size={16} /> List View
+                                        </DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem
+                                            value="grid"
+                                            className={`gap-2 ${viewMode === "grid" ? "text-blue-600 font-semibold" : ""}`}
+                                        >
+                                            <LayoutGrid size={16} /> Grid View
+                                        </DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        </div> */}
-                    </div>}
 
-                    {/* <div className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
-                        <img
-                            src="https://flagcdn.com/us.svg"
-                            alt="flag"
-                            className="h-4 w-6 rounded-sm object-cover"
-                        />
-
-                        <span className="text-sm text-gray-700">
-                            English
-                        </span>
-
-                        <span className="text-xs text-gray-500">
-                            ▼
-                        </span>
-                    </div> */}
-
-                    {/* <button className="text-gray-500 hover:text-blue-600">
-                        <img src="/header/menu.svg" alt="" />
-
-                    </button> */}
-
+                            <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                                Change View
+                            </span>
+                        </div>
+                    )}
                     <div className="relative" ref={profileRef}>
                         <div
                             onClick={() => setOpenProfile(!openProfile)}
                             className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1 hover:bg-gray-100"
                         >
-                            <img
-                                src={
-                                    !displayUser?.userFile
-                                        ? "https://i.pravatar.cc/150?img=12"
-                                        : image
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-blue-100">
+                                {displayUser?.userFile
+                                    ? <img
+                                        src={image}
+                                        alt="profile"
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                    />
+                                    : null
                                 }
-                                alt="profile"
-                                className="h-10 w-10 rounded-full object-cover"
-                            />
+                                <span
+                                    style={{ display: displayUser?.userFile ? 'none' : 'flex' }}
+                                    className="h-full w-full items-center justify-center text-sm font-bold text-blue-600 absolute inset-0"
+                                >
+                                    {getInitials(displayUser?.name)}
+                                </span>
+                            </div>
 
                             <div className="leading-tight">
                                 <h4 className="text-sm font-semibold text-gray-800">
@@ -590,7 +610,7 @@ export default function Header({ onSearch, page }) {
                             <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
                                 <button
                                     className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b"
-                                    onClick={() => { setShowProfilePanel(true); setOpenProfile(false); }}
+                                    onClick={() => { router.push("/profile"); setOpenProfile(false); }}
                                 >
                                     <span className="text-sm font-medium text-gray-700 cursor-pointer">Profile</span>
                                 </button>
@@ -671,110 +691,51 @@ export default function Header({ onSearch, page }) {
                 </div>
 
                 <div className="p-5 flex flex-col gap-5 overflow-y-auto h-[calc(100%-64px)]">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                        </label>
+                    {fieldsConfig.map((field) => (
+                        <div key={field.id}>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {field.label}
+                            </label>
 
-                        <input
-                            type="text"
-                            value={sidePanelFilters.name}
-                            onChange={(e) =>
-                                handleSidePanelFilter(
-                                    "name",
-                                    e.target.value
-                                )
-                            }
-                            placeholder="Please enter Name"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-black"
-                        />
-                    </div>
+                            {field.id === "status" ? (
+                                <select
+                                    value={sidePanelFilters[field.id] || ""}
+                                    onChange={(e) =>
+                                        handleSidePanelFilter(
+                                            field.id,
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-gray-600"
+                                >
+                                    <option value="">
+                                        Select Status
+                                    </option>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
+                                    <option value="Active">
+                                        Active
+                                    </option>
 
-                        <input
-                            type="text"
-                            value={sidePanelFilters.email}
-                            onChange={(e) =>
-                                handleSidePanelFilter(
-                                    "email",
-                                    e.target.value
-                                )
-                            }
-                            placeholder="Please enter Email"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-black"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Group Name
-                        </label>
-
-                        <input
-                            type="text"
-                            value={sidePanelFilters.groupName}
-                            onChange={(e) =>
-                                handleSidePanelFilter(
-                                    "groupName",
-                                    e.target.value
-                                )
-                            }
-                            placeholder="Enter Group Name"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-black"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Company Name
-                        </label>
-
-                        <input
-                            type="text"
-                            value={sidePanelFilters.companyName}
-                            onChange={(e) =>
-                                handleSidePanelFilter(
-                                    "companyName",
-                                    e.target.value
-                                )
-                            }
-                            placeholder="Enter Company Name"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-black"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Status
-                        </label>
-
-                        <select
-                            value={sidePanelFilters.status}
-                            onChange={(e) =>
-                                handleSidePanelFilter(
-                                    "status",
-                                    e.target.value
-                                )
-                            }
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-gray-600"
-                        >
-                            <option value="">
-                                Select Status
-                            </option>
-
-                            <option value="Active">
-                                Active
-                            </option>
-
-                            <option value="Inactive">
-                                Inactive
-                            </option>
-                        </select>
-                    </div>
+                                    <option value="Inactive">
+                                        Inactive
+                                    </option>
+                                </select>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={sidePanelFilters[field.id] || ""}
+                                    onChange={(e) =>
+                                        handleSidePanelFilter(
+                                            field.id,
+                                            e.target.value
+                                        )
+                                    }
+                                    placeholder={field.id === "groupName" || field.id === "companyName" ? `Enter ${field.label}` : `Please enter ${field.label}`}
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-black"
+                                />
+                            )}
+                        </div>
+                    ))}
 
                     <button
                         onClick={handleSidePanelReset}
@@ -784,11 +745,6 @@ export default function Header({ onSearch, page }) {
                     </button>
                 </div>
             </div>
-            {showProfilePanel && (
-                <div className="fixed inset-0 z-50 bg-[#f5f6f8] overflow-y-auto" style={{ top: 0, left: 0, right: 0, bottom: 0, position: "fixed" }}>
-                    <ProfilePanel onClose={() => setShowProfilePanel(false)} />
-                </div>
-            )}
         </>
     );
 }

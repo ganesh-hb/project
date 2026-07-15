@@ -22,6 +22,11 @@ const MySwal = withReactContent(Swal);
 
 const MAX_DOB = dayjs().subtract(18, "year");
 
+function getInitials(name) {
+    if (!name) return "?";
+    return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
 export default function EditUserPage({ user, onBack }) {
     const router = useRouter();
 
@@ -71,6 +76,7 @@ export default function EditUserPage({ user, onBack }) {
     const [groupId, setGroupId] = useState("");
 
     const [preview, setPreview] = useState("");
+    const [imageRemoved, setImageRemoved] = useState(false);
     const fileInputRef = useRef(null);
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
@@ -164,7 +170,9 @@ export default function EditUserPage({ user, onBack }) {
         });
 
         setPreview(
-            `http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`
+            user.user_userFile
+                ? `http://localhost:4000/upload/${user.user_userId}/${user.user_userFile}`
+                : ""
         );
 
         const primary =
@@ -205,6 +213,7 @@ export default function EditUserPage({ user, onBack }) {
         if (file) {
             setFormData((prev) => ({ ...prev, userFile: file }));
             setPreview(URL.createObjectURL(file));
+            setImageRemoved(false);
         }
     };
 
@@ -222,6 +231,7 @@ export default function EditUserPage({ user, onBack }) {
         if (result.isConfirmed) {
             setFormData((prev) => ({ ...prev, userFile: null }));
             setPreview("");
+            setImageRemoved(true);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
@@ -307,6 +317,9 @@ export default function EditUserPage({ user, onBack }) {
                 payload.append("groupId", groupId);
                 if (formData.userFile) {
                     payload.append("userFile", formData.userFile);
+                }
+                if (imageRemoved && !formData.userFile) {
+                    payload.append("removeUserFile", "true");
                 }
 
 
@@ -516,13 +529,23 @@ export default function EditUserPage({ user, onBack }) {
                                     {errors.userFile && (
                                         <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
                                     )}
-                                    {preview && (
-                                        <div className="relative mt-4 h-24 w-24">
-                                            <img
+                                    <div className="relative mt-4 h-24 w-24 rounded-full overflow-hidden border bg-blue-100">
+                                        {preview
+                                            ? <img
                                                 src={preview}
                                                 alt="preview"
-                                                className="h-24 w-24 rounded-full object-cover border"
+                                                className="h-full w-full object-cover"
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                             />
+                                            : null
+                                        }
+                                        <span
+                                            style={{ display: preview ? 'none' : 'flex' }}
+                                            className="h-full w-full items-center justify-center text-2xl font-bold text-blue-600 absolute inset-0"
+                                        >
+                                            {getInitials(formData.firstName || formData.surname ? `${formData.firstName} ${formData.surname}`.trim() : formData.name)}
+                                        </span>
+                                        {preview && (
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveImage}
@@ -531,8 +554,8 @@ export default function EditUserPage({ user, onBack }) {
                                             >
                                                 ✕
                                             </button>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>

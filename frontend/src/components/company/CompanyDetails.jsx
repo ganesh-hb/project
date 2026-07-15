@@ -15,6 +15,11 @@ export default function CompanyDetails({ id }) {
     const [showEdit, setShowEdit] = useState(false);
     const [imgPreview, setImgPreview] = useState(false);
 
+    function getInitials(name) {
+        if (!name) return "?";
+        return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
     useEffect(() => {
         fetchCompany();
     }, [showEdit]);
@@ -143,13 +148,24 @@ export default function CompanyDetails({ id }) {
                             <div className="grid gap-6 lg:grid-cols-2">
                                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                                     <div className="flex items-center gap-4 border-b pb-5">
-                                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-md">
-                                            <img
-                                                src={imageUrl}
-                                                alt="company"
-                                                className="h-full w-full object-cover cursor-pointer"
-                                                onClick={() => setImgPreview(true)}
-                                            />
+                                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-md relative">
+                                            {company.companyFile
+                                                ? <img
+                                                    src={imageUrl}
+                                                    alt="company"
+                                                    className="h-full w-full object-cover cursor-pointer"
+                                                    onClick={() => setImgPreview(true)}
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                />
+                                                : null
+                                            }
+                                            <span
+                                                style={{ display: company.companyFile ? 'none' : 'flex' }}
+                                                className="h-full w-full items-center justify-center text-lg font-bold text-blue-600 absolute inset-0 cursor-pointer"
+                                                onClick={() => company.companyFile && setImgPreview(true)}
+                                            >
+                                                {getInitials(company.companyName)}
+                                            </span>
                                             {imgPreview && (
                                                 <div
                                                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -177,7 +193,7 @@ export default function CompanyDetails({ id }) {
                                     </div>
                                     <div className="mt-6 space-y-4">
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Company Code</p><p className="font-medium text-gray-800">{company.companyCode || "-"}</p></div>
-                                        <div className="grid grid-cols-2"><p className="text-gray-500">Location</p><p className="font-medium text-gray-800">{company.companyLocation || "-"}</p></div>
+                                        <div className="grid grid-cols-2"><p className="text-gray-500">Location</p><p className="font-medium text-gray-800">{company.city || "-"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Website</p><p className="font-medium text-gray-800">{company.website || "N/A"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Added By</p><p className="font-medium text-gray-800">{company.addedByName || "-"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Updated By</p><p className="font-medium text-gray-800">{company.updatedByName || "-"}</p></div>
@@ -196,9 +212,9 @@ export default function CompanyDetails({ id }) {
                                     <div className="rounded-2xl bg-white p-6 shadow-sm">
                                         <h3 className="mb-5 text-lg font-semibold text-gray-800">Address</h3>
                                         <div className="space-y-4">
-                                            <div><p className="text-sm text-gray-500">Address</p><p className="font-medium text-gray-800">{company.AddressLineOne || "N/A"}</p></div>
-                                            <div><p className="text-sm text-gray-500">City / State</p><p className="font-medium text-gray-800">{[company.state, company.country].filter(Boolean).join(", ") || "N/A"}</p></div>
-                                            <div><p className="text-sm text-gray-500">Postal Code</p><p className="font-medium text-gray-800">{company.postalCode || "N/A"}</p></div>
+                                            <div><p className="text-sm text-gray-500">Address</p><p className="font-medium text-gray-800">{company.AddressLineOne || "-"}</p></div>
+                                            <div><p className="text-sm text-gray-500">City / State</p><p className="font-medium text-gray-800">{[company.city, company.state, company.country].filter(Boolean).join(", ") || "N/A"}</p></div>
+                                            <div><p className="text-sm text-gray-500">Postal Code</p><p className="font-medium text-gray-800">{company.postalCode || "-"}</p></div>
                                         </div>
                                     </div>
                                 </div>

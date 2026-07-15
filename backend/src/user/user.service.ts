@@ -207,8 +207,12 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             if (params.phone)          user.phone          = params.phone;
             if (params.status)         user.status         = params.status;
             if (params.updatedBy)       user.updatedBy      = params.updatedBy
-            if (userFile)              user.userFile       = userFile.filename;
-            
+           if (userFile) {
+             user.userFile = userFile.filename;
+            } else if (params.removeUserFile === 'true') {
+                user.userFile = null;
+            }
+                        
             user.updatedDate = new Date();
 
             await this.userEntity.save(user);
@@ -363,6 +367,29 @@ async startUpdate(params: any, userFile?: any, req?: any) {
             };
         }
     }
+
+    async logout(body: any) {
+    try {
+        this.eventEmitter.emit('activity.log', {
+            activityCode: ActivityCode.USER_LOGOUT,
+            userId: body.userId,
+            companyId: body.companyId,
+            actorType: 'USER',
+            executionStatus: 'SUCCESS',
+            severity: 'INFO',
+            parameters: { userEmail: body.email },
+            metadata: {},
+        });
+
+        return { success: 1, message: 'Logged out successfully' };
+    } catch (error: any) {
+        return {
+            success: 0,
+            message: 'Something went wrong',
+            error: error instanceof Error ? error.message : 'An unexpected error occurred',
+        };
+    }
+}
 
 async getUsers(param: any, req?: any) {
     let return_data: any = {};

@@ -50,7 +50,7 @@ export class UserController {
         @Body() body: UserDto,
         @UploadedFile() userFile: Express.Multer.File,
     ) {
-        if (!userFile) return "File required!!!";
+
 
         const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
         if (!allowedTypes.includes(userFile.mimetype)) {
@@ -120,7 +120,7 @@ export class UserController {
         const result = await this.userService.login(body);
         return {
         encrypted: encryptResponse(result),
-};
+        };
     }
 
  @Post('user-list')
@@ -191,5 +191,11 @@ export class UserController {
     async getMyProfile(@Req() req: any) {
     const result = await this.userService.getUser({ id: String(req.user.userId) }, req);
     return { encrypted: encryptResponse(result) };
+    
+    }
+
+    @Post('user-logout')
+    async logout(@Body() body: { userId: number; companyId?: number; email?: string }) {
+    return this.userService.logout(body);
 }
 }

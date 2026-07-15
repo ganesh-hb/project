@@ -1,10 +1,13 @@
 "use client";
 import { useContext, useState } from "react";
+import { useRouter } from "next/navigation";
 import { loginContext } from "./hooks/LoginContext";
 import ActivityTimeline from '@/components/activity/ActivityTimeline';
 import Header from "./Header";
 
-export default function ProfilePage({ onClose }) {
+export default function ProfilePage() {
+    const router = useRouter();
+    const onClose = () => router.push("/");
     const { isLogin, displayUser, activeAssignment, permissions } = useContext(loginContext);
     const [activeTab, setActiveTab] = useState("summary");
     const [imgPreview, setImgPreview] = useState(false);
@@ -31,6 +34,13 @@ export default function ProfilePage({ onClose }) {
         if (status === "Active") return "inline-block rounded-full bg-green-100 px-3 py-1 text-sm text-green-700";
         if (status === "Inactive") return "inline-block rounded-full bg-red-100 px-3 py-1 text-sm text-red-700";
         return "inline-block rounded-full bg-sky-100 px-3 py-1 text-sm text-sky-700";
+    };
+
+    const getInitials = (name) => {
+        if (!name) return "";
+        const parts = name.trim().split(/\s+/);
+        const initials = parts.map(p => p[0]).join("");
+        return initials.slice(0, 2).toUpperCase();
     };
 
     const groupedPermissions = permissions.reduce((acc, perm) => {
@@ -110,14 +120,24 @@ export default function ProfilePage({ onClose }) {
                                 {/* Profile card */}
                                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                                     <div className="flex items-center gap-4 border-b pb-5">
-                                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md">
-                                            <img
-                                                src={imageurl}
-                                                alt="profile"
-                                                className="h-full w-full object-cover cursor-pointer"
-                                                onError={(e) => { e.target.style.display = "none"; }}
-                                                onClick={() => setImgPreview(true)}
-                                            />
+                                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md relative">
+                                            {displayUser?.userFile
+                                                ? <img
+                                                    src={imageurl}
+                                                    alt="profile"
+                                                    className="h-full w-full object-cover cursor-pointer"
+                                                    onClick={() => setImgPreview(true)}
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                />
+                                                : null
+                                            }
+                                            <span
+                                                style={{ display: displayUser?.userFile ? 'none' : 'flex' }}
+                                                className="h-full w-full items-center justify-center absolute inset-0 cursor-pointer"
+                                                onClick={() => displayUser?.userFile && setImgPreview(true)}
+                                            >
+                                                {getInitials(displayUser?.name)}
+                                            </span>
                                             {imgPreview && (
                                                 <div
                                                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -128,7 +148,7 @@ export default function ProfilePage({ onClose }) {
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
                                                         <button
-                                                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
+                                                            className="cursor-pointer absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
                                                             onClick={() => setImgPreview(false)}
                                                         >
                                                             ✕
@@ -219,7 +239,9 @@ export default function ProfilePage({ onClose }) {
                         )}
 
                         {activeTab === "activity" && (
-                            <ActivityTimeline userId={displayUser?.userId} />
+                            <div className="max-h-[70vh] overflow-y-auto pr-2 my-4">
+                                <ActivityTimeline userId={displayUser?.userId} />
+                            </div>
                         )}
 
                         {activeTab === "permissions" && (

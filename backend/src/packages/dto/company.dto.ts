@@ -24,10 +24,10 @@ export class CompanyDto {
     @IsEnum(isStatus)
     status!: string;
 
-    @IsOptional()
-    @IsString()
-    @Length(2, 100)
-    companyLocation?: string;
+    // @IsOptional()
+    // @IsString()
+    // @Length(2, 100)
+    // companyLocation?: string;
 
     @IsOptional()
     @IsEmail()
@@ -44,7 +44,7 @@ export class CompanyDto {
 
     @IsOptional()
     @IsString()
-    phone?: number;
+    phone?: string;
 
     @IsOptional()
     @Transform(({ value }) => Number(value))
@@ -57,6 +57,10 @@ export class CompanyDto {
     @IsOptional()
     @IsString()
     state?: string;
+
+    @IsOptional()
+    @IsString()
+    city?: string;
 
     // @IsOptional()
     // @IsNumber()
@@ -104,10 +108,10 @@ export class CompanyUpdateDto {
     @Length(2, 20)
     companyCode?: string;
 
-    @IsOptional()
-    @IsString()
-    @Length(2, 100)
-    companyLocation?: string;
+    // @IsOptional()
+    // @IsString()
+    // @Length(2, 100)
+    // companyLocation?: string;
 
     @IsOptional()
     @IsString()
@@ -128,9 +132,8 @@ export class CompanyUpdateDto {
     dialCode?: number;
 
     @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => Number(value))
-    phone?: number;
+    @IsString()
+    phone?: string;
 
     @IsOptional()
     @IsString()
@@ -139,6 +142,10 @@ export class CompanyUpdateDto {
     @IsOptional()
     @IsString()
     state?: string;
+
+    @IsOptional()
+    @IsString()
+    city?: string;
 
     // @IsOptional()
     // @IsNumber()
@@ -167,6 +174,10 @@ export class CompanyUpdateDto {
 
     @IsOptional()
     companyFile: any;
+
+    @IsOptional()
+    @IsString()
+    removeCompanyFile?: string; // "true" when the user explicitly removed the existing logo
 }
 
 export class getCompanyListDto {
@@ -181,9 +192,13 @@ export class getCompanyListDto {
     limit!: number;
 
     @IsOptional()
-    @ValidateNested()
+    @ValidateNested({ each: true })
     @Type(() => filterDto)
     filters: any;
+
+    @IsOptional()
+    @IsString()
+    condition?: string;
 }
 
 export class filterDto {

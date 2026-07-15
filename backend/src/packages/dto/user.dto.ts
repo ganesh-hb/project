@@ -143,6 +143,10 @@ export class userUpdateDto {
     remarks?: string;
 
     @IsOptional()
+    @IsString()
+    removeUserFile?: string; 
+
+    @IsOptional()
     @IsInt()
     @Min(18)
     @Transform(({ value }) => Number(value))

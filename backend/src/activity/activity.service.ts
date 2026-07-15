@@ -32,10 +32,6 @@ export class ActivityService {
         private readonly filterHelper: Filter,
     ) {}
 
-    /**
-     * Safe execution method to write an activity log.
-     * Prevents database issues from blocking main transactions.
-     */
     async log(payload: LogPayload): Promise<void> {
         try {
             const master = await this.masterRepository.findOne({
@@ -50,7 +46,6 @@ export class ActivityService {
             const severity = payload.severity || master.defaultSeverity;
             const generatedMessage = this.compileMessage(master.template, payload.parameters);
 
-            // Use repository.insert to persist activity log, bypassing TypeScript overload validation
             await this.logRepository.insert({
                 activityMasterId: master.activityMasterId,
                 userId: payload.userId ?? undefined,
@@ -69,10 +64,6 @@ export class ActivityService {
             console.error('Failed to save activity log:', error);
         }
     }
-
-    /**
-     * Lists logs with pagination, filtering, and company isolation scopes.
-     */
     async listLogs(query: GetActivityListDto, reqContext: any): Promise<any> {
         try {
             const queryBuilder = this.logRepository
@@ -121,8 +112,6 @@ export class ActivityService {
                 queryBuilder.andWhere(filterStr);
             }
 
-            // Date range filter (inclusive of the full end day), driven by the
-            // react-date-range picker on the frontend (values arrive as 'YYYY-MM-DD').
             if (query.startDate) {
                 const start = new Date(`${query.startDate}T00:00:00.000`);
                 queryBuilder.andWhere('activity_log.createdAt >= :startDate', { startDate: start });
@@ -175,9 +164,6 @@ export class ActivityService {
         }
     }
 
-    /**
-     * Subsitutes placeholders {{var}} in templates with values from parameters.
-     */
     private compileMessage(template: string, params: any): string {
         if (!template) return '';
         if (!params) return template;
@@ -186,8 +172,4 @@ export class ActivityService {
         });
     }
 
-    /**
-     * Filters out sensitive fields to protect user privacy.
-     */
-    // Sanitization is now handled in ActivityListener.
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, ConsoleLogger, Controller, Get, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
 import { multerConfig } from 'src/packages/config/multer.config';
 import { CompanyService } from './company.service';
@@ -29,8 +29,6 @@ export class CompanyController {
                         message: "invalid File type"
                     }
                 }
-            }else{
-              return "File required!!!"
             }
             let param = { ...body, addedBy: req.user.userId };
             return await this.companyService.startInsertCompany(param, companyFile, req)

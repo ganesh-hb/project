@@ -49,15 +49,15 @@ async insertCompany(params: any, companyFile: any, req?: any) {
     try {
         if (params.companyName)     queryParams.companyName     = params.companyName;
         if (params.companyCode)     queryParams.companyCode     = params.companyCode;
-        if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
         if (params.status)          queryParams.status          = params.status;
         if (params.email)           queryParams.email           = params.email;
         if (params.website)         queryParams.website         = params.website;
         if (params.dialCode)        queryParams.dialCode        = Number(params.dialCode);
-        if (params.phone)           queryParams.phone           = Number(params.phone);
+        if (params.phone)           queryParams.phone           = params.phone;
         if (params.country)         queryParams.country         = params.country;
         if (params.state)           queryParams.state           = params.state;
-        if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
+        if (params.city)            queryParams.city            = params.city;
+        // if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
         if (params.AddressLineOne)  queryParams.AddressLineOne  = params.AddressLineOne;
         if (params.ownerName)       queryParams.ownerName       = params.ownerName;
         if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
@@ -130,15 +130,20 @@ async insertCompany(params: any, companyFile: any, req?: any) {
         if (params.email)           queryParams.email           = params.email;
         if (params.website)         queryParams.website         = params.website;
         if (params.dialCode)        queryParams.dialCode        = Number(params.dialCode);
-        if (params.phone)           queryParams.phone           = Number(params.phone);
+        if (params.phone)           queryParams.phone           = params.phone;
         if (params.country)         queryParams.country         = params.country;
         if (params.state)           queryParams.state           = params.state;
+        if (params.city)            queryParams.city            = params.city;
         if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
         if (params.AddressLineOne)  queryParams.AddressLineOne  = params.AddressLineOne;
         if (params.ownerName)       queryParams.ownerName       = params.ownerName;
         if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
         if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
-        if (companyFile)            queryParams.companyFile     = companyFile.filename;
+        if (companyFile) {
+            queryParams.companyFile = companyFile.filename;
+        } else if (params.removeCompanyFile === 'true') {
+            queryParams.companyFile = null;
+        }
         if (params.updatedBy)       queryParams.updatedBy       = Number(params.updatedBy);
 
         queryParams.updatedDate = () => 'NOW()';
@@ -181,6 +186,8 @@ async insertCompany(params: any, companyFile: any, req?: any) {
             const queryString = await this.filter.makeFilterString(
                 param?.filters,
                 alias,
+                {},
+                param?.condition === 'Any' ? 'Any' : 'All',
             );
 
             if (queryString && queryString !== '') {

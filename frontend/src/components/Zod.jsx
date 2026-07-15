@@ -123,7 +123,7 @@ export const AddFormSchema = z.object({
     companyId: z.string().min(1, "Please select Company."),
 
     userFile: z.any()
-        .refine((file) => !!file, "Profile image is required.")
+        .optional()
         .refine((file) => {
             if (!file) return true;
             return file.size <= MAX_FILE_SIZE;
@@ -147,7 +147,7 @@ export const CompanyUpdateSchema = z.object({
         errorMap: () => ({ message: "Please Select a valid Status." }),
     }),
     companyFile: z.any()
-        .refine((file) => !!file, "Profile image is required.")
+        .optional()
         .refine((file) => {
             if (!file) return true;
             return file.size <= MAX_FILE_SIZE;

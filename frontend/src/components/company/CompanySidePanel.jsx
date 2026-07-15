@@ -6,6 +6,11 @@ export default function CompanySidePanel({ companyId, onClose }) {
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    function getInitials(name) {
+        if (!name) return "?";
+        return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+    }
+
     useEffect(() => {
         if (!companyId) return;
         fetchCompany();
@@ -72,16 +77,22 @@ export default function CompanySidePanel({ companyId, onClose }) {
                     <div className="flex-1">
                         {/* Logo + name */}
                         <div className="flex items-center gap-4 px-6 py-5 border-b bg-gray-50">
-                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-50 border shadow-sm flex-shrink-0">
-                                <img
-                                    src={`http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`}
-                                    alt="logo"
-                                    className="h-full w-full object-cover"
-                                    onError={(e) => {
-                                        e.target.style.display = "none";
-                                        e.target.parentNode.innerHTML = `<span class="text-xl font-bold text-blue-400">${company.companyName?.charAt(0) ?? "C"}</span>`;
-                                    }}
-                                />
+                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-50 border shadow-sm flex-shrink-0 relative">
+                                {company.companyFile
+                                    ? <img
+                                        src={`http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`}
+                                        alt="logo"
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                    />
+                                    : null
+                                }
+                                <span
+                                    style={{ display: company.companyFile ? 'none' : 'flex' }}
+                                    className="h-full w-full items-center justify-center text-xl font-bold text-blue-400 absolute inset-0"
+                                >
+                                    {getInitials(company.companyName)}
+                                </span>
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-800 text-base">{company.companyName}</h3>

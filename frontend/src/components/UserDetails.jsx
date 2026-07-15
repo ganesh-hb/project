@@ -5,6 +5,14 @@ import EditUserPage from "./userUpdate";
 import { useContext } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import Header from "./Header";
+
+// Helper to generate initials from a name string
+const getInitials = (name) => {
+    if (!name) return "";
+    const parts = name.trim().split(/\s+/);
+    const initials = parts.map(p => p[0]).join("");
+    return initials.slice(0, 2).toUpperCase();
+};
 import { authHeaders } from "@/app/lib/auth";
 import { createPortal } from "react-dom";
 import CompanySidePanel from "./company/CompanySidePanel";
@@ -240,13 +248,24 @@ export default function UserDetailsPage({ id }) {
                                 {/* Profile card */}
                                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                                     <div className="flex items-center gap-4 border-b pb-5">
-                                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md">
-                                            <img
-                                                src={imageurl}
-                                                alt="userImage"
-                                                className="h-full w-full object-cover cursor-pointer"
-                                                onClick={() => setImgPreview(true)}
-                                            />
+                                        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md relative">
+                                            {userData.user_userFile
+                                                ? <img
+                                                    src={imageurl}
+                                                    alt="userImage"
+                                                    className="h-full w-full object-cover cursor-pointer"
+                                                    onClick={() => setImgPreview(true)}
+                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                />
+                                                : null
+                                            }
+                                            <span
+                                                style={{ display: userData.user_userFile ? 'none' : 'flex' }}
+                                                className="h-full w-full items-center justify-center absolute inset-0 cursor-pointer"
+                                                onClick={() => userData.user_userFile && setImgPreview(true)}
+                                            >
+                                                {getInitials(user.firstName ? `${user.firstName} ${user.surname}` : user.name)}
+                                            </span>
                                             {imgPreview && (
                                                 <div
                                                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -337,7 +356,9 @@ export default function UserDetailsPage({ id }) {
                             </div>
                         )}
                         {activeTab === "activity" && (
-                            <ActivityTimeline userId={id} />
+                            <div className="max-h-[70vh] overflow-y-auto pr-2 my-4">
+                                <ActivityTimeline userId={id} />
+                            </div>
                         )}
 
                         {/* ── OTHER PROFILES TAB ── */}
