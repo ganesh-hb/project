@@ -1,6 +1,11 @@
-import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 
@@ -16,254 +21,403 @@ import { resolveAuthContext } from 'src/utilities/auth-helper';
 
 @Injectable()
 export class CompanyService {
-    constructor(private readonly fileTransfer: FileTransfer, private readonly eventEmitter: EventEmitter2) {}
+  constructor(
+    private readonly fileTransfer: FileTransfer,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    @Inject()
-    private readonly filter!: Filter;
+  @Inject()
+  private readonly filter!: Filter;
 
-    @Inject()
-    private readonly mailer!: Mailer;
+  @Inject()
+  private readonly mailer!: Mailer;
 
-    @InjectRepository(CompanyEntity)
-    protected companyEntity!: Repository<CompanyEntity>;
+  @InjectRepository(CompanyEntity)
+  protected companyEntity!: Repository<CompanyEntity>;
 
-    @InjectRepository(UserCompanyGroupEntity)
-    protected ucgEntity!: Repository<UserCompanyGroupEntity>;
+  @InjectRepository(UserCompanyGroupEntity)
+  protected ucgEntity!: Repository<UserCompanyGroupEntity>;
 
-    @InjectRepository(CurrencyEntity)
-    protected currencyEntity!: Repository<CurrencyEntity>;
+  @InjectRepository(CurrencyEntity)
+  protected currencyEntity!: Repository<CurrencyEntity>;
 
-    @InjectRepository(CompanyCurrencyEntity)
-    protected companyCurrencyEntity!: Repository<CompanyCurrencyEntity>;
+  @InjectRepository(CompanyCurrencyEntity)
+  protected companyCurrencyEntity!: Repository<CompanyCurrencyEntity>;
 
-   async startInsertCompany(params: any, companyFile: any, req?: any) {
-        const res = await this.insertCompany(params, companyFile, req);
-        if (res.success === 1) {
-            return this.finishSuccess(res, params, companyFile);
-        }
-        return this.finishFailure(res);
+  async startInsertCompany(params: any, companyFile: any, req?: any) {
+    const res = await this.insertCompany(params, companyFile, req);
+    if (res.success === 1) {
+      return this.finishSuccess(res, params, companyFile);
     }
+    return this.finishFailure(res);
+  }
 
-async insertCompany(params: any, companyFile: any, req?: any) {
-    const queryParams: any = {};
+  async insertCompany(params: any, companyFile: any, req?: any) {
     try {
-        if (params.companyName)     queryParams.companyName     = params.companyName;
-        if (params.companyCode)     queryParams.companyCode     = params.companyCode;
-        if (params.status)          queryParams.status          = params.status;
-        if (params.email)           queryParams.email           = params.email;
-        if (params.website)         queryParams.website         = params.website;
-        if (params.dialCode)        queryParams.dialCode        = Number(params.dialCode);
-        if (params.phone)           queryParams.phone           = params.phone;
-        if (params.country)         queryParams.country         = params.country;
-        if (params.state)           queryParams.state           = params.state;
-        if (params.city)            queryParams.city            = params.city;
-        // if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
-        if (params.AddressLineOne)  queryParams.AddressLineOne  = params.AddressLineOne;
-        if (params.ownerName)       queryParams.ownerName       = params.ownerName;
-        if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
-        if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
-        if (companyFile)            queryParams.companyFile     = companyFile.filename;
-        if (params.addedBy)         queryParams.addedBy         = Number(params.addedBy);
+      let codeExists = false;
+      let emailExists = false;
+      if (params.companyCode) {
+        const existingCode = await this.companyEntity.findOne({
+          where: { companyCode: params.companyCode },
+        });
+        if (existingCode) codeExists = true;
+      }
+      if (params.email) {
+        const existingEmail = await this.companyEntity.findOne({
+          where: { email: params.email },
+        });
+        if (existingEmail) emailExists = true;
+      }
 
-        const result = await this.companyEntity.insert(queryParams);
-        const insertId = result?.raw?.insertId;
+      if (codeExists && emailExists) {
+        return { success: 0, message: 'Company code and Email already exist' };
+      } else if (codeExists) {
+        return { success: 0, message: 'Company code already exists' };
+      } else if (emailExists) {
+        return { success: 0, message: 'Email already exists' };
+      }
 
-        if (params.curId && insertId) {
-            await this.companyCurrencyEntity.insert({ companyId: insertId, curId: Number(params.curId) });
+      const queryParams: any = {};
+      if (params.companyName) queryParams.companyName = params.companyName;
+      if (params.companyCode) queryParams.companyCode = params.companyCode;
+      if (params.status) queryParams.status = params.status;
+      if (params.email) queryParams.email = params.email;
+      if (params.website) queryParams.website = params.website;
+      if (params.dialCode) queryParams.dialCode = Number(params.dialCode);
+      if (params.phone) queryParams.phone = params.phone;
+      if (params.country) queryParams.country = params.country;
+      if (params.state) queryParams.state = params.state;
+      if (params.city) queryParams.city = params.city;
+      if (params.postalCode) queryParams.postalCode = Number(params.postalCode);
+      if (params.AddressLineOne)
+        queryParams.AddressLineOne = params.AddressLineOne;
+      if (params.ownerName) queryParams.ownerName = params.ownerName;
+      if (params.ownerEmail) queryParams.ownerEmail = params.ownerEmail;
+      if (params.ownerPhone) queryParams.ownerPhone = params.ownerPhone;
+      if (companyFile) queryParams.companyFile = companyFile.filename;
+      if (params.addedBy) queryParams.addedBy = Number(params.addedBy);
+
+      const result = await this.companyEntity.insert(queryParams);
+      const insertId = result?.raw?.insertId;
+
+      if (params.curIds && Array.isArray(params.curIds) && insertId) {
+        const currencyInsertions = params.curIds.map((curId: number) => ({
+          companyId: insertId,
+          curId: Number(curId),
+        }));
+        if (currencyInsertions.length > 0) {
+          await this.companyCurrencyEntity.insert(currencyInsertions);
         }
+      }
 
-        return { success: 1, message: 'Inserted successfully', data: { insertData: insertId } };
+      return {
+        success: 1,
+        message: 'Inserted successfully',
+        data: { insertData: insertId },
+      };
     } catch (err: any) {
-        return { success: 0, message: err?.message };
+      const errMsg = err?.message || '';
+      const driverMsg = err?.driverError?.message || '';
+      if (
+        err?.code === 'ER_DUP_ENTRY' ||
+        errMsg.includes('Duplicate entry') ||
+        driverMsg.includes('Duplicate entry')
+      ) {
+        if (
+          errMsg.includes('companyCode') ||
+          driverMsg.includes('companyCode')
+        ) {
+          return { success: 0, message: 'Company code already exists' };
+        }
+        if (errMsg.includes('email') || driverMsg.includes('email')) {
+          return { success: 0, message: 'Email already exists' };
+        }
+        return { success: 0, message: 'Company code or Email already exists' };
+      }
+      return { success: 0, message: err?.message };
     }
-}
+  }
 
-    async finishSuccess(res: any, params: any, companyFile: any) {
-        const output: any = {
-            settings: {
-                id: res?.data?.insertData,
-                success: res?.success,
-                message: res?.message,
-                data: params,
-            },
+  async finishSuccess(res: any, params: any, companyFile: any) {
+    const output: any = {
+      settings: {
+        id: res?.data?.insertData,
+        success: res?.success,
+        message: res?.message,
+        data: params,
+      },
+    };
+
+    const fid: number = parseInt(output.settings.id);
+    await this.fileTransfer.fileTransfer3(companyFile.filename, fid, fid);
+    return output;
+  }
+
+  async finishFailure(res: any) {
+    return res;
+  }
+
+  async startUpdate(params: any, companyFile: any, req?: any) {
+    const authCtx = await resolveAuthContext(req, this.ucgEntity);
+    if (!authCtx.isSuperAdmin) {
+      if (Number(params.companyId) !== authCtx.activeCompanyId) {
+        return {
+          success: 0,
+          message: 'Access denied: cannot modify another company',
         };
-
-        const fid: number = parseInt(output.settings.id);
-        await this.fileTransfer.fileTransfer3(companyFile.filename, fid, fid);
-        return output;
+      }
     }
-
-    async finishFailure(res: any) {
-        return res;
+    const res = await this.updateCompany(params, companyFile, req);
+    if (res.success === 1) {
+      return this.updateSuccess(res, params);
     }
+    return this.finishFailure(res);
+  }
 
-   async startUpdate(params: any, companyFile: any, req?: any) {
-        const authCtx = await resolveAuthContext(req, this.ucgEntity);
-        if (!authCtx.isSuperAdmin) {
-            if (Number(params.companyId) !== authCtx.activeCompanyId) {
-                return { success: 0, message: 'Access denied: cannot modify another company' };
-            }
-        }
-        const res = await this.updateCompany(params, companyFile, req);
-        if (res.success === 1) {
-            return this.updateSuccess(res, params);
-        }
-        return this.finishFailure(res);
-    }
-
-    async updateCompany(params: any, companyFile: any, req?: any) {
-    if (!params.companyId) return { success: 0, message: 'companyId is mandatory' };
+  async updateCompany(params: any, companyFile: any, req?: any) {
+    if (!params.companyId)
+      return { success: 0, message: 'companyId is mandatory' };
 
     try {
-        const authCtx = await resolveAuthContext(req, this.ucgEntity);
-        if (!authCtx.isSuperAdmin) {
-            if (Number(params.companyId) !== authCtx.activeCompanyId) {
-                return { success: 0, message: 'Access denied: cannot modify another company' };
-            }
+      const authCtx = await resolveAuthContext(req, this.ucgEntity);
+      if (!authCtx.isSuperAdmin) {
+        if (Number(params.companyId) !== authCtx.activeCompanyId) {
+          return {
+            success: 0,
+            message: 'Access denied: cannot modify another company',
+          };
         }
+      }
 
-        const queryParams: any = {};
-        if (params.companyName)     queryParams.companyName     = params.companyName;
-        if (params.companyCode)     queryParams.companyCode     = params.companyCode;
-        if (params.companyLocation) queryParams.companyLocation = params.companyLocation;
-        if (params.status)          queryParams.status          = params.status;
-        if (params.email)           queryParams.email           = params.email;
-        if (params.website)         queryParams.website         = params.website;
-        if (params.dialCode)        queryParams.dialCode        = Number(params.dialCode);
-        if (params.phone)           queryParams.phone           = params.phone;
-        if (params.country)         queryParams.country         = params.country;
-        if (params.state)           queryParams.state           = params.state;
-        if (params.city)            queryParams.city            = params.city;
-        if (params.postalCode)      queryParams.postalCode      = Number(params.postalCode);
-        if (params.AddressLineOne)  queryParams.AddressLineOne  = params.AddressLineOne;
-        if (params.ownerName)       queryParams.ownerName       = params.ownerName;
-        if (params.ownerEmail)      queryParams.ownerEmail      = params.ownerEmail;
-        if (params.ownerPhone)      queryParams.ownerPhone      = params.ownerPhone;
-        if (companyFile) {
-            queryParams.companyFile = companyFile.filename;
-        } else if (params.removeCompanyFile === 'true') {
-            queryParams.companyFile = null;
+      let codeExists = false;
+      let emailExists = false;
+      if (params.companyCode) {
+        const existingCode = await this.companyEntity.findOne({
+          where: {
+            companyCode: params.companyCode,
+            companyId: Not(Number(params.companyId)),
+          },
+        });
+        if (existingCode) codeExists = true;
+      }
+      if (params.email) {
+        const existingEmail = await this.companyEntity.findOne({
+          where: {
+            email: params.email,
+            companyId: Not(Number(params.companyId)),
+          },
+        });
+        if (existingEmail) emailExists = true;
+      }
+
+      if (codeExists && emailExists) {
+        return { success: 0, message: 'Company code and Email already exist' };
+      } else if (codeExists) {
+        return { success: 0, message: 'Company code already exists' };
+      } else if (emailExists) {
+        return { success: 0, message: 'Email already exists' };
+      }
+
+      const queryParams: any = {};
+      if (params.companyName) queryParams.companyName = params.companyName;
+      if (params.companyCode) queryParams.companyCode = params.companyCode;
+      if (params.companyLocation)
+        queryParams.companyLocation = params.companyLocation;
+      if (params.status) queryParams.status = params.status;
+      if (params.email) queryParams.email = params.email;
+      if (params.website) queryParams.website = params.website;
+      if (params.dialCode) queryParams.dialCode = Number(params.dialCode);
+      if (params.phone) queryParams.phone = params.phone;
+      if (params.country) queryParams.country = params.country;
+      if (params.state) queryParams.state = params.state;
+      if (params.city) queryParams.city = params.city;
+      if (params.postalCode) queryParams.postalCode = Number(params.postalCode);
+      if (params.AddressLineOne)
+        queryParams.AddressLineOne = params.AddressLineOne;
+      if (params.ownerName) queryParams.ownerName = params.ownerName;
+      if (params.ownerEmail) queryParams.ownerEmail = params.ownerEmail;
+      if (params.ownerPhone) queryParams.ownerPhone = params.ownerPhone;
+      if (companyFile) {
+        queryParams.companyFile = companyFile.filename;
+      } else if (params.removeCompanyFile === 'true') {
+        queryParams.companyFile = null;
+      }
+      if (params.updatedBy) queryParams.updatedBy = Number(params.updatedBy);
+
+      queryParams.updatedDate = () => 'NOW()';
+
+      await this.companyEntity.update(
+        { companyId: params.companyId },
+        queryParams,
+      );
+
+      if (companyFile) {
+        await this.fileTransfer.fileTransfer3(
+          companyFile.filename,
+          params.companyId,
+          params.companyId,
+        );
+      }
+
+      if (params.curIds && Array.isArray(params.curIds)) {
+        await this.companyCurrencyEntity.delete({
+          companyId: params.companyId,
+        });
+        const currencyInsertions = params.curIds.map((curId: number) => ({
+          companyId: Number(params.companyId),
+          curId: Number(curId),
+        }));
+        if (currencyInsertions.length > 0) {
+          await this.companyCurrencyEntity.insert(currencyInsertions);
         }
-        if (params.updatedBy)       queryParams.updatedBy       = Number(params.updatedBy);
+      }
 
-        queryParams.updatedDate = () => 'NOW()';
-
-        await this.companyEntity.update({ companyId: params.companyId }, queryParams);
-
-        if (companyFile) {
-                    await this.fileTransfer.fileTransfer3(companyFile.filename, params.companyId, params.companyId);
-                }
-
-        if (params.curId) {
-            const existing = await this.companyCurrencyEntity.findOne({ where: { companyId: params.companyId } });
-            if (existing) {
-                await this.companyCurrencyEntity.update({ companyId: params.companyId }, { curId: Number(params.curId) });
-            } else {
-                await this.companyCurrencyEntity.insert({ companyId: params.companyId, curId: Number(params.curId) });
-            }
-        }
-
-        return { success: 1, message: 'Updated successfully' };
+      return { success: 1, message: 'Updated successfully' };
     } catch (err: any) {
-        return { success: 0, message: err?.message };
-    }
-}
-    async updateSuccess(result: any, params: any) {
-        return { status: result, data: params };
-    }
-
-   async getCompanies(param: any, req?: any) {
-        let return_data: any = {};
-        try {
-            const authCtx = await resolveAuthContext(req, this.ucgEntity);
-            const queryBuilder = this.companyEntity.createQueryBuilder('company');
-            const alias = 'company';
-
-            if (!authCtx.isSuperAdmin) {
-                queryBuilder.andWhere('company.companyId = :activeCompanyId', { activeCompanyId: authCtx.activeCompanyId });
-            }
-
-            const queryString = await this.filter.makeFilterString(
-                param?.filters,
-                alias,
-                {},
-                param?.condition === 'Any' ? 'Any' : 'All',
-            );
-
-            if (queryString && queryString !== '') {
-                queryBuilder.andWhere(queryString);
-            }
-
-            const [skip, limit] = (await this.filter.calcPages(
-                param,
-                this.companyEntity,
-            )) as [number, number];
-
-            queryBuilder.skip(skip).take(limit);
-            const [data, total] = await queryBuilder.getManyAndCount();
-
-            return_data = {
-                success: 1,
-                message: 'List fetched successfully',
-                total,
-                data,
-            };
-        } catch (err: any) {
-            return_data = { success: 0, message: err.message };
+      const errMsg = err?.message || '';
+      const driverMsg = err?.driverError?.message || '';
+      if (
+        err?.code === 'ER_DUP_ENTRY' ||
+        errMsg.includes('Duplicate entry') ||
+        driverMsg.includes('Duplicate entry')
+      ) {
+        if (
+          errMsg.includes('companyCode') ||
+          driverMsg.includes('companyCode')
+        ) {
+          return { success: 0, message: 'Company code already exists' };
         }
-
-        return return_data;
-    }
-
-
-    async getCompany(query: any, req?: any) {
-        try {
-            const authCtx = await resolveAuthContext(req, this.ucgEntity);
-            const targetCompanyId = Number(query);
-            if (!authCtx.isSuperAdmin && targetCompanyId !== authCtx.activeCompanyId) {
-                throw new ForbiddenException('Access denied: cannot access another company');
-            }
-
-            const company = await this.companyEntity.findOne({
-                where: { companyId: targetCompanyId },
-            });
-
-            if (!company) {
-                throw new NotFoundException('Company not found');
-            }
-
-            const userRepo = this.companyEntity.manager.getRepository(UserEntity);
-            const [assignments, currencyMapping, allCurrencies, addedByUser, updatedByUser] = await Promise.all([
-                this.ucgEntity.find({ where: { companyId: targetCompanyId }, relations: ['user', 'group'] }),
-                this.companyCurrencyEntity.findOne({ where: { companyId: targetCompanyId }, relations: ['currency'] }),
-                this.currencyEntity.find({ order: { name: 'ASC' } }),
-                company.addedBy ? userRepo.findOne({ where: { userId: company.addedBy }, select: ['name'] }) : null,
-                company.updatedBy ? userRepo.findOne({ where: { userId: company.updatedBy }, select: ['name'] }) : null,
-            ]);
-
-            return {
-                ...company,
-                addedByName: addedByUser?.name ?? null,
-                updatedByName: updatedByUser?.name ?? null,
-                currency: currencyMapping?.currency ?? null,
-                curId: currencyMapping?.curId ?? null,
-                allCurrencies,
-                assignments: assignments.map((ucg) => ({
-                    userId: ucg.userId,
-                    userName: ucg.user?.name,
-                    userEmail: ucg.user?.email,
-                    groupId: ucg.groupId,
-                    groupName: ucg.group?.groupName,
-                    is_parent: ucg.is_parent,
-                })),
-            };
-        } catch (err) {
-            return err;
+        if (errMsg.includes('email') || driverMsg.includes('email')) {
+          return { success: 0, message: 'Email already exists' };
         }
+        return { success: 0, message: 'Company code or Email already exists' };
+      }
+      return { success: 0, message: err?.message };
+    }
+  }
+  async updateSuccess(result: any, params: any) {
+    return { status: result, data: params };
+  }
+
+  async getCompanies(param: any, req?: any) {
+    let return_data: any = {};
+    try {
+      const authCtx = await resolveAuthContext(req, this.ucgEntity);
+      const queryBuilder = this.companyEntity.createQueryBuilder('company');
+      const alias = 'company';
+
+      if (!authCtx.isSuperAdmin) {
+        queryBuilder.andWhere('company.companyId = :activeCompanyId', {
+          activeCompanyId: authCtx.activeCompanyId,
+        });
+      }
+
+      const queryString = await this.filter.makeFilterString(
+        param?.filters,
+        alias,
+        {},
+        param?.condition === 'Any' ? 'Any' : 'All',
+      );
+
+      if (queryString && queryString !== '') {
+        queryBuilder.andWhere(queryString);
+      }
+
+      const [skip, limit] = (await this.filter.calcPages(
+        param,
+        this.companyEntity,
+      )) as [number, number];
+
+      queryBuilder.skip(skip).take(limit);
+      const [data, total] = await queryBuilder.getManyAndCount();
+
+      return_data = {
+        success: 1,
+        message: 'List fetched successfully',
+        total,
+        data,
+      };
+    } catch (err: any) {
+      return_data = { success: 0, message: err.message };
     }
 
-   async getCurrencies(req?: any) {
-        return this.currencyEntity.find({ order: { name: 'ASC' } });
-    }
+    return return_data;
+  }
 
+  async getCompany(query: any, req?: any) {
+    try {
+      const authCtx = await resolveAuthContext(req, this.ucgEntity);
+      const targetCompanyId = Number(query);
+      if (
+        !authCtx.isSuperAdmin &&
+        targetCompanyId !== authCtx.activeCompanyId
+      ) {
+        throw new ForbiddenException(
+          'Access denied: cannot access another company',
+        );
+      }
+
+      const company = await this.companyEntity.findOne({
+        where: { companyId: targetCompanyId },
+      });
+
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+
+      const userRepo = this.companyEntity.manager.getRepository(UserEntity);
+      const [
+        assignments,
+        currencyMappings,
+        allCurrencies,
+        addedByUser,
+        updatedByUser,
+      ] = await Promise.all([
+        this.ucgEntity.find({
+          where: { companyId: targetCompanyId },
+          relations: ['user', 'group'],
+        }),
+        this.companyCurrencyEntity.find({
+          where: { companyId: targetCompanyId },
+          relations: ['currency'],
+        }),
+        this.currencyEntity.find({ order: { name: 'ASC' } }),
+        company.addedBy
+          ? userRepo.findOne({
+              where: { userId: company.addedBy },
+              select: ['name'],
+            })
+          : null,
+        company.updatedBy
+          ? userRepo.findOne({
+              where: { userId: company.updatedBy },
+              select: ['name'],
+            })
+          : null,
+      ]);
+
+      return {
+        ...company,
+        addedByName: addedByUser?.name ?? null,
+        updatedByName: updatedByUser?.name ?? null,
+        currencies: currencyMappings.map((cm) => cm.currency),
+        curIds: currencyMappings.map((cm) => cm.curId),
+        allCurrencies,
+        assignments: assignments.map((ucg) => ({
+          userId: ucg.userId,
+          userName: ucg.user?.name,
+          userEmail: ucg.user?.email,
+          groupId: ucg.groupId,
+          groupName: ucg.group?.groupName,
+          is_parent: ucg.is_parent,
+        })),
+      };
+    } catch (err) {
+      return err;
+    }
+  }
+
+  async getCurrencies(req?: any) {
+    return this.currencyEntity.find({ order: { name: 'ASC' } });
+  }
 }

@@ -73,7 +73,6 @@ export default function GroupUpdate({ id, onBack }) {
             const response = await fetch("/relayapi", {
                 method: "PUT",
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                     "Content-Type": "application/json",
                     endpoint: "group-update",
                     module: "group",

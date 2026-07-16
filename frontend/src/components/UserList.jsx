@@ -64,9 +64,8 @@ export default function UsersPage() {
     const [companyAdmin, setCompanyAdmin] = useState(false);
 
     useEffect(() => {
-        const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        setSuperAdmin(isSuperAdmin(isLogin || storedUser));
-        setCompanyAdmin(isCompanyAdmin(isLogin || storedUser));
+        setSuperAdmin(isSuperAdmin(isLogin));
+        setCompanyAdmin(isCompanyAdmin(isLogin));
     }, [isLogin]);
 
     const [expandedRows, setExpandedRows] = useState({});

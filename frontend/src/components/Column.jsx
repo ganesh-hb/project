@@ -55,8 +55,7 @@ function LoginAsCell({ row }) {
     const { isLogin, impersonating, loginAs } = useContext(loginContext);
     const user = row.original;
 
-    const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
-    const superAdmin = isSuperAdmin(isLogin || storedUser);
+    const superAdmin = isSuperAdmin(isLogin);
 
     const canLoginAs = superAdmin && !impersonating && user.user_userId !== isLogin?.userId;
 

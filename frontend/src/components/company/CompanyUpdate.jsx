@@ -11,12 +11,14 @@ import { City, Country, State } from "country-state-city";
 import Swal from "sweetalert2";
 import Select from "react-select";
 import withReactContent from "sweetalert2-react-content";
+import { useRouter } from "next/navigation";
 const MySwal = withReactContent(Swal);
 
 export default function CompanyUpdate({ id, onBack }) {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [errors, setErrors] = useState({});
+
 
     function getInitials(name) {
         if (!name) return "?";
@@ -26,6 +28,7 @@ export default function CompanyUpdate({ id, onBack }) {
     const [preview, setPreview] = useState("");
     const [imageRemoved, setImageRemoved] = useState(false);
     const fileInputRef = useRef(null);
+    const router = useRouter()
     const [currencies, setCurrencies] = useState([]);
     // Ensure ownerPhoneDialCode is included in state when loading data
 
@@ -47,9 +50,10 @@ export default function CompanyUpdate({ id, onBack }) {
         state: "",
         city: "",
         AddressLineOne: "",
+        postalCode: "",
         ownerName: "",
         ownerEmail: "",
-        curId: "",
+        curIds: [],
         ownerPhone: "",
         ownerPhoneDialCode: "",
     });
@@ -101,11 +105,12 @@ export default function CompanyUpdate({ id, onBack }) {
                     state: "",
                     city: data.city || "",
                     AddressLineOne: data.AddressLineOne || "",
+                    postalCode: data.postalCode || "",
                     ownerName: data.ownerName || "",
                     ownerEmail: data.ownerEmail || "",
                     ownerPhone: data.ownerPhone || "",
                     ownerPhoneDialCode: data.ownerPhoneDialCode || "",
-                    curId: data.curId || "",
+                    curIds: data.curIds || [],
                 });
 
                 setCurrencies(data.allCurrencies || []);
@@ -220,7 +225,11 @@ export default function CompanyUpdate({ id, onBack }) {
             Object.entries(formData).forEach(([key, value]) => {
                 if (["country", "state", "dialCode", "ownerPhoneDialCode"].includes(key)) return;
                 if (value !== "" && value !== null && value !== undefined) {
-                    payload.append(key, String(value));
+                    if (key === "curIds") {
+                        payload.append(key, JSON.stringify(value));
+                    } else {
+                        payload.append(key, String(value));
+                    }
                 }
             });
 
@@ -239,7 +248,6 @@ export default function CompanyUpdate({ id, onBack }) {
             const response = await fetch("http://localhost:3000/relayapi", {
                 method: "PUT",
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                     endpoint: "company-update",
                     module: "company",
                 },
@@ -272,6 +280,24 @@ export default function CompanyUpdate({ id, onBack }) {
             </div>
         );
     }
+
+    const gotoPages = async (e, url) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) {
+            router.push(url);
+        }
+    };
 
     return (
         <div className="min-h-screen w-full bg-[#f5f6f8] text-black">
@@ -386,32 +412,32 @@ export default function CompanyUpdate({ id, onBack }) {
                                 <div>
                                     <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
                                     <Select
-                                        name="curId"
+                                        name="curIds"
+                                        isMulti
                                         options={currencies.map((c) => ({
                                             value: c.curId,
-                                            label: `(${c.code}) ${c.symbol}`,//${c.name}
+                                            label: `(${c.code}) ${c.symbol}`,
                                         }))}
-                                        value={
-                                            currencies.find((c) => c.curId === formData.curId)
-                                                ? {
-                                                    value: formData.curId,
-                                                    label: ` (${currencies.find((c) => c.curId === formData.curId).code}) ${currencies.find((c) => c.curId === formData.curId).symbol}`,//${currencies.find((c) => c.curId === formData.curId).name}
-                                                }
-                                                : null
-                                        }
+                                        value={currencies
+                                            .filter((c) => formData.curIds.includes(c.curId))
+                                            .map((c) => ({
+                                                value: c.curId,
+                                                label: `(${c.code}) ${c.symbol}`,
+                                            }))}
                                         onChange={(selected) => {
+                                            const selectedIds = selected ? selected.map((s) => s.value) : [];
                                             setFormData((prev) => ({
                                                 ...prev,
-                                                curId: selected ? selected.value : "",
+                                                curIds: selectedIds,
                                             }));
-                                            setErrors((prev) => ({ ...prev, curId: "" }));
+                                            setErrors((prev) => ({ ...prev, curIds: "" }));
                                         }}
                                         isSearchable
                                         isClearable
-                                        placeholder="Select currency"
+                                        placeholder="Select currencies"
                                         classNamePrefix="react-select"
                                     />
-                                    {errors.curId && <p className={errorClass}>{errors.curId}</p>}
+                                    {errors.curIds && <p className={errorClass}>{errors.curIds}</p>}
                                 </div>
 
                             </div>
@@ -520,6 +546,12 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <label className={labelClass}>Address Line 1 <span className="text-red-500">*</span></label>
                                     <input type="text" name="AddressLineOne" value={formData.AddressLineOne} onChange={handleChange} disabled={!formData.city} placeholder="Enter Address Line 1" className={`${inputClass} disabled:bg-gray-100`} />
                                     {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Postal Code</label>
+                                    <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Enter Postal Code" className={inputClass} />
+                                    {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}
                                 </div>
 
 

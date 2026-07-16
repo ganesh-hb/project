@@ -144,7 +144,6 @@ export default function GroupCapabilities({ id }) {
             await fetch("/relayapi", {
                 method: "PUT",
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                     "Content-Type": "application/json",
                     endpoint: "group-update",
                     module: "group",
@@ -155,7 +154,6 @@ export default function GroupCapabilities({ id }) {
             const permRes = await fetch("/relayapi", {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                     "Content-Type": "application/json",
                     endpoint: "group-permissions-save",
                     module: "group",

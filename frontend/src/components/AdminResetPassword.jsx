@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "./hooks/LoginContext";
 import { ResetPasswordSchema } from "./Zod";
 import RouteGuard from "./RouteGuard";
@@ -31,7 +32,8 @@ export default function AdminResetPassword() {
                     method: "GET",
                     headers: { ...authHeaders(), endpoint: `user-details/${targetUserId}`, module: "user" },
                 });
-                const data = await res.json();
+                const payload = await res.json();
+                const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
                 setTargetUser(data);
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });

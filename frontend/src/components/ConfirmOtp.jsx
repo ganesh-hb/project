@@ -42,6 +42,7 @@ export default function ConfirmOtp() {
                 headers: {
                     'Content-Type': 'application/json',
                     endpoint: 'user-forgotpass',
+                    module: 'user',
                 },
                 body: JSON.stringify({ email }),
             });

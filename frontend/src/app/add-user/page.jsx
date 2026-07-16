@@ -13,6 +13,7 @@ import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import Header from "@/components/Header";
 import { AddFormSchema } from "@/components/Zod";
 import { authHeaders } from "../lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "@/components/hooks/LoginContext";
 import RouteGuard from "@/components/RouteGuard";
 import Swal from "sweetalert2";
@@ -82,11 +83,19 @@ export default function AddUserPage() {
             text: "Any unsaved data will be lost.",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Yes, go back",
-            cancelButtonText: "Stay",
+            confirmButtonText: "Yes, discard",
+            cancelButtonText: "Keep editing",
+            confirmButtonColor: "#EF4444",
+            cancelButtonColor: "#1F2937",
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup: 'rounded-xl',
+                confirmButton: 'px-6 py-2 font-medium',
+                cancelButton: 'px-6 py-2 font-medium'
+            }
         });
+
         if (result.isConfirmed) router.push("/users");
     };
     useEffect(() => {
@@ -95,7 +104,6 @@ export default function AddUserPage() {
                 const res = await fetch("http://localhost:3000/relayapi", {
                     method: "POST",
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                         "Content-Type": "application/json",
                         endpoint: "group-list",
                         module: "group",
@@ -117,7 +125,6 @@ export default function AddUserPage() {
                 const res = await fetch("http://localhost:3000/relayapi", {
                     method: "POST",
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                         "Content-Type": "application/json",
                         endpoint: "company-list",
                         module: "company",
@@ -240,18 +247,25 @@ export default function AddUserPage() {
                     const response = await fetch("http://localhost:3000/relayapi", {
                         method: "POST",
                         headers: {
-                            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                             endpoint: "user-add", module: "user"
                         },
                         body: payload,
                     });
 
-                    if (response.ok) {
+                    const rawPayload = await response.json();
+                    const result = rawPayload?.encrypted
+                        ? decryptResponse(rawPayload.encrypted)
+                        : rawPayload;
+                    const isSuccess =
+                        response.ok &&
+                        (result?.success === 1 || result?.settings?.success === 1);
+
+                    if (isSuccess) {
                         toast.success("User created successfully", { position: "top-right" });
                         setTimeout(() => router.push("/users"), 1000);
                     } else {
-                        const errText = await response.text();
-                        toast.error(`Create failed: ${errText}`, { position: "top-right" });
+                        const msg = result?.message || result?.settings?.message || "Failed to create user.";
+                        toast.error(msg, { position: "top-right" });
                     }
                 }
             }

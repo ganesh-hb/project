@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { authHeaders } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 
 export default function UserSidePanel({ userId, onClose }) {
     const [user, setUser] = useState(null);
@@ -22,7 +23,8 @@ export default function UserSidePanel({ userId, onClose }) {
                     module: "user",
                 },
             });
-            const data = await res.json();
+            const payload = await res.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             setUser(data);
         } catch (err) {
             console.error(err);

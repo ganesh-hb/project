@@ -37,10 +37,11 @@ export default function AddCompany() {
         country: "",
         state: "",
         city: "",
+        postalCode: "",
         ownerName: "",
         ownerEmail: "",
         ownerPhone: "",
-        curId: "",
+        curIds: [],
     });
 
     const [companyFile, setCompanyFile] = useState(null);
@@ -181,7 +182,11 @@ export default function AddCompany() {
                 const payload = new FormData();
                 Object.entries(formData).forEach(([key, value]) => {
                     if (value !== "" && value !== null && value !== undefined) {
-                        payload.append(key, String(value));
+                        if (key === "curIds") {
+                            payload.append(key, JSON.stringify(value));
+                        } else {
+                            payload.append(key, String(value));
+                        }
                     }
                 });
                 if (companyFile) payload.append("companyFile", companyFile);
@@ -189,7 +194,6 @@ export default function AddCompany() {
                 const response = await fetch("/relayapi", {
                     method: "POST",
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                         endpoint: "company-add",
                         module: "company",
                     },
@@ -422,6 +426,12 @@ export default function AddCompany() {
                                     {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
                                 </div>
 
+                                <div>
+                                    <label className={labelClass}>Postal Code</label>
+                                    <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Enter Postal Code" className={inputClass} />
+                                    {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}
+                                </div>
+
                             </div>
                         </div>
 
@@ -478,32 +488,32 @@ export default function AddCompany() {
                         <div>
                             <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
                             <Select
-                                name="curId"
+                                name="curIds"
+                                isMulti
                                 options={currencies.map((c) => ({
                                     value: c.curId,
-                                    label: `(${c.code}) ${c.symbol}`,//${c.name}
+                                    label: `(${c.code}) ${c.symbol}`,
                                 }))}
-                                value={
-                                    currencies.find((c) => c.curId === formData.curId)
-                                        ? {
-                                            value: formData.curId,
-                                            label: ` (${currencies.find((c) => c.curId === formData.curId).code}) ${currencies.find((c) => c.curId === formData.curId).symbol}`,//${currencies.find((c) => c.curId === formData.curId).name}
-                                        }
-                                        : null
-                                }
+                                value={currencies
+                                    .filter((c) => formData.curIds.includes(c.curId))
+                                    .map((c) => ({
+                                        value: c.curId,
+                                        label: `(${c.code}) ${c.symbol}`,
+                                    }))}
                                 onChange={(selected) => {
+                                    const selectedIds = selected ? selected.map((s) => s.value) : [];
                                     setFormData((prev) => ({
                                         ...prev,
-                                        curId: selected ? selected.value : "",
+                                        curIds: selectedIds,
                                     }));
-                                    setErrors((prev) => ({ ...prev, curId: "" }));
+                                    setErrors((prev) => ({ ...prev, curIds: "" }));
                                 }}
                                 isSearchable
                                 isClearable
-                                placeholder="Select currency"
+                                placeholder="Select currencies"
                                 classNamePrefix="react-select"
                             />
-                            {errors.curId && <p className={errorClass}>{errors.curId}</p>}
+                            {errors.curIds && <p className={errorClass}>{errors.curIds}</p>}
                         </div>
 
 

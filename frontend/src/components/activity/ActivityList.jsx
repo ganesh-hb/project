@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import ActivityFilters from './ActivityFilters';
 import AppPagination from '@/components/ui/AppPagination';
 import { authHeaders } from '@/app/lib/auth';
+import { decryptResponse } from '@/app/lib/crypto';
 import { toast } from 'react-toastify';
 
 export default function ActivityList() {
@@ -33,7 +34,7 @@ export default function ActivityList() {
         toast.error('Failed to fetch activity logs', { position: 'top-right' });
       }
       const payload = await response.json();
-      const data = payload.encrypted ? JSON.parse(atob(payload.encrypted)) : payload;
+      const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
 
       setActivities(data?.data ?? []);
       setTotalPages(Math.ceil((data?.total || 1) / LIMIT));

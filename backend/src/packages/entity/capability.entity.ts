@@ -1,43 +1,43 @@
 import {
-    Column,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { GroupEntity } from './group.entity';
 
 @Entity('permissions')
 export class PermissionEntity {
-    @PrimaryGeneratedColumn()
-    permissionId!: number;
+  @PrimaryGeneratedColumn()
+  permissionId!: number;
 
-    @Column({ unique: true })
-    permissionName!: string; 
+  @Column({ unique: true })
+  permissionName!: string;
 
-    @Column()
-    module!: string;
+  @Column()
+  module!: string;
 
-    @Column()
-    label!: string; 
+  @Column()
+  label!: string;
 }
 
 @Entity('group_permissions')
 export class GroupPermissionEntity {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @Column()
-    groupId!: number;
+  @Column()
+  groupId!: number;
 
-    @Column()
-    permissionId!: number;
+  @Column()
+  permissionId!: number;
 
-    @ManyToOne(() => GroupEntity, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'groupId' })
-    group!: GroupEntity;
+  @ManyToOne(() => GroupEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'groupId' })
+  group!: GroupEntity;
 
-    @ManyToOne(() => PermissionEntity, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'permissionId' })
-    permission!: PermissionEntity;
+  @ManyToOne(() => PermissionEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'permissionId' })
+  permission!: PermissionEntity;
 }

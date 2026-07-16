@@ -9,6 +9,8 @@ import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
 import AppPagination from "../ui/AppPagination";
 import { ChevronDown } from "lucide-react";
+import { DataTable } from "../data-table";
+import { companyColumns } from "./CompanyColumn";
 
 function getInitials(name) {
     if (!name) return "?";
@@ -107,7 +109,7 @@ export default function CompanyList() {
             <Header page="companies" onSearch={handleSearch} viewMode={viewMode} onViewModeChange={setViewMode} />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4 pb-20">
-                <nav className="mb-6 p-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
+                <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">Companies</span>
@@ -305,60 +307,19 @@ export default function CompanyList() {
 
                 {/* TABLE VIEW */}
                 {!loading && !error && viewMode === "table" && (
-                    <div className="w-full bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                        <div className="w-full overflow-x-auto">
-                            <table className="w-full min-w-[900px]">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr className="text-gray-500 text-sm font-semibold">
-                                        <th className="px-5 py-4 text-left w-[50px]">#</th>
-                                        <th className="px-5 py-4 text-left">Company</th>
-                                        <th className="px-5 py-4 text-left">Code</th>
-                                        <th className="px-5 py-4 text-left">Email</th>
-                                        <th className="px-5 py-4 text-left">Phone</th>
-                                        <th className="px-5 py-4 text-left">Website</th>
-                                        <th className="px-5 py-4 text-left">Location</th>
-                                        <th className="px-5 py-4 text-left">Owner</th>
-                                        <th className="px-5 py-4 text-left">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {companies.map((company, index) => (
-                                        <tr key={company.companyId || index} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                                            <td className="px-5 py-4 text-gray-500 text-sm">{index + 1}</td>
-                                            <td className="px-5 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <CompanyAvatar company={company} sizeClass="h-8 w-8" />
-                                                    <span className={`font-medium ${can("companyView") ? "text-blue-600 hover:underline cursor-pointer" : "text-gray-800"}`}
-                                                        onClick={(e) => gotoCompany(e, company)}>
-                                                        {company.companyName}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-5 py-4 text-gray-600">{company.companyCode || "-"}</td>
-                                            <td className="px-5 py-4 text-gray-600">{company.email || "-"}</td>
-                                            <td className="px-5 py-4 text-gray-600">{company.dialCode ? `+${company.dialCode} ` : ""}{company.phone || "-"}</td>
-                                            <td className="px-5 py-4 text-gray-600">
-                                                {company.website
-                                                    ? <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{company.website}</a>
-                                                    : "-"}
-                                            </td>
-                                            <td className="px-5 py-4 text-gray-600">{company.city || "-"}</td>
-                                            <td className="px-5 py-4 text-gray-600">
-                                                <div>{company.ownerName || "-"}</div>
-                                                <div className="text-xs text-gray-400">{company.ownerPhone || ""}</div>
-                                            </td>
-                                            <td className="px-5 py-4">
-                                                <span className={statusBadgeClass(company.status)}>{formatStatus(company.status)}</span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {companies.length === 0 && (
-                                        <tr><td colSpan={9} className="text-center text-gray-400 py-16">No companies found.</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <DataTable
+                        columns={companyColumns}
+                        data={companies}
+                        filterableColumns={[
+                            { id: "companyName", label: "Company" },
+                            { id: "companyCode", label: "Code" },
+                            { id: "email", label: "Email" },
+                            { id: "phone", label: "Phone" },
+                            { id: "companyLocation", label: "Location" },
+                            { id: "status", label: "Status" },
+                        ]}
+                        emptyMessage="No companies found."
+                    />
                 )}
             </div>
 

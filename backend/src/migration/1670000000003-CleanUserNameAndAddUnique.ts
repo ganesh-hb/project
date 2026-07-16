@@ -25,10 +25,10 @@ export class CleanUserNameAndAddUnique1670000000003 implements MigrationInterfac
     // -------------------------------------------------
     for (const { userId } of rows) {
       const newName = `user_${userId}`;
-      await queryRunner.query(
-        `UPDATE \`user\` SET name = ? WHERE userId = ?`,
-        [newName, userId],
-      );
+      await queryRunner.query(`UPDATE \`user\` SET name = ? WHERE userId = ?`, [
+        newName,
+        userId,
+      ]);
     }
 
     // -------------------------------------------------

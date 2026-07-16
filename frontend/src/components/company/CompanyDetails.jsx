@@ -85,8 +85,8 @@ export default function CompanyDetails({ id }) {
         <div className="min-h-screen bg-[#f5f6f8]">
             <Header page="company-details" />
 
-            <div className="p-6">
-                <nav className="mb-4 flex items-center space-x-2 text-sm font-medium text-gray-500">
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-4 pb-20">
+                <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/company-list")}>Companies</span>

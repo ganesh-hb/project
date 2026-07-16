@@ -14,16 +14,16 @@ import { CurrencyEntity } from 'src/packages/entity/currency.entity';
 import { CompanyCurrencyEntity } from 'src/packages/entity/company.currency.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            CompanyEntity,
-            UserCompanyGroupEntity,
-            GroupPermissionEntity,
-            CurrencyEntity,
-            CompanyCurrencyEntity,
-        ]),
-    ],
-    controllers: [CompanyController],
-    providers: [CompanyService, Filter, Mailer, FileTransfer],
+  imports: [
+    TypeOrmModule.forFeature([
+      CompanyEntity,
+      UserCompanyGroupEntity,
+      GroupPermissionEntity,
+      CurrencyEntity,
+      CompanyCurrencyEntity,
+    ]),
+  ],
+  controllers: [CompanyController],
+  providers: [CompanyService, Filter, Mailer, FileTransfer],
 })
 export class CompanyModule {}

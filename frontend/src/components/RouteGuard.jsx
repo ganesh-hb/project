@@ -3,30 +3,24 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginContext } from "./hooks/LoginContext";
 
-
 export default function RouteGuard({ permission, isSuperAdminOnly = false, children }) {
-    const { isLogin, can, permissions } = useContext(loginContext);
+    const { isLogin, can, authReady } = useContext(loginContext);
     const router = useRouter();
 
     const [authState, setAuthState] = useState("loading"); // "loading" | "ok" | "denied"
 
     useEffect(() => {
-        // isLogin is null while LoginContext is restoring the session — wait.
-        if (isLogin === null && permissions.length === 0) {
-            // Give localStorage-based restore a chance to run (it's synchronous in
-            // useEffect, so by the next tick permissions will be set if a session exists).
-            const timer = setTimeout(() => {
-                checkAccess();
-            }, 50);
-            return () => clearTimeout(timer);
+        if (!authReady) {
+            setAuthState("loading");
+            return;
         }
         checkAccess();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isLogin, permissions]);
+    }, [authReady, isLogin]);
 
     function checkAccess() {
         // No session at all → redirect to login
-        if (!isLogin && !localStorage.getItem("accessToken")) {
+        if (!isLogin) {
             router.replace("/login");
             setAuthState("denied");
             return;

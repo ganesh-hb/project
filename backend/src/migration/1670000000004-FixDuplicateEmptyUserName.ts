@@ -39,18 +39,22 @@ export class FixDuplicateEmptyUserName1670000000004 implements MigrationInterfac
     // -------------------------------------------------
     for (const { userId } of rows) {
       const newName = `user_${userId}`;
-      await queryRunner.query(
-        `UPDATE \`user\` SET name = ? WHERE userId = ?`,
-        [newName, userId],
-      );
+      await queryRunner.query(`UPDATE \`user\` SET name = ? WHERE userId = ?`, [
+        newName,
+        userId,
+      ]);
     }
 
     // -------------------------------------------------
     // 4️⃣ Add the proper UNIQUE constraint on `name`
     // -------------------------------------------------
-    await queryRunner.query(
-      `ALTER TABLE \`user\` ADD CONSTRAINT \`UQ_user_name\` UNIQUE (name)`,
-    );
+    try {
+      await queryRunner.query(
+        `ALTER TABLE \`user\` ADD CONSTRAINT \`UQ_user_name\` UNIQUE (name)`,
+      );
+    } catch (e) {
+      // Ignore if index already exists
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

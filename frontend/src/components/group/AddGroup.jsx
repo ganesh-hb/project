@@ -64,7 +64,6 @@ export default function AddGroup() {
             const response = await fetch("http://localhost:3000/relayapi", {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
                     endpoint: "group-add",
                     module: "group",
                     "Content-Type": "application/json",

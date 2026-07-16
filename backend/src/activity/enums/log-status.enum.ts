@@ -1,4 +1,4 @@
 export enum LogStatus {
-    SUCCESS = 'SUCCESS',
-    FAILED = 'FAILED',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
 }

@@ -14,27 +14,27 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from 'src/utilities/jwt.strategy';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            ActivityMasterEntity,
-            ActivityLogEntity,
-            UserCompanyGroupEntity,
-        ]),
-        PassportModule.register({ defaultStrategy: 'jwt' }),
-        JwtModule.register({
-            secret: process.env.JWT_SECRET || 'hiddenbrains',
-            signOptions: { expiresIn: '1d' },
-        }),
-    ],
-    controllers: [ActivityController],
-    providers: [
-        ActivityService,
+  imports: [
+    TypeOrmModule.forFeature([
+      ActivityMasterEntity,
+      ActivityLogEntity,
+      UserCompanyGroupEntity,
+    ]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.register({
+      secret: process.env.JWT_SECRET || 'hiddenbrains',
+      signOptions: { expiresIn: '1d' },
+    }),
+  ],
+  controllers: [ActivityController],
+  providers: [
+    ActivityService,
 
-        ActivityListener,
-        Filter,
-        RolesGuard,
-        JwtStrategy,
-    ],
-    exports: [ActivityService],
+    ActivityListener,
+    Filter,
+    RolesGuard,
+    JwtStrategy,
+  ],
+  exports: [ActivityService],
 })
 export class ActivityModule {}

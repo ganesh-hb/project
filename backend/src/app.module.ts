@@ -13,20 +13,20 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserModule } from './user/user.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forRoot(typeOrmConfig),
-        ConfigModule.forRoot({ isGlobal: true }),
-        ServeStaticModule.forRoot({
-            rootPath: join(__dirname, '..', 'upload'),
-            serveRoot: '/upload',
-        }),
-        EventEmitterModule.forRoot(),
-        UserModule,
-        GroupModule,
-        CompanyModule,
-        ActivityModule,
-    ],
-    controllers: [AppController],
-    providers: [AppService],
+  imports: [
+    TypeOrmModule.forRoot(typeOrmConfig),
+    ConfigModule.forRoot({ isGlobal: true }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'upload'),
+      serveRoot: '/upload',
+    }),
+    EventEmitterModule.forRoot(),
+    UserModule,
+    GroupModule,
+    CompanyModule,
+    ActivityModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

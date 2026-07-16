@@ -5,12 +5,12 @@ import { loginContext } from "./hooks/LoginContext";
 import { useRouter } from "next/navigation";
 import { Menu, Table as TableIcon, List, LayoutGrid } from "lucide-react";
 
-import { authHeaders } from "@/app/lib/auth";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
     const router = useRouter();
-    const { isLogin, setLogin, displayUser, activeAssignment } = useContext(loginContext);
+    const { displayUser, activeAssignment, logout } = useContext(loginContext);
+    console.log(displayUser, "displayUser in console")
 
     function getInitials(name) {
         if (!name) return "?";
@@ -95,30 +95,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
         setSearchValue("");
     }, [page]);
 
-    useEffect(() => {
-        async function Page() {
-            const loggedIn = document.cookie
-                .split("; ")
-                .find(row => row.startsWith("loggedIn="))
-                ?.split("=")[1];
 
-            if (!loggedIn) return;
-
-            const allData = await fetch(`http://localhost:3000/relayapi`, {
-                method: "GET",
-                headers: {
-                    ...authHeaders(),
-                    endpoint: `user-me`,
-                    module: "user"
-                },
-            });
-
-            const res = await allData.json();
-            setLogin(res);
-        }
-
-        Page();
-    }, []);
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -152,16 +129,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
     const gotoLogout = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        document.cookie =
-            document.cookie = "loggedIn=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-        document.cookie =
-            document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-        localStorage.removeItem("accessToken")
-        localStorage.removeItem("activeAssignment")
-        localStorage.removeItem("permissions")
-        localStorage.removeItem("token")
-        localStorage.removeItem("userInfo")
-
+        logout();
         router.refresh();
     };
 

@@ -14,18 +14,20 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
-const COLUMN_IDS = ["user_name", "user_email", "user_phone", "user_age", "role", "company", "user_status"];
-const COLUMN_LABELS = {
-    user_name: "Name",
-    user_email: "Email",
-    user_phone: "Phone",
-    user_age: "Age",
-    role: "Role",
-    company: "Company",
-    user_status: "Status",
-};
-
-export function DataTable({ columns, data }) {
+export function DataTable({
+    columns,
+    data,
+    filterableColumns = [
+        { id: "user_name", label: "Name" },
+        { id: "user_email", label: "Email" },
+        { id: "user_phone", label: "Phone" },
+        { id: "user_age", label: "Age" },
+        { id: "role", label: "Role" },
+        { id: "company", label: "Company" },
+        { id: "user_status", label: "Status" },
+    ],
+    emptyMessage = "No results found."
+}) {
     const [sorting, setSorting] = React.useState([]);
     const [columnFilters, setColumnFilters] = React.useState([]);
     const [showFilters, setShowFilters] = React.useState(false);
@@ -71,16 +73,16 @@ export function DataTable({ columns, data }) {
                 <div className="rounded-2xl bg-white border border-gray-200 p-4 shadow-sm">
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Filter by column</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-                        {COLUMN_IDS.map((colId) => (
-                            <div key={colId}>
+                        {filterableColumns.map(({ id, label }) => (
+                            <div key={id}>
                                 <label className="block text-xs text-gray-500 mb-1 font-medium">
-                                    {COLUMN_LABELS[colId]}
+                                    {label}
                                 </label>
                                 <input
                                     type="text"
                                     placeholder="Search..."
-                                    value={getFilter(colId)}
-                                    onChange={(e) => setFilter(colId, e.target.value)}
+                                    value={getFilter(id)}
+                                    onChange={(e) => setFilter(id, e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100"
                                 />
                             </div>
@@ -133,7 +135,7 @@ export function DataTable({ columns, data }) {
                                         colSpan={columns.length}
                                         className="text-center h-32 text-gray-400 text-base"
                                     >
-                                        No users found.
+                                        {emptyMessage}
                                     </TableCell>
                                 </TableRow>
                             )}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { authHeaders } from '@/app/lib/auth';
+import { decryptResponse } from '@/app/lib/crypto';
 
 export default function ActivityFilters({ onFilterChange }) {
   const [activityTypes, setActivityTypes] = useState([]);
@@ -26,7 +27,7 @@ export default function ActivityFilters({ onFilterChange }) {
     })
       .then((r) => r.json())
       .then((p) => {
-        const data = p.encrypted ? JSON.parse(atob(p.encrypted)) : p;
+        const data = p.encrypted ? decryptResponse(p.encrypted) : p;
         setActivityTypes(data?.data ?? []);
       })
       .catch(() => setActivityTypes([]));
@@ -39,7 +40,7 @@ export default function ActivityFilters({ onFilterChange }) {
     })
       .then((r) => r.json())
       .then((p) => {
-        const data = p.encrypted ? JSON.parse(atob(p.encrypted)) : p;
+        const data = p.encrypted ? decryptResponse(p.encrypted) : p;
         setUsers(data?.data ?? []);
       })
       .catch(() => setUsers([]));
@@ -52,7 +53,7 @@ export default function ActivityFilters({ onFilterChange }) {
     })
       .then((r) => r.json())
       .then((p) => {
-        const data = p.encrypted ? JSON.parse(atob(p.encrypted)) : p;
+        const data = p.encrypted ? decryptResponse(p.encrypted) : p;
         setCompanies(data?.data ?? []);
       })
       .catch(() => setCompanies([]));

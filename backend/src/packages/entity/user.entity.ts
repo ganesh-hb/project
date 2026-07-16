@@ -1,88 +1,84 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    OneToMany,
-    PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserCompanyGroupEntity } from './user.company.group.entity';
 
 @Entity('user')
 export class UserEntity {
-    @PrimaryGeneratedColumn()
-    userId!: number;
+  @PrimaryGeneratedColumn()
+  userId!: number;
 
-    @Column({ name: 'name', unique: true })
-    name!: string;
+  @Column({ name: 'name', unique: true })
+  name!: string;
 
-    @Column({ nullable: true })
-    firstName!: string;
+  @Column({ nullable: true })
+  firstName!: string;
 
-    @Column({ nullable: true })
-    middleName?: string;
+  @Column({ nullable: true })
+  middleName?: string;
 
-    @Column({ nullable: true })
-    surname?: string;
+  @Column({ nullable: true })
+  surname?: string;
 
-    @Column({ unique: true })
-    email!: string;
+  @Column({ unique: true })
+  email!: string;
 
-    @Column()
-    age!: number;
+  @Column()
+  age!: number;
 
-    @Column({ nullable: true })
-    otp!: number;
+  @Column({ nullable: true })
+  otp!: number;
 
-    @Column({ nullable: true })
-    token!: string;
+  @Column({ nullable: true })
+  token!: string;
 
-    @Column()
-    phone!: string;
+  @Column()
+  phone!: string;
 
-    @Column()
-    status!: string;
+  @Column()
+  status!: string;
 
-    @Column()
-    password!: string;
+  @Column()
+  password!: string;
 
-    @Column({ nullable: true })
-    dialCode!: string;
+  @Column({ nullable: true })
+  dialCode!: string;
 
-    @Column({ nullable: true })
-    country!: string;
+  @Column({ nullable: true })
+  country!: string;
 
-    @Column({ nullable: true })
-    state!: string;
+  @Column({ nullable: true })
+  state!: string;
 
-    @Column({ nullable: true })
-    city!: string;
+  @Column({ nullable: true })
+  city!: string;
 
-    @Column({ nullable: true })
-    alternatePhone!: string;
+  @Column({ nullable: true })
+  alternatePhone!: string;
 
-    @Column({ type: 'text', nullable: true })
-    remarks!: string;
-    
-    @Column({ nullable: true })
-    createdBy!: number;
+  @Column({ type: 'text', nullable: true })
+  remarks!: string;
 
-    @Column({ nullable: true })
-    updatedBy!: number;
+  @Column({ nullable: true })
+  createdBy!: number;
 
-    @Column({ type: 'varchar', nullable: true })
-    userFile!: string | null;
+  @Column({ nullable: true })
+  updatedBy!: number;
 
-    @CreateDateColumn()
-    createdAt!: Date;
+  @Column({ type: 'varchar', nullable: true })
+  userFile!: string | null;
 
-    @Column({ nullable: true })
-    updatedDate!: Date;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-    /** All company+role assignments for this user */
-    @OneToMany(
-        () => UserCompanyGroupEntity,
-        (ucg) => ucg.user,
-        { cascade: true },
-    )
-    userCompanyGroups!: UserCompanyGroupEntity[];
+  @Column({ nullable: true })
+  updatedDate!: Date;
+
+  /** All company+role assignments for this user */
+  @OneToMany(() => UserCompanyGroupEntity, (ucg) => ucg.user, { cascade: true })
+  userCompanyGroups!: UserCompanyGroupEntity[];
 }

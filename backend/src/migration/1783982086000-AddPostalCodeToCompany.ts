@@ -1,12 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddCityToCompany1783982085000 implements MigrationInterface {
-  name = 'AddCityToCompany1783982085000';
+export class AddPostalCodeToCompany1783982086000 implements MigrationInterface {
+  name = 'AddPostalCodeToCompany1783982086000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     try {
       await queryRunner.query(
-        `ALTER TABLE \`company\` ADD \`city\` varchar(255) NULL`,
+        `ALTER TABLE \`company\` ADD \`postalCode\` int NULL`,
       );
     } catch (e) {
       // Ignore if column already exists
@@ -14,6 +14,8 @@ export class AddCityToCompany1783982085000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE \`company\` DROP COLUMN \`city\``);
+    await queryRunner.query(
+      `ALTER TABLE \`company\` DROP COLUMN \`postalCode\``,
+    );
   }
 }

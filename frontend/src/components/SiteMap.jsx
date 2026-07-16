@@ -13,8 +13,7 @@ export default function SiteMap() {
 
     useEffect(() => {
         const activeUser = impersonating || isLogin;
-        const storedUser = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        setSuperAdmin(isSuperAdmin(activeUser || storedUser));
+        setSuperAdmin(isSuperAdmin(activeUser));
     }, [isLogin, impersonating, permissions]);
 
     if (!authReady) {

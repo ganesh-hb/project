@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useEffect, useMemo, useState } from "react";
+import { decryptResponse } from "@/app/lib/crypto";
 import { authHeaders } from "@/app/lib/auth";
 
 export const loginContext = createContext();
@@ -14,53 +15,45 @@ export default function LoginContext({ children }) {
     useEffect(() => {
         async function restoreSession() {
             try {
-                const storedUserInfo = localStorage.getItem("userInfo");
+                const storedUserInfo = sessionStorage.getItem("userInfo");
 
                 if (storedUserInfo) {
-                    const parsed = JSON.parse(storedUserInfo);
-                    setLogin(parsed);
+                    try {
+                        const parsed = JSON.parse(storedUserInfo);
+                        setLogin(parsed);
 
-                    const storedAssignment = localStorage.getItem("activeAssignment");
-                    setActiveAssignment(
-                        storedAssignment
-                            ? JSON.parse(storedAssignment)
-                            : parsed.assignments?.find((a) => a.is_parent === 0) ?? parsed.assignments?.[0] ?? null
-                    );
+                        const storedAssignment = sessionStorage.getItem("activeAssignment");
+                        setActiveAssignment(
+                            storedAssignment
+                                ? JSON.parse(storedAssignment)
+                                : parsed.assignments?.find((a) => a.is_parent === 0) ?? parsed.assignments?.[0] ?? null
+                        );
 
-                    const impersonatedUser = localStorage.getItem("impersonatedUser");
-                    if (impersonatedUser) {
-                        setImpersonating(JSON.parse(impersonatedUser));
-                        const impersonatedPerms = localStorage.getItem("impersonatedPermissions");
-                        setPermissions(impersonatedPerms ? JSON.parse(impersonatedPerms) : []);
-                    } else {
-                        const storedPerms = localStorage.getItem("permissions");
-                        setPermissions(storedPerms ? JSON.parse(storedPerms) : parsed.permissions || []);
+                        const impersonatedUser = sessionStorage.getItem("impersonatedUser");
+                        if (impersonatedUser) {
+                            setImpersonating(JSON.parse(impersonatedUser));
+                            const impersonatedPerms = sessionStorage.getItem("impersonatedPermissions");
+                            setPermissions(impersonatedPerms ? JSON.parse(impersonatedPerms) : []);
+                        } else {
+                            const storedPerms = sessionStorage.getItem("permissions");
+                            setPermissions(storedPerms ? JSON.parse(storedPerms) : parsed.permissions || []);
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse optimistic user info:", e);
                     }
-
-                    return;
                 }
-                const loggedIn = document.cookie
-                    .split("; ")
-                    .find((row) => row.startsWith("loggedIn="))
-                    ?.split("=")[1];
-
-                if (!loggedIn) return;
-
-
-                const token = localStorage.getItem("accessToken");
-                if (!token) return;
 
                 const res = await fetch(`/relayapi`, {
                     method: "GET",
                     headers: {
                         endpoint: "user-me",
                         module: "user",
-                        Authorization: `Bearer ${token}`,
                     },
                 });
 
                 if (res.ok) {
-                    const data = await res.json();
+                    const payload = await res.json();
+                    const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
 
                     const primary =
                         data.activeAssignment ??
@@ -84,13 +77,26 @@ export default function LoginContext({ children }) {
                     };
 
                     setLogin(normalized);
-                    localStorage.setItem("userInfo", JSON.stringify(normalized));
-                    setActiveAssignment(primary);
-                    setPermissions(normalized.permissions);
-                    localStorage.setItem("permissions", JSON.stringify(normalized.permissions));
+                    sessionStorage.setItem("userInfo", JSON.stringify(normalized));
+                    
+                    const isCurrentlyImpersonating = !!sessionStorage.getItem("impersonatedUser");
+                    if (!isCurrentlyImpersonating) {
+                        setActiveAssignment(primary);
+                        setPermissions(normalized.permissions);
+                        sessionStorage.setItem("permissions", JSON.stringify(normalized.permissions));
+                    }
+                } else {
+                    setLogin(false);
+                    sessionStorage.removeItem("userInfo");
+                    sessionStorage.removeItem("permissions");
+                    sessionStorage.removeItem("activeAssignment");
                 }
             } catch (err) {
                 console.error("Session restore failed:", err);
+                setLogin(false);
+                sessionStorage.removeItem("userInfo");
+                sessionStorage.removeItem("permissions");
+                sessionStorage.removeItem("activeAssignment");
             }
             finally {
                 setAuthReady(true);
@@ -110,15 +116,15 @@ export default function LoginContext({ children }) {
                 },
                 body: JSON.stringify({ targetUserId }),
             });
-            const data = await res.json();
+            const payload = await res.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             if (data?.success === 1) {
-                localStorage.setItem("impersonationToken", data.impersonationToken);
-                localStorage.setItem("impersonatedUser", JSON.stringify(data.user));
-                localStorage.setItem("impersonatedPermissions", JSON.stringify(data.user?.permissions || []));
+                sessionStorage.setItem("impersonatedUser", JSON.stringify(data.user));
+                sessionStorage.setItem("impersonatedPermissions", JSON.stringify(data.user?.permissions || []));
 
                 // Preserve the real session's active profile so we can restore it later
                 if (activeAssignment) {
-                    localStorage.setItem("originalActiveAssignment", JSON.stringify(activeAssignment));
+                    sessionStorage.setItem("originalActiveAssignment", JSON.stringify(activeAssignment));
                 }
 
                 setImpersonating(data.user);
@@ -127,7 +133,7 @@ export default function LoginContext({ children }) {
                 const impersonatedAssignment = data.user?.primaryProfile || null;
                 setActiveAssignment(impersonatedAssignment);
                 if (impersonatedAssignment) {
-                    localStorage.setItem("activeAssignment", JSON.stringify(impersonatedAssignment));
+                    sessionStorage.setItem("activeAssignment", JSON.stringify(impersonatedAssignment));
                 }
 
                 return true;
@@ -139,20 +145,27 @@ export default function LoginContext({ children }) {
     }
 
     function stopImpersonating() {
-        localStorage.removeItem("impersonationToken");
-        localStorage.removeItem("impersonatedUser");
-        localStorage.removeItem("activeAssignment")
-        localStorage.removeItem("impersonatedPermissions");
+        fetch("/relayapi", {
+            method: "POST",
+            headers: {
+                endpoint: "user-stop-impersonating",
+                module: "user",
+            }
+        }).catch(() => {});
+
+        sessionStorage.removeItem("impersonatedUser");
+        sessionStorage.removeItem("activeAssignment")
+        sessionStorage.removeItem("impersonatedPermissions");
         setImpersonating(null);
 
-        const original = localStorage.getItem("permissions");
+        const original = sessionStorage.getItem("permissions");
         setPermissions(original ? JSON.parse(original) : []);
 
-        const originalAssignment = localStorage.getItem("originalActiveAssignment");
+        const originalAssignment = sessionStorage.getItem("originalActiveAssignment");
         if (originalAssignment) {
             setActiveAssignment(JSON.parse(originalAssignment));
-            localStorage.setItem("activeAssignment", originalAssignment);
-            localStorage.removeItem("originalActiveAssignment");
+            sessionStorage.setItem("activeAssignment", originalAssignment);
+            sessionStorage.removeItem("originalActiveAssignment");
         }
     }
 
@@ -168,7 +181,28 @@ export default function LoginContext({ children }) {
 
     function switchProfile(assignment) {
         setActiveAssignment(assignment);
-        localStorage.setItem("activeAssignment", JSON.stringify(assignment));
+        sessionStorage.setItem("activeAssignment", JSON.stringify(assignment));
+    }
+
+    function login(data) {
+        if (!data || !data.user) return;
+        const user = data.user;
+
+        sessionStorage.setItem("userInfo", JSON.stringify(user));
+        sessionStorage.setItem("permissions", JSON.stringify(user.permissions || []));
+        setLogin(user);
+
+        const primary =
+            user.activeAssignment ??
+            user.assignments?.find((a) => a.is_parent === 0) ??
+            user.assignments?.[0] ??
+            null;
+
+        setActiveAssignment(primary);
+        if (primary) {
+            sessionStorage.setItem("activeAssignment", JSON.stringify(primary));
+        }
+        setPermissions(user.permissions || []);
     }
 
     function logout() {
@@ -186,15 +220,12 @@ export default function LoginContext({ children }) {
         setActiveAssignment(null);
         setPermissions([]);
         setImpersonating(null);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("activeAssignment");
-        localStorage.removeItem("permissions");
-        localStorage.removeItem("impersonationToken");
-        localStorage.removeItem("impersonatedUser");
-        localStorage.removeItem("impersonatedPermissions");
-        document.cookie = "session=; Max-Age=0";
-        document.cookie = "loggedIn=; Max-Age=0";
+        sessionStorage.removeItem("userInfo");
+        sessionStorage.removeItem("activeAssignment");
+        sessionStorage.removeItem("permissions");
+        sessionStorage.removeItem("impersonatedUser");
+        sessionStorage.removeItem("impersonatedPermissions");
+        sessionStorage.removeItem("originalActiveAssignment");
     }
 
     function can(permission) {
@@ -211,7 +242,7 @@ export default function LoginContext({ children }) {
             activeAssignment, switchProfile,
             permissions, can, canAny,
             impersonating, loginAs, stopImpersonating,
-            logout, authReady,
+            login, logout, authReady,
         }}>
             {children}
         </loginContext.Provider>

@@ -5,26 +5,10 @@ import { useRouter } from "next/navigation";
 import { loginContext } from "./hooks/LoginContext";
 import { userLoginSchema } from "./Zod";
 import { toast } from "react-toastify";
-import CryptoJS from "crypto-js";
 import { decryptResponse } from "@/app/lib/crypto";
 
-const CRYPTO_SECRET = process.env.NEXT_PUBLIC_CRYPTO_SECRET || "hiddenbrainspune";
-
-function encryptValue(plain) {
-    return CryptoJS.AES.encrypt(plain, CRYPTO_SECRET).toString();
-}
-
-function decryptValue(cipher) {
-    try {
-        const bytes = CryptoJS.AES.decrypt(cipher, CRYPTO_SECRET);
-        return bytes.toString(CryptoJS.enc.Utf8);
-    } catch {
-        return "";
-    }
-}
-
 export default function LoginPage() {
-    const { isLogin, setLogin } = useContext(loginContext);
+    const { login } = useContext(loginContext);
     const route = useRouter();
 
     const [message, setMessage] = useState("");
@@ -41,9 +25,7 @@ export default function LoginPage() {
                 const parsed = JSON.parse(savedRaw);
                 setFormData({
                     email: parsed.email || "",
-                    password: parsed.encryptedPassword
-                        ? decryptValue(parsed.encryptedPassword)
-                        : "",
+                    password: "",
                 });
                 setRememberMe(true);
             } catch {
@@ -56,13 +38,12 @@ export default function LoginPage() {
         const updated = { ...formData, [e.target.id]: e.target.value };
         setFormData(updated);
         setErrors({ ...errors, [e.target.id]: "" });
-        if (rememberMe) saveEncryptedCredentials(updated);
+        if (rememberMe) saveRememberMeIdentifier(updated);
     };
 
-    function saveEncryptedCredentials(data) {
+    function saveRememberMeIdentifier(data) {
         const toStore = {
             email: data.email,
-            encryptedPassword: encryptValue(data.password),
         };
         localStorage.setItem("rememberMeCredentials", JSON.stringify(toStore));
     }
@@ -71,7 +52,7 @@ export default function LoginPage() {
         const checked = e.target.checked;
         setRememberMe(checked);
         if (checked) {
-            saveEncryptedCredentials(formData);
+            saveRememberMeIdentifier(formData);
         } else {
             localStorage.removeItem("rememberMeCredentials");
         }
@@ -98,7 +79,7 @@ export default function LoginPage() {
                 return;
             }
 
-            if (rememberMe) saveEncryptedCredentials(formData);
+            if (rememberMe) saveRememberMeIdentifier(formData);
 
             const response = await fetch("/relayapi", {
                 method: "POST",
@@ -113,16 +94,8 @@ export default function LoginPage() {
             const payload = await response.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             if (response.ok && data.success === 1 && data.user?.userId) {
-                const jwt = data.accessToken || data.token;
-                localStorage.setItem("accessToken", jwt);
-                if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
-                localStorage.setItem("userInfo", JSON.stringify(data.user));
-                localStorage.setItem("permissions", JSON.stringify(data.user?.permissions || []));
-                setLogin(data.user);
+                login(data);
                 toast.success(`Welcome ${data.user?.name}`, { position: "top-right" });
-
-                document.cookie = `session=yes`;
-                document.cookie = `loggedIn=${data.user.userId}`;
 
                 window.location.href = "/";
             } else {

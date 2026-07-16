@@ -25,7 +25,7 @@ import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
       GroupEntity,
       CompanyEntity,
       UserCompanyGroupEntity,
-      GroupPermissionEntity
+      GroupPermissionEntity,
     ]),
 
     PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -39,6 +39,13 @@ import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
   ],
 
   controllers: [UserController],
-  providers: [UserService, FileTransfer, Filter, Mailer, JwtStrategy,RolesGuard],
+  providers: [
+    UserService,
+    FileTransfer,
+    Filter,
+    Mailer,
+    JwtStrategy,
+    RolesGuard,
+  ],
 })
 export class UserModule {}

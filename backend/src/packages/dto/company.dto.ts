@@ -1,215 +1,252 @@
-import { Transform, Type } from "class-transformer";
-import { IsEmail, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Length, ValidateNested } from "class-validator";
+import { Transform, Type } from 'class-transformer';
+import {
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 
 export enum isStatus {
-    ACTIVE = "active",
-    INACTIVE = "inactive",
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
 }
 
 export class CompanyDto {
-    @IsString()
-    @Length(2, 100)
-    companyName!: string;
+  @IsString()
+  @Length(2, 100)
+  companyName!: string;
 
-    @IsOptional()
-    @IsInt()
-    @Transform(({ value }) => Number(value))
-    curId?: number;
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value).map(Number);
+      } catch {
+        return value.split(',').map(Number);
+      }
+    }
+    if (Array.isArray(value)) {
+      return value.map(Number);
+    }
+    return value;
+  })
+  curIds?: number[];
 
-    @IsString()
-    @Length(2, 20)
-    companyCode!: string;
+  @IsString()
+  @Length(2, 20)
+  companyCode!: string;
 
-    @IsString()
-    @IsEnum(isStatus)
-    status!: string;
+  @IsString()
+  @IsEnum(isStatus)
+  status!: string;
 
-    // @IsOptional()
-    // @IsString()
-    // @Length(2, 100)
-    // companyLocation?: string;
+  // @IsOptional()
+  // @IsString()
+  // @Length(2, 100)
+  // companyLocation?: string;
 
-    @IsOptional()
-    @IsEmail()
-    email?: string;
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
-    @IsOptional()
-    @IsString()
-    website?: string;
+  @IsOptional()
+  @IsString()
+  website?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => Number(value))
-    dialCode?: number;
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  dialCode?: number;
 
-    @IsOptional()
-    @IsString()
-    phone?: string;
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
-    @IsOptional()
-    @Transform(({ value }) => Number(value))
-    addedBy?: number;
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  addedBy?: number;
 
-    @IsOptional()
-    @IsString()
-    country?: string;
+  @IsOptional()
+  @IsString()
+  country?: string;
 
-    @IsOptional()
-    @IsString()
-    state?: string;
+  @IsOptional()
+  @IsString()
+  state?: string;
 
-    @IsOptional()
-    @IsString()
-    city?: string;
+  @IsOptional()
+  @IsString()
+  city?: string;
 
-    // @IsOptional()
-    // @IsNumber()
-    // @Transform(({ value }) => Number(value))
-    // postalCode?: number;
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  postalCode?: number;
 
-    @IsOptional()
-    @IsString()
-    AddressLineOne?: string;
+  @IsOptional()
+  @IsString()
+  AddressLineOne?: string;
 
-    @IsOptional()
-    @IsString()
-    ownerName?: string;
+  @IsOptional()
+  @IsString()
+  ownerName?: string;
 
-    @IsOptional()
-    @IsEmail()
-    ownerEmail?: string;
+  @IsOptional()
+  @IsEmail()
+  ownerEmail?: string;
 
-    @IsOptional()
-    @IsString()
-    ownerPhone?: string;
+  @IsOptional()
+  @IsString()
+  ownerPhone?: string;
 
-    @IsOptional()
-    companyFile: any;
+  @IsOptional()
+  companyFile: any;
 }
 
 export class CompanyUpdateDto {
-    @IsInt()
-    @IsNotEmpty()
-    @Transform(({ value }) => Number(value))
-    companyId!: number;
+  @IsInt()
+  @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
+  companyId!: number;
 
-    @IsOptional()
-    @IsInt()
-    @Transform(({ value }) => Number(value))
-    curId?: number;
-    
-    @IsOptional()
-    @IsString()
-    @Length(2, 100)
-    companyName?: string;
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value).map(Number);
+      } catch {
+        return value.split(',').map(Number);
+      }
+    }
+    if (Array.isArray(value)) {
+      return value.map(Number);
+    }
+    return value;
+  })
+  curIds?: number[];
 
-    @IsOptional()
-    @IsString()
-    @Length(2, 20)
-    companyCode?: string;
+  @IsOptional()
+  @IsString()
+  @Length(2, 100)
+  companyName?: string;
 
-    // @IsOptional()
-    // @IsString()
-    // @Length(2, 100)
-    // companyLocation?: string;
+  @IsOptional()
+  @IsString()
+  @Length(2, 20)
+  companyCode?: string;
 
-    @IsOptional()
-    @IsString()
-    @IsEnum(isStatus)
-    status?: string;
+  // @IsOptional()
+  // @IsString()
+  // @Length(2, 100)
+  // companyLocation?: string;
 
-    @IsOptional()
-    @IsEmail()
-    email?: string;
+  @IsOptional()
+  @IsString()
+  @IsEnum(isStatus)
+  status?: string;
 
-    @IsOptional()
-    @IsString()
-    website?: string;
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Transform(({ value }) => Number(value))
-    dialCode?: number;
+  @IsOptional()
+  @IsString()
+  website?: string;
 
-    @IsOptional()
-    @IsString()
-    phone?: string;
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  dialCode?: number;
 
-    @IsOptional()
-    @IsString()
-    country?: string;
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
-    @IsOptional()
-    @IsString()
-    state?: string;
+  @IsOptional()
+  @IsString()
+  country?: string;
 
-    @IsOptional()
-    @IsString()
-    city?: string;
+  @IsOptional()
+  @IsString()
+  state?: string;
 
-    // @IsOptional()
-    // @IsNumber()
-    // @Transform(({ value }) => Number(value))
-    // postalCode?: number;
+  @IsOptional()
+  @IsString()
+  city?: string;
 
-    @IsOptional()
-    @IsString()
-    AddressLineOne?: string;
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  postalCode?: number;
 
-    @IsOptional()
-    @IsString()
-    ownerName?: string;
+  @IsOptional()
+  @IsString()
+  AddressLineOne?: string;
 
-    @IsOptional()
-    @IsEmail()
-    ownerEmail?: string;
+  @IsOptional()
+  @IsString()
+  ownerName?: string;
 
-    @IsOptional()
-    @Transform(({ value }) => Number(value))
-    updatedBy!: number;
+  @IsOptional()
+  @IsEmail()
+  ownerEmail?: string;
 
-    @IsOptional()
-    @IsString()
-    ownerPhone?: string;
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  updatedBy!: number;
 
-    @IsOptional()
-    companyFile: any;
+  @IsOptional()
+  @IsString()
+  ownerPhone?: string;
 
-    @IsOptional()
-    @IsString()
-    removeCompanyFile?: string; // "true" when the user explicitly removed the existing logo
+  @IsOptional()
+  companyFile: any;
+
+  @IsOptional()
+  @IsString()
+  removeCompanyFile?: string; // "true" when the user explicitly removed the existing logo
 }
 
 export class getCompanyListDto {
-    @IsOptional()
-    @IsInt()
-    @Transform(({ value }) => Number(value))
-    page!: number;
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  page!: number;
 
-    @IsOptional()
-    @IsInt()
-    @Transform(({ value }) => Number(value))
-    limit!: number;
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  limit!: number;
 
-    @IsOptional()
-    @ValidateNested({ each: true })
-    @Type(() => filterDto)
-    filters: any;
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => filterDto)
+  filters: any;
 
-    @IsOptional()
-    @IsString()
-    condition?: string;
+  @IsOptional()
+  @IsString()
+  condition?: string;
 }
 
 export class filterDto {
-    @IsString()
-    @IsNotEmpty()
-    key!: string;
+  @IsString()
+  @IsNotEmpty()
+  key!: string;
 
-    @IsNotEmpty()
-    value!: string;
+  @IsNotEmpty()
+  value!: string;
 
-    @IsString()
-    @IsNotEmpty()
-    operator!: string;
+  @IsString()
+  @IsNotEmpty()
+  operator!: string;
 }

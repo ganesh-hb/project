@@ -1,87 +1,93 @@
-import { Transform, Type } from "class-transformer";
-import { IsEmail, IsEnum, IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Length, Min, ValidateNested } from "class-validator";
-import { EntitySchemaOptions } from "typeorm";
+import { Transform, Type } from 'class-transformer';
+import {
+  IsEmail,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { EntitySchemaOptions } from 'typeorm';
 
 export enum isOptional {
-    YES = "yes",
-    NO = "no"
+  YES = 'yes',
+  NO = 'no',
 }
-export enum isStatus{
-    ACTIVE="active",
-    INACTIVE="inactive",
+export enum isStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
 }
 
-export class GroupDto{
-    @IsString()
-    @Length(2, 20)
-    groupName!: string;
+export class GroupDto {
+  @IsString()
+  @Length(2, 20)
+  groupName!: string;
 
-    @IsString()
-    @Length(2, 20)
-    groupCode!: string;
+  @IsString()
+  @Length(2, 20)
+  groupCode!: string;
 
-    @IsString()
-    @IsEnum(isStatus)
-    status!: string;
+  @IsString()
+  @IsEnum(isStatus)
+  status!: string;
 
-    @IsOptional()
-    @Transform(({ value }) => Number(value))
-    addedBy!: number;
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  addedBy!: number;
 
-    @IsOptional()
-    groupFile: any;
-
+  @IsOptional()
+  groupFile: any;
 }
 
 export class GroupUpdateDto {
+  @IsInt()
+  @IsNotEmpty()
+  groupId!: number;
 
-    @IsInt()
-    @IsNotEmpty()
-    groupId!:number;
+  @IsNotEmpty()
+  @IsString()
+  @Length(2, 20)
+  groupName!: string;
 
-    @IsNotEmpty()
-    @IsString()
-    @Length(2, 20)
-    groupName!: string;
+  @IsOptional()
+  @IsString()
+  @Length(2, 20)
+  groupCode!: string;
 
-    @IsOptional()
-    @IsString()
-    @Length(2, 20)
-    groupCode!: string;
+  @IsOptional()
+  @Transform(({ value }) => Number(value))
+  updatedBy!: number;
 
-    @IsOptional()
-    @Transform(({ value }) => Number(value))
-    updatedBy!: number;
-
-    @IsOptional()
-    @IsString()
-    @IsEnum(isStatus)
-    status!: string;
-
+  @IsOptional()
+  @IsString()
+  @IsEnum(isStatus)
+  status!: string;
 }
 
+export class getGroupListDto {
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  page!: number;
 
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  limit!: number;
 
-export class getGroupListDto{
-    @IsOptional()
-    @IsInt()
-    @Transform(({ value }) => Number(value))
-    page!: number;
-
-    @IsOptional()
-    @IsInt()
-    @Transform(({ value }) => Number(value))
-    limit!: number;
-    
-    @IsOptional()
+  @IsOptional()
   @ValidateNested()
   @Type(() => filterDto)
   filters: any;
 }
 
 export class filterDto {
-
-    @IsString()
+  @IsString()
   @IsNotEmpty()
   key!: string;
 
@@ -92,4 +98,3 @@ export class filterDto {
   @IsNotEmpty()
   operator!: string;
 }
-

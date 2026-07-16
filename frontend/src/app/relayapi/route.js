@@ -1,63 +1,154 @@
 import { NextResponse } from "next/server";
 import { decryptResponse } from "../lib/crypto";
 
-// Backend URL (ensure protocol is included)
-const BACKEND = process.env.BACKEND_URL || "http://localhost:4000";
-
-/**
- * Helper to build the base URL for a given module/service.
- */
 function getServiceBase(request) {
-    const module = request.headers.get("module") || request.headers.get("service") || "user";
-    return `${BACKEND}/${module}`;
+    const module = request.headers.get("module");
+    if (module === "company") return "http://localhost:4000/company";
+    if (module === "group") return "http://localhost:4000/group";
+    if (module === "user") return "http://localhost:4000/user";
+    if (module === "activity") return "http://localhost:4000/activity";
+    return "http://localhost:4000";
 }
 
 /**
- * Parse the raw response from the backend.
- * If the payload is encrypted, decrypt it, otherwise return the JSON body.
+ * Resolves the authentication token.
+ * Since the browser has no access to tokens, it reads them directly from secure cookies.
+ * Prefers the `impersonationToken` cookie if present, falling back to the `accessToken` cookie.
  */
-async function parseResponse(res) {
-    const text = await res.text();
+function getAuthToken(request) {
+    const impToken = request.cookies.get("impersonationToken")?.value;
+    if (impToken) {
+        return `Bearer ${impToken}`;
+    }
+    const cookieToken = request.cookies.get("accessToken")?.value;
+    if (cookieToken) {
+        return `Bearer ${cookieToken}`;
+    }
+    return null;
+}
+
+async function doFetch(url, options = {}) {
+    const res = await fetch(url, options);
+    const raw = await res.text();
+    let payload;
     try {
-        const payload = JSON.parse(text);
-        return payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+        payload = JSON.parse(raw);
     } catch {
-        return { message: text };
+        payload = raw;
     }
-}
-
-/**
- * Centralised fetch wrapper that logs useful debugging information.
- */
-async function doFetch(url, options) {
-    try {
-        const res = await fetch(url, options);
-        const raw = await res.text();
-        // Re‑create a Response so parseResponse can read it again
-        const clone = new Response(raw, { status: res.status, headers: res.headers });
-        return { res: clone, payload: await parseResponse(clone) };
-    } catch (err) {
-        console.error("Relay fetch failed:", err);
-        throw err;
-    }
+    return { res, payload };
 }
 
 export async function GET(request) {
     try {
         const endpoint = request.headers.get("endpoint");
-        const impersonationToken = request.headers.get("x-impersonation-token");
-        const token = impersonationToken || request.headers.get("authorization");
+        const token = getAuthToken(request);
         const base = getServiceBase(request);
-        const profileId = request.headers.get("x-profile-id");
-        const qs = profileId ? `?profileId=${profileId}` : "";
 
-        const { res, payload } = await doFetch(`${base}/${endpoint}${qs}`, {
+        const fetchHeaders = {};
+        if (token) fetchHeaders["Authorization"] = token;
+
+        const { res, payload } = await doFetch(`${base}/${endpoint}`, {
             method: "GET",
-            headers: { ...(token ? { Authorization: token } : {}) },
+            headers: fetchHeaders,
         });
+
         return NextResponse.json(payload, { status: res.status });
-    } catch (err) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ success: 0, message: "Server error" }, { status: 500 });
+    }
+}
+
+export async function POST(request) {
+    try {
+        const endpoint = request.headers.get("endpoint");
+        const contentType = request.headers.get("content-type") || "";
+        const token = getAuthToken(request);
+        const base = getServiceBase(request);
+
+        // Intercept stop-impersonating request and clear the impersonation cookie
+        if (endpoint === "user-stop-impersonating") {
+            const nextRes = NextResponse.json({ success: 1 });
+            nextRes.cookies.set("impersonationToken", "", {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+                path: "/",
+                maxAge: 0,
+                expires: new Date(0),
+            });
+            return nextRes;
+        }
+
+        let body;
+        const fetchHeaders = {};
+        if (token) fetchHeaders["Authorization"] = token;
+        if (contentType.includes("application/json")) {
+            const json = await request.json();
+            body = JSON.stringify(json);
+            fetchHeaders["Content-Type"] = "application/json";
+        } else {
+            body = await request.formData();
+        }
+
+        const { res, payload } = await doFetch(`${base}/${endpoint}`, {
+            method: "POST",
+            headers: fetchHeaders,
+            body,
+        });
+
+        const nextRes = NextResponse.json(payload, { status: res.status });
+
+        if (endpoint === "user-login") {
+            const decrypted = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+            if (decrypted.success === 1) {
+                const loginToken = res.headers.get("x-auth-token");
+                if (loginToken) {
+                    nextRes.cookies.set("accessToken", loginToken, {
+                        httpOnly: true,
+                        sameSite: "lax",
+                        secure: process.env.NODE_ENV === "production",
+                        path: "/",
+                    });
+                }
+            }
+        } else if (endpoint === "user-login-as") {
+            const decrypted = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+            if (decrypted.success === 1) {
+                const impToken = res.headers.get("x-impersonation-token");
+                if (impToken) {
+                    nextRes.cookies.set("impersonationToken", impToken, {
+                        httpOnly: true,
+                        sameSite: "lax",
+                        secure: process.env.NODE_ENV === "production",
+                        path: "/",
+                    });
+                }
+            }
+        } else if (endpoint === "user-logout") {
+            nextRes.cookies.set("accessToken", "", {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+                path: "/",
+                maxAge: 0,
+                expires: new Date(0),
+            });
+            nextRes.cookies.set("impersonationToken", "", {
+                httpOnly: true,
+                sameSite: "lax",
+                secure: process.env.NODE_ENV === "production",
+                path: "/",
+                maxAge: 0,
+                expires: new Date(0),
+            });
+        }
+
+        return nextRes;
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ success: 0, message: "Server error" }, { status: 500 });
     }
 }
 
@@ -65,8 +156,7 @@ export async function PUT(request) {
     try {
         const endpoint = request.headers.get("endpoint");
         const contentType = request.headers.get("content-type") || "";
-        const impersonationToken = request.headers.get("x-impersonation-token");
-        const token = impersonationToken || request.headers.get("authorization");
+        const token = getAuthToken(request);
         const base = getServiceBase(request);
 
         let body;
@@ -85,38 +175,31 @@ export async function PUT(request) {
             headers: fetchHeaders,
             body,
         });
+
         return NextResponse.json(payload, { status: res.status });
-    } catch (err) {
-        return NextResponse.json({ error: err.message || "Something went wrong" }, { status: 500 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ success: 0, message: "Server error" }, { status: 500 });
     }
 }
 
-export async function POST(request) {
+export async function DELETE(request) {
     try {
         const endpoint = request.headers.get("endpoint");
-        const contentType = request.headers.get("content-type") || "";
-        const impersonationToken = request.headers.get("x-impersonation-token");
-        const token = impersonationToken || request.headers.get("authorization");
+        const token = getAuthToken(request);
         const base = getServiceBase(request);
 
-        let body;
         const fetchHeaders = {};
         if (token) fetchHeaders["Authorization"] = token;
-        if (contentType.includes("application/json")) {
-            const json = await request.json();
-            body = JSON.stringify(json);
-            fetchHeaders["Content-Type"] = "application/json";
-        } else {
-            body = await request.formData();
-        }
 
         const { res, payload } = await doFetch(`${base}/${endpoint}`, {
-            method: "POST",
+            method: "DELETE",
             headers: fetchHeaders,
-            body,
         });
+
         return NextResponse.json(payload, { status: res.status });
-    } catch (err) {
-        return NextResponse.json({ error: err.message || "Something went wrong" }, { status: 500 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ success: 0, message: "Server error" }, { status: 500 });
     }
 }

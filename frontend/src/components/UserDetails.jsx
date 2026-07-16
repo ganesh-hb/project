@@ -14,6 +14,7 @@ const getInitials = (name) => {
     return initials.slice(0, 2).toUpperCase();
 };
 import { authHeaders } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 import { createPortal } from "react-dom";
 import CompanySidePanel from "./company/CompanySidePanel";
 import UserSidePanel from "./UserSidePanel";
@@ -45,14 +46,15 @@ export default function UserDetailsPage({ id }) {
     };
 
     const fetchUser = async (profileId = null) => {
-        const headers = { ...authHeaders(), endpoint: `user-details/${id}` };
+        const headers = { ...authHeaders(), endpoint: `user-details/${id}`, module: "user" };
         if (profileId) headers["x-profile-id"] = String(profileId);
         const allData = await fetch(`http://localhost:3000/relayapi`, {
             method: "GET",
             headers,
         });
-        const res = await allData.json();
-        setUser(res);
+        const payload = await allData.json();
+        const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+        setUser(data);
     };
 
     useEffect(() => {
@@ -69,12 +71,12 @@ export default function UserDetailsPage({ id }) {
         const [gRes, cRes] = await Promise.all([
             fetch(`http://localhost:3000/relayapi`, {
                 method: "POST",
-                headers: { ...authHeaders(), endpoint: "group-list", service: "group", "Content-Type": "application/json" },
+                headers: { ...authHeaders(), endpoint: "group-list", module: "group", "Content-Type": "application/json" },
                 body: JSON.stringify({ page: 1, limit: 200 }),
             }),
             fetch(`http://localhost:3000/relayapi`, {
                 method: "POST",
-                headers: { ...authHeaders(), endpoint: "company-list", service: "company", "Content-Type": "application/json" },
+                headers: { ...authHeaders(), endpoint: "company-list", module: "company", "Content-Type": "application/json" },
                 body: JSON.stringify({ page: 1, limit: 200 }),
             }),
         ]);
@@ -94,7 +96,7 @@ export default function UserDetailsPage({ id }) {
         try {
             const res = await fetch(`http://localhost:3000/relayapi`, {
                 method: "POST",
-                headers: { ...authHeaders(), endpoint: "user-add-profile", "Content-Type": "application/json" },
+                headers: { ...authHeaders(), endpoint: "user-add-profile", module: "user", "Content-Type": "application/json" },
                 body: JSON.stringify({
                     userId: Number(id),
                     groupId: Number(addForm.groupId),
@@ -102,7 +104,8 @@ export default function UserDetailsPage({ id }) {
                     isActive: addForm.isActive,
                 }),
             });
-            const data = await res.json();
+            const payload = await res.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             if (data?.success === 1) {
                 setShowAddProfile(false);
                 setAddForm({ groupId: "", companyId: "", isActive: "Active" });
