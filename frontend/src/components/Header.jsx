@@ -7,10 +7,9 @@ import { Menu, Table as TableIcon, List, LayoutGrid } from "lucide-react";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
-export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
+export default function Header({ onSearch, page, viewMode, onViewModeChange, onAddClick }) {
     const router = useRouter();
-    const { displayUser, activeAssignment, logout } = useContext(loginContext);
-    console.log(displayUser, "displayUser in console")
+    const { displayUser, activeAssignment, logout, can } = useContext(loginContext);
 
     function getInitials(name) {
         if (!name) return "?";
@@ -40,16 +39,23 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
             { id: "phone", label: "Phone" },
             { id: "status", label: "Status" }
         ]
-        : [
-            { id: "name", label: "Name" },
-            { id: "email", label: "Email" },
-            { id: "phone", label: "Phone" },
-            { id: "groupName", label: "Group Name" },
-            { id: "status", label: "Status" }
-        ];
+        : page === "currencies"
+            ? [
+                { id: "name", label: "Currency Name" },
+                { id: "code", label: "Code" },
+                { id: "symbol", label: "Symbol" },
+                { id: "status", label: "Status" }
+            ]
+            : [
+                { id: "name", label: "Name" },
+                { id: "email", label: "Email" },
+                { id: "phone", label: "Phone" },
+                { id: "groupName", label: "Group Name" },
+                { id: "status", label: "Status" }
+            ];
 
     const defaultField = fieldsConfig[0]?.id || "name";
-    const isListPage = page === "users" || page === "companies";
+    const isListPage = page === "users" || page === "companies" || page === "currencies";
 
     const [openProfile, setOpenProfile] = useState(false);
     const [searchValue, setSearchValue] = useState("");
@@ -328,6 +334,22 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange }) {
                 </div>
 
                 <div className="flex items-center gap-5">
+                    {(() => {
+                        const addBtnConfigs = {
+                            companies: { perm: "companyAdd", label: "Add Company" },
+                            users: { perm: "userAdd", label: "Add User" },
+                            groups: { perm: "groupAdd", label: "Add Group" }
+                        };
+                        const currentAddConfig = addBtnConfigs[page];
+                        return currentAddConfig && can && can(currentAddConfig.perm) && onAddClick && (
+                            <button
+                                onClick={onAddClick}
+                                className="cursor-pointer flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition shadow-sm"
+                            >
+                                <span>+</span> {currentAddConfig.label}
+                            </button>
+                        );
+                    })()}
                     {isListPage && <div className="flex items-center gap-4 text-gray-500">
                         <div
                             className="relative"

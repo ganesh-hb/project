@@ -53,59 +53,67 @@ export class CompanyDto {
   // @Length(2, 100)
   // companyLocation?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsEmail()
-  email?: string;
+  email!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  website?: string;
+  website!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
   @Transform(({ value }) => Number(value))
-  dialCode?: number;
+  dialCode!: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  phone?: string;
+  phone!: string;
 
   @IsOptional()
   @Transform(({ value }) => Number(value))
   addedBy?: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  country?: string;
+  country!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  state?: string;
+  state!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  city?: string;
+  city!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
   @Transform(({ value }) => Number(value))
-  postalCode?: number;
+  postalCode!: number;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  AddressLineOne?: string;
+  AddressLineOne!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  ownerName?: string;
+  ownerName!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsEmail()
-  ownerEmail?: string;
+  ownerEmail!: string;
+
+  @IsNotEmpty()
+  @IsString()
+  ownerPhone!: string;
 
   @IsOptional()
-  @IsString()
-  ownerPhone?: string;
+  @Transform(({ value }) => value ? Number(value) : null)
+  ownerPhoneDialCode?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value ? Number(value) : null)
+  ownerDialCode?: number;
 
   @IsOptional()
   companyFile: any;
@@ -184,10 +192,10 @@ export class CompanyUpdateDto {
   @IsString()
   city?: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
   @Transform(({ value }) => Number(value))
-  postalCode?: number;
+  postalCode!: number;
 
   @IsOptional()
   @IsString()
@@ -208,6 +216,14 @@ export class CompanyUpdateDto {
   @IsOptional()
   @IsString()
   ownerPhone?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value ? Number(value) : null)
+  ownerPhoneDialCode?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value ? Number(value) : null)
+  ownerDialCode?: number;
 
   @IsOptional()
   companyFile: any;

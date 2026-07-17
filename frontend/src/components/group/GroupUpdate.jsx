@@ -6,13 +6,14 @@ import { authHeaders } from "@/app/lib/auth";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GroupFormSchema } from "../Zod";
+import { useRouter } from "next/navigation";
 const MySwal = withReactContent(Swal);
 
 export default function GroupUpdate({ id, onBack }) {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [errors, setErrors] = useState({});
-
+    const router = useRouter()
     const [formData, setFormData] = useState({
         groupName: "",
         groupCode: "",
@@ -96,6 +97,28 @@ export default function GroupUpdate({ id, onBack }) {
             setLoading(false);
         }
     };
+    const gotoPages = async (e, url) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) {
+            if (url === "/group") {
+                onBack();
+            } else {
+                router.push(url);
+            }
+        }
+    };
 
     const inputClass = "w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 text-sm";
     const labelClass = "mb-2 block text-sm font-medium text-gray-700";
@@ -115,13 +138,19 @@ export default function GroupUpdate({ id, onBack }) {
             <Header page="group-update" />
 
             <nav className="p-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
-                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={() => onBack()}>← Back to Details</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
+                <span className="text-gray-400">{">>"}</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/group-list")}>Groups</span>
+                <span className="text-gray-400">{">>"}</span>
+                <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/group")}>Group</span>
+                <span className="text-gray-400">{">>"}</span>
+                <span className="text-gray-800">Update Group</span>
             </nav>
 
             <div className="px-6">
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800 cursor-pointer">Edit Group</h1>
-                    <button
+                    {/* <button
                         onClick={async () => {
                             const result = await MySwal.fire({
                                 title: "Discard changes?",
@@ -138,7 +167,7 @@ export default function GroupUpdate({ id, onBack }) {
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
-                    </button>
+                    </button> */}
                 </div>
 
                 <div className="w-full rounded-2xl bg-white p-8 shadow-sm">

@@ -173,7 +173,7 @@ export const CompanyUpdateSchema = z.object({
         .min(1, "Please select State "),
     city: z.string()
         .min(1, "Please select City "),
-    postalCode: z.union([z.coerce.number(), z.literal(""), z.undefined()]).optional(),
+    postalCode: z.coerce.string({ required_error: "Please enter Postal Code." }).min(1, "Please enter Postal Code.").regex(/^\d+$/, "Postal Code must contain only numbers."),
     ownerName: z.string().min(2, "Please enter Owner Name."),
     ownerEmail: z.string().min(2, "Please enter Owner Email.")
         .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), "Enter a valid owner email."),

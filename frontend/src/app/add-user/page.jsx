@@ -407,21 +407,22 @@ export default function AddUserPage() {
                                     </div>
 
                                     {/* DOB */}
-                                    <div>
-                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <DemoContainer
-                                                components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
-                                            >
-                                                <DemoItem label="DOB *">
-                                                    <DesktopDatePicker
-                                                        value={formData.dob}
-                                                        onChange={handleDateChange}
-                                                        maxDate={MAX_DOB}
-                                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-20 outline-none focus:border-blue-500"
-                                                    />
-                                                </DemoItem>
-                                            </DemoContainer>
-                                        </LocalizationProvider>
+                                    <div className="w-full">
+                                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                                            DOB <span className="text-red-500 text-[16px]">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="dob"
+                                            value={formData.dob ? formData.dob.format("YYYY-MM-DD") : ""}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                const date = val ? dayjs(val) : null;
+                                                handleDateChange(date);
+                                            }}
+                                            max={MAX_DOB.format("YYYY-MM-DD")}
+                                            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                        />
                                         {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
                                     </div>
 
@@ -451,7 +452,7 @@ export default function AddUserPage() {
                                                     type="button"
                                                     onClick={handleRemoveImage}
                                                     aria-label="Remove selected image"
-                                                    className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                                    className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600 z-10"
                                                 >
                                                     ✕
                                                 </button>

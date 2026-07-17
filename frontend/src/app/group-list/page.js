@@ -3,7 +3,7 @@ import RouteGuard from "@/components/RouteGuard";
 
 export default function Groups() {
     return (
-        <RouteGuard permission="groupList">
+        <RouteGuard permission="groupList" isSuperAdminOnly>
             <GroupList />
         </RouteGuard>
     );

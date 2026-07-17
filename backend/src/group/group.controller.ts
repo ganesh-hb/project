@@ -36,7 +36,8 @@ export class GroupController {
   }
 
   @Post('group-add')
-  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
+  @Roles('superAdmin')
   @RequirePermission('groupAdd')
   @UseInterceptors(FileInterceptor('groupFile', multerConfig))
   async insertGroup(
@@ -49,7 +50,8 @@ export class GroupController {
   }
 
   @Put('group-update')
-  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
+  @Roles('superAdmin')
   @RequirePermission('groupUpdate')
   async updateGroup(@Req() req, @Body() body: GroupUpdateDto) {
     try {
@@ -61,14 +63,16 @@ export class GroupController {
   }
 
   @Post('group-list')
-  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
+  @Roles('superAdmin')
   @RequirePermission('groupList')
   async getGroups(@Req() req, @Body() body: getGroupListDto) {
     return await this.groupService.getGroups(body, req);
   }
 
   @Get('group-details/:id')
-  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
+  @Roles('superAdmin')
   @RequirePermission('groupView')
   async getGroup(@Req() req, @Param('id') param) {
     return await this.groupService.getGroup(param, req);
@@ -92,11 +96,13 @@ export class GroupController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('superAdmin')
   async saveGroupPermissions(
+    @Req() req: any,
     @Body() body: { groupId: number; permissions: string[] },
   ) {
     return await this.groupService.saveGroupPermissions(
       Number(body.groupId),
       body.permissions,
+      req,
     );
   }
 }

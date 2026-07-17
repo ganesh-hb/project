@@ -16,7 +16,7 @@ export class CompanyCurrencyEntity {
   @Column()
   companyId!: number;
 
-  @Column()
+  @Column({ type: 'int', unsigned: true })
   curId!: number;
 
   @ManyToOne(() => CompanyEntity, { onDelete: 'CASCADE' })

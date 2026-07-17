@@ -30,21 +30,50 @@ function formatStatus(status) {
     return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 }
 
-function CompanyAvatar({ company, sizeClass = "h-10 w-10" }) {
-    return company.companyFile ? (
-        <img
-            src={`http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`}
-            alt="logo"
-            className={`${sizeClass} rounded-full object-cover`}
-            onError={(e) => {
-                e.target.style.display = "none";
-                e.target.nextSibling.style.display = "flex";
-            }}
-        />
-    ) : (
-        <span className={`${sizeClass} flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-sm`}>
-            {getInitials(company.companyName)}
-        </span>
+export function CompanyAvatar({ company, sizeClass = "h-10 w-10" }) {
+    const [imgPreview, setImgPreview] = useState(false);
+    const imageUrl = company.companyFile
+        ? `http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`
+        : "";
+
+    return (
+        <>
+            {company.companyFile ? (
+                <img
+                    src={imageUrl}
+                    alt="logo"
+                    className={`${sizeClass} rounded-full object-cover cursor-pointer`}
+                    onClick={() => setImgPreview(true)}
+                    onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.nextSibling.style.display = "flex";
+                    }}
+                />
+            ) : (
+                <span className={`${sizeClass} flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-sm`}>
+                    {getInitials(company.companyName)}
+                </span>
+            )}
+            {imgPreview && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+                    onClick={() => setImgPreview(false)}
+                >
+                    <div
+                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
+                            onClick={() => setImgPreview(false)}
+                        >
+                            ✕
+                        </button>
+                        <img src={imageUrl} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 
@@ -106,7 +135,7 @@ export default function CompanyList() {
 
     return (
         <div className="w-full min-h-screen bg-[#f5f6fa]">
-            <Header page="companies" onSearch={handleSearch} viewMode={viewMode} onViewModeChange={setViewMode} />
+            <Header page="companies" onSearch={handleSearch} viewMode={viewMode} onViewModeChange={setViewMode} onAddClick={() => router.push("/add-company")} />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4 pb-20">
                 <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
@@ -118,11 +147,6 @@ export default function CompanyList() {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
                     <h1 className="text-2xl font-semibold text-gray-800">Companies</h1>
                     <div className="flex flex-wrap items-center gap-3">
-                        {can("companyAdd") && (
-                            <button onClick={() => router.push("/add-company")} className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition">
-                                <span>+</span> Add
-                            </button>
-                        )}
                     </div>
                 </div>
 

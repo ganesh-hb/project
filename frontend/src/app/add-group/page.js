@@ -3,7 +3,7 @@ import RouteGuard from "@/components/RouteGuard";
 
 export default function addGroupPage() {
     return (
-        <RouteGuard permission="groupAdd">
+        <RouteGuard permission="groupAdd" isSuperAdminOnly>
             <AddGroup />
         </RouteGuard>
     );

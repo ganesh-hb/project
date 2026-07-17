@@ -8,7 +8,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'hiddenbrains',
+      secretOrKey: process.env.JWT_SECRET || 'hiddenbrainsinfotechpune',
     });
   }
 
@@ -16,6 +16,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userId: payload.userId,
       email: payload.email,
+      impersonatedBy: payload.impersonatedBy,
+      impersonatorEmail: payload.impersonatorEmail,
+      isImpersonation: payload.isImpersonation,
     };
   }
 }

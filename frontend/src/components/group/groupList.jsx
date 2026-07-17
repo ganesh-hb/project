@@ -8,6 +8,47 @@ import Header from "../Header";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
 import AppPagination from "../ui/AppPagination";
+import { DataTable } from "../data-table";
+
+const groupColumns = [
+    {
+        accessorKey: "groupName",
+        header: "Group Name",
+        cell: ({ row }) => {
+            const group = row.original;
+            return (
+                <span className="font-semibold text-blue-600 hover:underline">
+                    {group.groupName ? group.groupName.replace(/([A-Z])/g, " $1").trim() : "-"}
+                </span>
+            );
+        },
+        filterFn: "includesString"
+    },
+    {
+        accessorKey: "groupCode",
+        header: "Group Code",
+        cell: ({ row }) => <span>{row.getValue("groupCode") || "-"}</span>,
+        filterFn: "includesString"
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+            const status = row.getValue("status") || "inactive";
+            const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+            const cls =
+                formatted === "Active"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700";
+            return (
+                <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${cls}`}>
+                    {formatted}
+                </span>
+            );
+        },
+        filterFn: "includesString"
+    }
+];
 
 export default function GroupList() {
     const router = useRouter();
@@ -69,7 +110,7 @@ export default function GroupList() {
 
     return (
         <div className="w-full min-h-screen bg-[#f5f6fa]">
-            <Header page="groups" />
+            <Header page="groups" onAddClick={() => router.push("/add-group")} />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
                 <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
@@ -80,14 +121,6 @@ export default function GroupList() {
 
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="text-2xl font-semibold text-gray-800">Groups</h1>
-                    {can("groupAdd") && (
-                        <button
-                            onClick={() => router.push("/add-group")}
-                            className="cursor-pointer flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition"
-                        >
-                            <span>+</span> Add Group
-                        </button>
-                    )}
                 </div>
 
                 {loading && (
@@ -103,55 +136,17 @@ export default function GroupList() {
                 )}
 
                 {!loading && !error && (
-                    <div className="w-full bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                        <div className="w-full overflow-x-auto">
-                            <table className="w-full min-w-[600px]">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr className="text-gray-500 text-sm font-semibold">
-                                        <th className="px-5 py-4 text-left w-[50px]">#</th>
-                                        <th className="px-5 py-4 text-left">Group Name</th>
-                                        <th className="px-5 py-4 text-left">Group Code</th>
-                                        <th className="px-5 py-4 text-left">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {groups.map((group, index) => (
-                                        <tr
-                                            key={group.groupId || index}
-                                            className={`border-b border-gray-100 hover:bg-gray-50 transition ${can("groupView") ? "cursor-pointer" : ""}`}
-                                            onClick={() => can("groupView") && router.push(`/group/${group.groupId}`)}
-                                        >
-                                            <td className="px-5 py-4 text-gray-500 text-sm">{index + 1}</td>
-                                            <td className="px-5 py-4 font-medium text-blue-600 hover:underline">
-                                                {group.groupName
-                                                    ? group.groupName.replace(/([A-Z])/g, " $1").trim()
-                                                    : "-"}
-                                            </td>
-                                            <td className="px-5 py-4 text-gray-600">{group.groupCode || "-"}</td>
-                                            <td className="px-5 py-4">
-                                                <span className={
-                                                    group.status === "Active"
-                                                        ? "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700"
-                                                        : group.status === "Inactive"
-                                                            ? "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700"
-                                                            : "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700"
-                                                }>
-                                                    {group.status.charAt(0).toUpperCase() + group.status.slice(1) || "Unknown"}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {groups.length === 0 && (
-                                        <tr>
-                                            <td colSpan={4} className="text-center text-gray-400 py-16">
-                                                No groups found.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <DataTable
+                        columns={groupColumns}
+                        data={groups}
+                        filterableColumns={[
+                            { id: "groupName", label: "Group Name" },
+                            { id: "groupCode", label: "Group Code" },
+                            { id: "status", label: "Status" },
+                        ]}
+                        emptyMessage="No groups found."
+                        onRowClick={(group) => can("groupView") && router.push(`/group/${group.groupId}`)}
+                    />
                 )}
             </div>
 

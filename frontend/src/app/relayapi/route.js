@@ -7,6 +7,7 @@ function getServiceBase(request) {
     if (module === "group") return "http://localhost:4000/group";
     if (module === "user") return "http://localhost:4000/user";
     if (module === "activity") return "http://localhost:4000/activity";
+    if (module === "currency") return "http://localhost:4000/currency";
     return "http://localhost:4000";
 }
 
@@ -69,6 +70,24 @@ export async function POST(request) {
 
         // Intercept stop-impersonating request and clear the impersonation cookie
         if (endpoint === "user-stop-impersonating") {
+            let bodyObj = {};
+            try {
+                bodyObj = await request.json();
+            } catch (e) {}
+
+            try {
+                await fetch(`${base}/user/user-stop-impersonating`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": token,
+                    },
+                    body: JSON.stringify(bodyObj),
+                });
+            } catch (err) {
+                console.error("Failed to forward stop impersonating log to backend:", err);
+            }
+
             const nextRes = NextResponse.json({ success: 1 });
             nextRes.cookies.set("impersonationToken", "", {
                 httpOnly: true,

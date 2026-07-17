@@ -26,23 +26,7 @@ function StatusBadge({ status }) {
     );
 }
 
-function CompanyAvatar({ company, sizeClass = "h-8 w-8" }) {
-    return company.companyFile ? (
-        <img
-            src={`http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`}
-            alt="logo"
-            className={`${sizeClass} rounded-full object-cover`}
-            onError={(e) => {
-                e.target.style.display = "none";
-                e.target.nextSibling.style.display = "flex";
-            }}
-        />
-    ) : (
-        <span className={`${sizeClass} flex items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-xs`}>
-            {getInitials(company.companyName)}
-        </span>
-    );
-}
+import { CompanyAvatar } from "./companyList";
 
 function CompanyNameCell({ row }) {
     const router = useRouter();

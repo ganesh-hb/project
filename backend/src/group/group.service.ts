@@ -55,6 +55,7 @@ export class GroupService {
   async insertGroup(params: any, req?: any) {
     const queryParams: any = {};
     try {
+      const authCtx = await resolveAuthContext(req, this.ucgEntity);
       if (params.groupName) queryParams.groupName = params.groupName;
       if (params.groupCode) queryParams.groupCode = params.groupCode;
       if (params.status) queryParams.status = params.status;
@@ -62,6 +63,28 @@ export class GroupService {
 
       const result = await this.groupEntity.insert(queryParams);
       const insertId = result?.raw?.insertId;
+
+      const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.addedBy);
+      const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.GROUP_CREATE,
+        userId: performerId,
+        companyId: authCtx.activeCompanyId,
+        actorType: 'USER',
+        targetType: 'GROUP',
+        targetId: String(insertId),
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: { 
+          userEmail: performerEmail,
+          groupName: params.groupName, 
+          groupCode: params.groupCode,
+          impersonated: !!req?.user?.isImpersonation
+        },
+        metadata: {},
+      });
+
       return {
         success: 1,
         message: 'Inserted successfully',
@@ -149,6 +172,29 @@ export class GroupService {
         { groupId: params.groupId },
         queryParams,
       );
+
+      const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.updatedBy);
+      const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.GROUP_UPDATE,
+        userId: performerId,
+        companyId: authCtx.activeCompanyId,
+        actorType: 'USER',
+        targetType: 'GROUP',
+        targetId: String(params.groupId),
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: { 
+          userEmail: performerEmail,
+          groupName: params.groupName, 
+          groupCode: params.groupCode, 
+          status: params.status,
+          impersonated: !!req?.user?.isImpersonation
+        },
+        metadata: {},
+      });
+
       return {
         success: 1,
         message: 'Updated successfully',
@@ -295,8 +341,44 @@ export class GroupService {
     }
   }
 
-  async saveGroupPermissions(groupId: number, permissionNames: string[]) {
+  async saveGroupPermissions(groupId: number, permissionNames: string[], req?: any) {
     try {
+      const authCtx = await resolveAuthContext(req, this.ucgEntity);
+      if (!authCtx.isSuperAdmin) {
+        const existingGroupPerms = await this.groupPermissionEntity.find({
+          where: { groupId },
+          relations: ['permission'],
+        });
+        const existingGroupPermNames = existingGroupPerms
+          .map((gp) => gp.permission?.permissionName)
+          .filter((name) => name && name.startsWith('group'));
+
+        const requestedGroupPermNames = permissionNames.filter((name) =>
+          name.startsWith('group'),
+        );
+
+        const existingSet = new Set(existingGroupPermNames);
+        const requestedSet = new Set(requestedGroupPermNames);
+
+        let mismatch = false;
+        if (existingSet.size !== requestedSet.size) {
+          mismatch = true;
+        } else {
+          for (const item of existingSet) {
+            if (!requestedSet.has(item)) {
+              mismatch = true;
+              break;
+            }
+          }
+        }
+
+        if (mismatch) {
+          throw new ForbiddenException(
+            'Access denied: non-superAdmin cannot modify group permissions',
+          );
+        }
+      }
+
       const allPermissions = await this.permissionEntity.find();
       const nameToId = Object.fromEntries(
         allPermissions.map((p) => [p.permissionName, p.permissionId]),

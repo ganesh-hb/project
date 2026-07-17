@@ -89,7 +89,7 @@ export class CompanyController {
 
   @Post('company-list')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
-  @RequirePermission('companyView')
+  @RequirePermission('companyList')
   @UseInterceptors(FileInterceptor('companyFile', multerConfig))
   async getCompanys(@Req() req, @Body() body: getCompanyListDto) {
     return await this.companyService.getCompanies(body, req);

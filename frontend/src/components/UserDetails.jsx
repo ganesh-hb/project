@@ -199,12 +199,12 @@ export default function UserDetailsPage({ id }) {
                             </button>
                         )}
 
-                        <button
+                        {/* <button
                             onClick={gotoBack}
                             className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-300 bg-white px-8 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
                         >
                             Back
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

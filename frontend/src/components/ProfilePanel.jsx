@@ -21,12 +21,12 @@ export default function ProfilePage() {
 
     const formattedGroupName = selectedAssignment?.groupName
         ? selectedAssignment.groupName.replace(/([A-Z])/g, " $1").trim()
-        : "N/A";
+        : "-";
 
-    const formattedCompanyName = selectedAssignment?.companyName || "N/A";
+    const formattedCompanyName = selectedAssignment?.companyName || "-";
 
     const formatDate = (dateStr) => {
-        if (!dateStr) return "N/A";
+        if (!dateStr) return "-";
         return new Date(dateStr).toLocaleDateString("en-GB").replace(/\//g, "-");
     };
 
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                                         <h3 className="mb-5 text-xl font-semibold text-gray-800">Contact Info</h3>
                                         <div className="space-y-5">
                                             <div><p className="text-sm text-gray-500">Email</p><p className="font-medium text-gray-800">{displayUser.email}</p></div>
-                                            <div><p className="text-sm text-gray-500">Phone Number</p><p className="font-medium text-gray-800">{displayUser.phone || "N/A"}</p></div>
+                                            <div><p className="text-sm text-gray-500">Phone Number</p><p className="font-medium text-gray-800">{displayUser.phone || "-"}</p></div>
                                             <div><p className="text-sm text-gray-500">Alternate Phone</p><p className="font-medium text-gray-800">{displayUser.alternatePhone || "-"}</p></div>
                                         </div>
                                     </div>
@@ -222,12 +222,12 @@ export default function ProfilePage() {
                                                 <div className="space-y-2">
                                                     <div>
                                                         <p className="text-xs text-gray-400">Company</p>
-                                                        <p className="font-semibold text-gray-800">{a.companyName || "N/A"}</p>
+                                                        <p className="font-semibold text-gray-800">{a.companyName || "-"}</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-xs text-gray-400">Role</p>
                                                         <p className="font-medium text-gray-700">
-                                                            {a.groupName ? a.groupName.replace(/([A-Z])/g, " $1").trim() : "N/A"}
+                                                            {a.groupName ? a.groupName.replace(/([A-Z])/g, " $1").trim() : "-"}
                                                         </p>
                                                     </div>
                                                 </div>

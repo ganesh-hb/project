@@ -20,10 +20,22 @@ export default function AddGroup() {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const gotoPages = (e, url) => {
+    const gotoPages = async (e, url) => {
         e.stopPropagation();
         e.preventDefault();
-        router.push(url);
+        const result = await MySwal.fire({
+            title: "Discard changes?",
+            text: "Any unsaved data will be lost.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#6b7280",
+            confirmButtonText: "Yes, go back",
+            cancelButtonText: "Stay",
+        });
+        if (result.isConfirmed) {
+            router.push(url);
+        }
     };
 
     const handleChange = (e) => {
@@ -85,6 +97,7 @@ export default function AddGroup() {
         }
     };
 
+
     const inputClass = "w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 text-sm";
     const labelClass = "mb-2 block text-sm font-medium text-gray-700";
     const errorClass = "mt-1 text-sm text-red-500";
@@ -104,12 +117,12 @@ export default function AddGroup() {
             <div className="px-6">
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800 ">Add Group</h1>
-                    <button
+                    {/* <button
                         onClick={() => onBack()}
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
-                    </button>
+                    </button> */}
                 </div>
 
                 <form onSubmit={handleSubmit}>

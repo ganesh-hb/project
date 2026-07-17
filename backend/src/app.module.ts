@@ -11,6 +11,7 @@ import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserModule } from './user/user.module';
+import { CurrencyModule } from './currency/currency.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserModule } from './user/user.module';
     GroupModule,
     CompanyModule,
     ActivityModule,
+    CurrencyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

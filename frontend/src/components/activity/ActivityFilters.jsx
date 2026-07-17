@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import { authHeaders } from '@/app/lib/auth';
 import { decryptResponse } from '@/app/lib/crypto';
+import PremiumDateRangePicker from './PremiumDateRangePicker';
 
 export default function ActivityFilters({ onFilterChange }) {
   const [activityTypes, setActivityTypes] = useState([]);
@@ -114,19 +115,18 @@ export default function ActivityFilters({ onFilterChange }) {
             ))}
           </select>
 
-          <input
-            type="date"
-            name="startDate"
-            className="rounded border px-2 py-1"
-            value={filters.startDate}
-            onChange={handleChange}
-          />
-          <input
-            type="date"
-            name="endDate"
-            className="rounded border px-2 py-1"
-            value={filters.endDate}
-            onChange={handleChange}
+          <PremiumDateRangePicker
+            startDate={filters.startDate}
+            endDate={filters.endDate}
+            onChange={(start, end) => {
+              const newFilters = {
+                ...filters,
+                startDate: start ? start.toISOString().split('T')[0] : '',
+                endDate: end ? end.toISOString().split('T')[0] : '',
+              };
+              setFilters(newFilters);
+              onFilterChange(newFilters);
+            }}
           />
         </div>
       }

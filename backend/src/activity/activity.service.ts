@@ -139,7 +139,7 @@ export class ActivityService {
       const limit = query.limit ? Number(query.limit) : 10;
       const skip = (page - 1) * limit;
 
-      queryBuilder.orderBy('activity_log.createdAt', 'DESC');
+      queryBuilder.orderBy('activity_log.createdAt', 'DESC').addOrderBy('activity_log.logId', 'DESC');
       queryBuilder.skip(skip).take(limit);
 
       const [data, total] = await queryBuilder.getManyAndCount();

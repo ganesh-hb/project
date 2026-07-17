@@ -22,10 +22,15 @@ const MODULES = [
         key: "user",
         permissions: ["userList", "userView", "userAdd", "userUpdate"],
     },
+    {
+        label: "Currency",
+        key: "currency",
+        permissions: ["currencyList", "currencyView", null, null],
+    },
 ];
 
 const COL_HEADERS = ["List", "View", "Add", "Update"];
-const ALL_PERMS = MODULES.flatMap((m) => m.permissions);
+const ALL_PERMS = MODULES.flatMap((m) => m.permissions).filter(Boolean);
 
 export default function GroupCapabilities({ id }) {
     const { isLogin } = useContext(loginContext);
@@ -47,16 +52,10 @@ export default function GroupCapabilities({ id }) {
     }, [isLogin]);
 
     useEffect(() => {
-        if (superAdmin === false) {
-            // router.replace("/");
-        }
-    }, [superAdmin]);
-
-    useEffect(() => {
-        if (superAdmin === true) {
+        if (isLogin) {
             fetchGroup();
         }
-    }, [superAdmin]);
+    }, [isLogin]);
 
     const fetchGroup = async () => {
         setFetching(true);
@@ -112,19 +111,39 @@ export default function GroupCapabilities({ id }) {
     const togglePerm = (perm) => setChecked((prev) => ({ ...prev, [perm]: !prev[perm] }));
 
     const toggleModule = (perms) => {
-        const allOn = perms.every((p) => checked[p]);
-        setChecked((prev) => { const n = { ...prev }; perms.forEach((p) => { n[p] = !allOn; }); return n; });
+        const validPerms = perms.filter(Boolean);
+        const allOn = validPerms.every((p) => checked[p]);
+        setChecked((prev) => {
+            const n = { ...prev };
+            validPerms.forEach((p) => { n[p] = !allOn; });
+            return n;
+        });
     };
 
     const toggleColumn = (ci) => {
-        const col = MODULES.map((m) => m.permissions[ci]).filter(Boolean);
+        const col = MODULES.map((m) => {
+            if (!superAdmin && m.key === "group") return null;
+            return m.permissions[ci];
+        }).filter(Boolean);
         const allOn = col.every((p) => checked[p]);
-        setChecked((prev) => { const n = { ...prev }; col.forEach((p) => { n[p] = !allOn; }); return n; });
+        setChecked((prev) => {
+            const n = { ...prev };
+            col.forEach((p) => { n[p] = !allOn; });
+            return n;
+        });
     };
 
     const toggleAll = () => {
-        const allOn = ALL_PERMS.every((p) => checked[p]);
-        setChecked(Object.fromEntries(ALL_PERMS.map((p) => [p, !allOn])));
+        const validPerms = ALL_PERMS.filter((p) => {
+            if (!superAdmin && p.startsWith("group")) return false;
+            return true;
+        });
+        const allOn = validPerms.every((p) => checked[p]);
+        setChecked((prev) => {
+            const n = { ...prev };
+            validPerms.forEach((p) => { n[p] = !allOn; });
+            return n;
+        });
     };
 
     const validate = () => {
@@ -182,9 +201,24 @@ export default function GroupCapabilities({ id }) {
     const labelClass = "text-sm font-medium text-gray-700 w-40 shrink-0 pt-2.5";
     const errorClass = "mt-1 text-sm text-red-500";
 
-    const isModuleAllOn = (perms) => perms.every((p) => checked[p]);
-    const isColAllOn = (ci) => MODULES.map((m) => m.permissions[ci]).every((p) => checked[p]);
-    const isAllOn = ALL_PERMS.every((p) => checked[p]);
+    const isModuleAllOn = (perms) => {
+        const validPerms = perms.filter(Boolean);
+        return validPerms.length > 0 && validPerms.every((p) => checked[p]);
+    };
+    const isColAllOn = (ci) => {
+        const col = MODULES.map((m) => {
+            if (!superAdmin && m.key === "group") return null;
+            return m.permissions[ci];
+        }).filter(Boolean);
+        return col.length > 0 && col.every((p) => checked[p]);
+    };
+    const isAllOn = () => {
+        const validPerms = ALL_PERMS.filter((p) => {
+            if (!superAdmin && p.startsWith("group")) return false;
+            return true;
+        });
+        return validPerms.length > 0 && validPerms.every((p) => checked[p]);
+    };
 
     if (!isLogin || superAdmin !== true) {
         return null;
@@ -259,13 +293,23 @@ export default function GroupCapabilities({ id }) {
                                     <thead>
                                         <tr className="border-b-2 border-gray-200">
                                             <th className="w-8 py-3 text-left">
-                                                <input type="checkbox" checked={isAllOn} onChange={toggleAll} className="w-4 h-4 accent-blue-600 cursor-pointer" />
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isAllOn()}
+                                                    onChange={toggleAll}
+                                                    className="w-4 h-4 accent-blue-600 cursor-pointer"
+                                                />
                                             </th>
                                             <th className="py-3 text-left text-gray-500 font-semibold w-36 pl-2">Module</th>
                                             {COL_HEADERS.map((h, ci) => (
                                                 <th key={h} className="py-3 text-center px-6">
                                                     <div className="flex flex-col items-center gap-1.5">
-                                                        <input type="checkbox" checked={isColAllOn(ci)} onChange={() => toggleColumn(ci)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isColAllOn(ci)}
+                                                            onChange={() => toggleColumn(ci)}
+                                                            className="w-4 h-4 accent-blue-600 cursor-pointer"
+                                                        />
                                                         <span className="text-gray-500 font-semibold">{h}</span>
                                                     </div>
                                                 </th>
@@ -276,12 +320,26 @@ export default function GroupCapabilities({ id }) {
                                         {MODULES.map((mod) => (
                                             <tr key={mod.key} className="border-b border-gray-100 hover:bg-gray-50">
                                                 <td className="py-3.5">
-                                                    <input type="checkbox" checked={isModuleAllOn(mod.permissions)} onChange={() => toggleModule(mod.permissions)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isModuleAllOn(mod.permissions)}
+                                                        disabled={!superAdmin && mod.key === "group"}
+                                                        onChange={() => toggleModule(mod.permissions)}
+                                                        className="w-4 h-4 accent-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    />
                                                 </td>
-                                                <td className="py-3.5 pl-2 font-medium text-gray-700">{mod.label}</td>
-                                                {mod.permissions.map((perm) => (
-                                                    <td key={perm} className="py-3.5 text-center px-6">
-                                                        <input type="checkbox" checked={!!checked[perm]} onChange={() => togglePerm(perm)} className="w-4 h-4 accent-blue-600 cursor-pointer" />
+                                                <td className={`py-3.5 pl-2 font-medium ${!superAdmin && mod.key === "group" ? "text-gray-400" : "text-gray-700"}`}>{mod.label}</td>
+                                                {mod.permissions.map((perm, idx) => (
+                                                    <td key={perm || idx} className="py-3.5 text-center px-6">
+                                                        {perm ? (
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={!!checked[perm]}
+                                                                disabled={!superAdmin && mod.key === "group"}
+                                                                onChange={() => togglePerm(perm)}
+                                                                className="w-4 h-4 accent-blue-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            />
+                                                        ) : null}
                                                     </td>
                                                 ))}
                                             </tr>

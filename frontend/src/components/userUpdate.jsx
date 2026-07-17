@@ -404,7 +404,7 @@ export default function EditUserPage({ user, onBack }) {
             <div className="px-6">
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Edit User</h1>
-                    {onBack && (
+                    {/* {onBack && (
                         <button
                             onClick={async () => {
                                 const result = await MySwal.fire({
@@ -423,7 +423,7 @@ export default function EditUserPage({ user, onBack }) {
                         >
                             ← Back
                         </button>
-                    )}
+                    )} */}
                 </div>
 
                 <div className="w-full rounded-2xl bg-white p-8 shadow-sm">
@@ -508,20 +508,22 @@ export default function EditUserPage({ user, onBack }) {
 
 
                                 {/* DOB */}
-                                <div>
-                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                        <DemoContainer
-                                            components={["DatePicker", "MobileDatePicker", "DesktopDatePicker", "StaticDatePicker"]}
-                                        >
-                                            <DemoItem label="DOB *">
-                                                <DesktopDatePicker
-                                                    value={formData.dob}
-                                                    onChange={handleDateChange}
-                                                    maxDate={MAX_DOB}
-                                                />
-                                            </DemoItem>
-                                        </DemoContainer>
-                                    </LocalizationProvider>
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        DOB <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="dob"
+                                        value={formData.dob ? formData.dob.format("YYYY-MM-DD") : ""}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const date = val ? dayjs(val) : null;
+                                            handleDateChange(date);
+                                        }}
+                                        max={MAX_DOB.format("YYYY-MM-DD")}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    />
                                     {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
                                 </div>
 
@@ -539,33 +541,23 @@ export default function EditUserPage({ user, onBack }) {
                                     {errors.userFile && (
                                         <p className="mt-1 text-sm text-red-500">{errors.userFile}</p>
                                     )}
-                                    <div className="relative mt-4 h-24 w-24 rounded-full overflow-hidden border bg-blue-100">
-                                        {preview
-                                            ? <img
+                                    {preview && (
+                                        <div className="relative mt-4 h-24 w-24 rounded-full border bg-gray-100">
+                                            <img
                                                 src={preview}
                                                 alt="preview"
-                                                className="h-full w-full object-cover"
-                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                className="h-full w-full object-cover rounded-full"
                                             />
-                                            : null
-                                        }
-                                        <span
-                                            style={{ display: preview ? 'none' : 'flex' }}
-                                            className="h-full w-full items-center justify-center text-2xl font-bold text-blue-600 absolute inset-0"
-                                        >
-                                            {getInitials(formData.firstName || formData.surname ? `${formData.firstName} ${formData.surname}`.trim() : formData.name)}
-                                        </span>
-                                        {preview && (
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveImage}
                                                 aria-label="Remove selected image"
-                                                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                                className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600 z-10"
                                             >
                                                 ✕
                                             </button>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

@@ -209,6 +209,16 @@ export class UserController {
     return { encrypted: encryptResponse(result) };
   }
 
+  @Post('user-stop-impersonating')
+  @UseGuards(AuthGuard('jwt'))
+  async stopImpersonating(@Body() body: { targetUserId: number }, @Req() req) {
+    const result = await this.userService.stopImpersonating(
+      Number(body.targetUserId),
+      req,
+    );
+    return { encrypted: encryptResponse(result) };
+  }
+
   @Get('user-me')
   @UseGuards(AuthGuard('jwt'))
   async getMyProfile(@Req() req: any) {

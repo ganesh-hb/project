@@ -53,6 +53,12 @@ export default function SiteMap() {
             show: permissions.includes("groupList"),
         },
         {
+            title: "Currencies",
+            items: ["Currencies"],
+            redirectTo: '/currency-list',
+            show: permissions.includes("currencyList") || superAdmin,
+        },
+        {
             title: "Settings",
             items: ["Capabilities"],
             redirectTo: '/capabilities',

@@ -205,7 +205,7 @@ export default function UsersPage() {
 
     return (
         <div className="w-full min-h-screen bg-[#f5f6fa] overflow-x-hidden">
-            <Header onSearch={handleSearch} page="users" viewMode={viewMode} onViewModeChange={setViewMode} />
+            <Header onSearch={handleSearch} page="users" viewMode={viewMode} onViewModeChange={setViewMode} onAddClick={() => router.push("/add-user")} />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
                 <nav
@@ -231,18 +231,6 @@ export default function UsersPage() {
                         </h1>
 
                         <div className="flex flex-wrap items-center gap-3">
-                            {can("userAdd") && (
-                                <button
-                                    onClick={() => router.push("/add-user")}
-                                    title="Add user"
-                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
-                                >
-                                    <span className="text-base leading-none">+</span>
-                                    <span>Add User</span>
-                                </button>
-
-                            )}
-
 
                             {/* <div className="flex border rounded-md overflow-hidden bg-white ">
                                 {["grid", "list", "table"].map((mode) => (

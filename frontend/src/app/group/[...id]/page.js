@@ -4,7 +4,7 @@ import RouteGuard from "@/components/RouteGuard";
 export default async function GroupDetailsPage({ params }) {
     const { id } = await params;
     return (
-        <RouteGuard permission="groupView">
+        <RouteGuard permission="groupView" isSuperAdminOnly>
             <GroupDetails id={id} />
         </RouteGuard>
     );

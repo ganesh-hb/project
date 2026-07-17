@@ -94,6 +94,9 @@ export class CompanyService {
       if (params.ownerName) queryParams.ownerName = params.ownerName;
       if (params.ownerEmail) queryParams.ownerEmail = params.ownerEmail;
       if (params.ownerPhone) queryParams.ownerPhone = params.ownerPhone;
+      if (params.ownerDialCode) {
+        queryParams.ownerDialCode = Number(params.ownerDialCode);
+      } 
       if (companyFile) queryParams.companyFile = companyFile.filename;
       if (params.addedBy) queryParams.addedBy = Number(params.addedBy);
 
@@ -109,6 +112,28 @@ export class CompanyService {
           await this.companyCurrencyEntity.insert(currencyInsertions);
         }
       }
+
+      const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.addedBy);
+      const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.COMPANY_CREATE,
+        userId: performerId,
+        companyId: insertId,
+        actorType: 'USER',
+        targetType: 'COMPANY',
+        targetId: String(insertId),
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: { 
+          userEmail: performerEmail,
+          companyName: params.companyName, 
+          companyCode: params.companyCode, 
+          email: params.email,
+          impersonated: !!req?.user?.isImpersonation
+        },
+        metadata: {},
+      });
 
       return {
         success: 1,
@@ -149,7 +174,9 @@ export class CompanyService {
     };
 
     const fid: number = parseInt(output.settings.id);
-    await this.fileTransfer.fileTransfer3(companyFile.filename, fid, fid);
+    if (companyFile?.filename) {
+      await this.fileTransfer.fileTransfer3(companyFile.filename, fid, fid);
+    }
     return output;
   }
 
@@ -237,6 +264,9 @@ export class CompanyService {
       if (params.ownerName) queryParams.ownerName = params.ownerName;
       if (params.ownerEmail) queryParams.ownerEmail = params.ownerEmail;
       if (params.ownerPhone) queryParams.ownerPhone = params.ownerPhone;
+      if (params.ownerDialCode) {
+        queryParams.ownerDialCode = Number(params.ownerDialCode);
+      } 
       if (companyFile) {
         queryParams.companyFile = companyFile.filename;
       } else if (params.removeCompanyFile === 'true') {
@@ -271,6 +301,29 @@ export class CompanyService {
           await this.companyCurrencyEntity.insert(currencyInsertions);
         }
       }
+
+      const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.updatedBy);
+      const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.COMPANY_UPDATE,
+        userId: performerId,
+        companyId: Number(params.companyId),
+        actorType: 'USER',
+        targetType: 'COMPANY',
+        targetId: String(params.companyId),
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: { 
+          userEmail: performerEmail,
+          companyName: params.companyName, 
+          companyCode: params.companyCode, 
+          email: params.email, 
+          status: params.status,
+          impersonated: !!req?.user?.isImpersonation
+        },
+        metadata: {},
+      });
 
       return { success: 1, message: 'Updated successfully' };
     } catch (err: any) {

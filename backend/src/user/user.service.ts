@@ -932,7 +932,28 @@ export class UserService {
         userId: target.userId,
         email: target.email,
         impersonatedBy: requestingUserId,
+        impersonatorEmail: requester?.email,
         isImpersonation: true,
+      });
+
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.USER_IMPERSONATION,
+        userId: requestingUserId,
+        companyId: primary?.company?.companyId,
+        actorType: 'USER',
+        targetType: 'USER',
+        targetId: String(target.userId),
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: { 
+          userEmail: requester?.email,
+          targetEmail: target.email,
+          requestingUserEmail: requester?.email,
+          targetUserId: target.userId,
+          targetUserEmail: target.email,
+          impersonationDetails: `Admin ${requester?.email} logged in as User ${target.email}`
+        },
+        metadata: {},
       });
 
       return {
@@ -964,6 +985,46 @@ export class UserService {
           permissions,
         },
       };
+    } catch (err: any) {
+      return { success: 0, message: err.message };
+    }
+  }
+
+  async stopImpersonating(targetUserId: number, req: any) {
+    try {
+      const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : req?.user?.userId;
+      const requester = await this.userEntity.findOne({
+        where: { userId: performerId },
+      });
+      const target = await this.userEntity.findOne({
+        where: { userId: targetUserId },
+      });
+      const ucg = await this.ucgEntity.findOne({
+        where: { userId: targetUserId },
+        relations: ['company'],
+      });
+
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.USER_STOP_IMPERSONATION,
+        userId: performerId,
+        companyId: ucg?.company?.companyId,
+        actorType: 'USER',
+        targetType: 'USER',
+        targetId: String(targetUserId),
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: { 
+          userEmail: requester?.email,
+          targetEmail: target?.email,
+          requestingUserEmail: requester?.email,
+          targetUserId,
+          targetUserEmail: target?.email,
+          impersonationDetails: `Admin ${requester?.email} stopped impersonating User ${target?.email}`
+        },
+        metadata: {},
+      });
+
+      return { success: 1, message: 'Impersonation stopped successfully' };
     } catch (err: any) {
       return { success: 0, message: err.message };
     }

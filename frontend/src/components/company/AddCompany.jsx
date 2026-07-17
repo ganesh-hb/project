@@ -12,6 +12,7 @@ import { City, Country, State } from "country-state-city";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 const MySwal = withReactContent(Swal);
 
 
@@ -41,6 +42,7 @@ export default function AddCompany() {
         ownerName: "",
         ownerEmail: "",
         ownerPhone: "",
+        ownerDialCode: "",
         curIds: [],
     });
 
@@ -94,6 +96,9 @@ export default function AddCompany() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (name === "postalCode" && value !== "" && !/^\d+$/.test(value)) {
+            return;
+        }
         setErrors((prev) => ({ ...prev, [name]: "" }));
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
@@ -176,11 +181,12 @@ export default function AddCompany() {
             cancelButtonText: 'Cancel'
         });
 
-        if (result.isConfirmed) {
+        if (res.isConfirmed) {
             setLoading(true);
             try {
                 const payload = new FormData();
                 Object.entries(formData).forEach(([key, value]) => {
+                    if (["country", "state", "dialCode", "ownerDialCode"].includes(key)) return;
                     if (value !== "" && value !== null && value !== undefined) {
                         if (key === "curIds") {
                             payload.append(key, JSON.stringify(value));
@@ -189,6 +195,13 @@ export default function AddCompany() {
                         }
                     }
                 });
+                if (formData.dialCode) payload.append("dialCode", formData.dialCode);
+                if (formData.ownerDialCode) payload.append("ownerDialCode", formData.ownerDialCode);
+
+                const countryName = Country.getAllCountries().find(c => c.isoCode === formData.country)?.name || formData.country;
+                const stateName = State.getStatesOfCountry(formData.country).find(s => s.isoCode === formData.state)?.name || formData.state;
+                if (countryName) payload.append("country", countryName);
+                if (stateName) payload.append("state", stateName);
                 if (companyFile) payload.append("companyFile", companyFile);
 
                 const response = await fetch("/relayapi", {
@@ -238,12 +251,12 @@ export default function AddCompany() {
             <div className="px-6">
                 <div className="mb-8 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">Add Company</h1>
-                    <button
+                    {/* <button
                         onClick={() => onBack()}
                         className="rounded-xl bg-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
-                    </button>
+                    </button> */}
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -267,14 +280,6 @@ export default function AddCompany() {
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Status <span className="text-red-500">*</span></label>
-                                    <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
-                                    {errors.status && <p className={errorClass}>{errors.status}</p>}
-                                </div>
-                                <div>
                                     <label className={labelClass}>Email <span className="text-red-500">*</span></label>
                                     <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="company@email.com" className={inputClass} />
                                     {errors.email && <p className={errorClass}>{errors.email}</p>}
@@ -286,37 +291,58 @@ export default function AddCompany() {
                                     {errors.website && <p className={errorClass}>{errors.website}</p>}     </div>
 
                                 {/* Logo */}
-                                <div className="lg:col-span-2">
+                                <div>
                                     <label className={labelClass}>Company Logo</label>
                                     <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImage} className={inputClass} />
                                     {errors.companyFile && <p className={errorClass}>{errors.companyFile}</p>}
-                                    <div className="relative mt-4 h-24 w-24 rounded-xl overflow-hidden border bg-blue-100">
-                                        {preview
-                                            ? <img
+                                    {preview && (
+                                        <div className="relative mt-4 h-24 w-24 rounded-xl border bg-gray-100">
+                                            <img
                                                 src={preview}
                                                 alt="preview"
-                                                className="h-full w-full object-cover"
-                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                className="h-full w-full object-cover rounded-xl"
                                             />
-                                            : null
-                                        }
-                                        <span
-                                            style={{ display: preview ? 'none' : 'flex' }}
-                                            className="h-full w-full items-center justify-center text-2xl font-bold text-blue-600 absolute inset-0"
-                                        >
-                                            {getInitials(formData.companyName)}
-                                        </span>
-                                        {preview && (
                                             <button
                                                 type="button"
                                                 onClick={handleRemoveImage}
                                                 aria-label="Remove selected logo"
-                                                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600"
+                                                className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow hover:bg-red-600 z-10"
                                             >
                                                 ✕
                                             </button>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
+                                    <Select
+                                        name="curIds"
+                                        isMulti
+                                        options={currencies.map((c) => ({
+                                            value: c.curId,
+                                            label: `(${c.code}) ${c.symbol}`,
+                                        }))}
+                                        value={currencies
+                                            .filter((c) => formData.curIds.includes(c.curId))
+                                            .map((c) => ({
+                                                value: c.curId,
+                                                label: `(${c.code}) ${c.symbol}`,
+                                            }))}
+                                        onChange={(selected) => {
+                                            const selectedIds = selected ? selected.map((s) => s.value) : [];
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                curIds: selectedIds,
+                                            }));
+                                            setErrors((prev) => ({ ...prev, curIds: "" }));
+                                        }}
+                                        isSearchable
+                                        isClearable
+                                        placeholder="Select currencies"
+                                        classNamePrefix="react-select"
+                                    />
+                                    {errors.curIds && <p className={errorClass}>{errors.curIds}</p>}
                                 </div>
                             </div>
                         </div>
@@ -327,7 +353,7 @@ export default function AddCompany() {
                             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 {/* Phone */}
                                 <div className="w-full">
-                                    <label className={labelClass}>Phone</label>
+                                    <label className={labelClass}>Phone <span className="text-red-500">*</span></label>
                                     <PhoneInput
                                         country={companyCountryCode}
                                         value={formData.phone ? `+${formData.dialCode}${formData.phone}` : ""}
@@ -366,68 +392,73 @@ export default function AddCompany() {
 
                                 <div>
                                     <label className={labelClass}>Country <span className="text-red-500">*</span></label>
-                                    <select
+                                    <Select
                                         name="country"
-                                        value={formData.country}
-                                        onChange={handleChange}
-                                        className={inputClass}
-                                    >
-                                        <option value="">Select Country</option>
-                                        {countries.map((c) => (
-                                            <option key={c.isoCode} value={c.isoCode}>
-                                                {c.flag} {c.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        options={countries.map((c) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }))}
+                                        value={countries
+                                            .filter((c) => c.isoCode === formData.country)
+                                            .map((c) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }))[0] || null}
+                                        onChange={(selected) => {
+                                            setFormData((prev) => ({ ...prev, country: selected ? selected.value : "", state: "", city: "" }));
+                                            setErrors((prev) => ({ ...prev, country: "" }));
+                                        }}
+                                        isSearchable
+                                        isClearable
+                                        placeholder="Select Country"
+                                        classNamePrefix="react-select"
+                                    />
                                     {errors.country && <p className={errorClass}>{errors.country}</p>}
                                 </div>
 
                                 <div>
                                     <label className={labelClass}>State <span className="text-red-500">*</span></label>
-                                    <select
+                                    <Select
                                         name="state"
-                                        value={formData.state}
-                                        onChange={handleChange}
-                                        disabled={!formData.country}
-                                        className={`${inputClass} disabled:bg-gray-100`}
-                                    >
-                                        <option value="">Select State</option>
-                                        {states.map((s) => (
-                                            <option key={s.isoCode} value={s.isoCode}>
-                                                {s.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        options={states.map((s) => ({ value: s.isoCode, label: s.name }))}
+                                        value={states
+                                            .filter((s) => s.isoCode === formData.state)
+                                            .map((s) => ({ value: s.isoCode, label: s.name }))[0] || null}
+                                        onChange={(selected) => {
+                                            setFormData((prev) => ({ ...prev, state: selected ? selected.value : "", city: "" }));
+                                            setErrors((prev) => ({ ...prev, state: "" }));
+                                        }}
+                                        isDisabled={!formData.country}
+                                        isSearchable
+                                        isClearable
+                                        placeholder="Select State"
+                                        classNamePrefix="react-select"
+                                    />
                                     {errors.state && <p className={errorClass}>{errors.state}</p>}
                                 </div>
 
                                 <div>
                                     <label className={labelClass}>City <span className="text-red-500">*</span></label>
-                                    <select
+                                    <CreatableSelect
                                         name="city"
-                                        value={formData.city}
-                                        onChange={handleChange}
-                                        disabled={!formData.state}
-                                        className={`${inputClass} disabled:bg-gray-100`}
-                                    >
-                                        <option value="">Select City</option>
-                                        {cities.map((city) => (
-                                            <option key={city.name} value={city.name}>
-                                                {city.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        options={cities.map((city) => ({ value: city.name, label: city.name }))}
+                                        value={formData.city ? { value: formData.city, label: formData.city } : null}
+                                        onChange={(selected) => {
+                                            setFormData((prev) => ({ ...prev, city: selected ? selected.value : "" }));
+                                            setErrors((prev) => ({ ...prev, city: "" }));
+                                        }}
+                                        isDisabled={!formData.state}
+                                        isSearchable
+                                        isClearable
+                                        placeholder="Select or Type City"
+                                        classNamePrefix="react-select"
+                                        formatCreateLabel={(inputValue) => `Use custom city "${inputValue}"`}
+                                    />
                                     {errors.city && <p className={errorClass}>{errors.city}</p>}      </div>
 
 
                                 <div>
                                     <label className={labelClass}>Address Line 1 <span className="text-red-500">*</span></label>
-                                    <input type="text" name="AddressLineOne" value={formData.AddressLineOne} disabled={!formData.city} onChange={handleChange} placeholder="Enter Address Line 1" className={inputClass} />
+                                    <input type="text" name="AddressLineOne" value={formData.AddressLineOne} disabled={!formData.country || !formData.state} onChange={handleChange} placeholder="Enter Address Line 1" className={inputClass} />
                                     {errors.AddressLineOne && <p className={errorClass}>{errors.AddressLineOne}</p>}
                                 </div>
 
                                 <div>
-                                    <label className={labelClass}>Postal Code</label>
+                                    <label className={labelClass}>Postal Code <span className="text-red-500">*</span></label>
                                     <input type="text" name="postalCode" value={formData.postalCode} onChange={handleChange} placeholder="Enter Postal Code" className={inputClass} />
                                     {errors.postalCode && <p className={errorClass}>{errors.postalCode}</p>}
                                 </div>
@@ -453,15 +484,15 @@ export default function AddCompany() {
 
                                 {/* Owner Phone */}
                                 <div className="w-full">
-                                    <label className={labelClass}>Owner Phone</label>
+                                    <label className={labelClass}>Owner Phone <span className="text-red-500">*</span></label>
                                     <PhoneInput
                                         country={ownerCountryCode}
-                                        value={formData.ownerPhone ? `+${formData.ownerPhoneDialCode}${formData.ownerPhone}` : ""}
+                                        value={formData.ownerPhone ? `+${formData.ownerDialCode}${formData.ownerPhone}` : ""}
                                         onChange={(value, countryData) => {
                                             const dial = countryData?.dialCode || "";
                                             const phone = value.slice(dial.length);
                                             setOwnerCountryCode(countryData?.countryCode);
-                                            setFormData((prev) => ({ ...prev, ownerPhone: phone, ownerPhoneDialCode: dial }));
+                                            setFormData((prev) => ({ ...prev, ownerPhone: phone, ownerDialCode: dial }));
                                             setErrors((prev) => ({ ...prev, ownerPhone: "" }));
                                         }}
                                         inputStyle={{
@@ -485,40 +516,18 @@ export default function AddCompany() {
                             </div>
                         </div>
 
-                        <div>
-                            <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
-                            <Select
-                                name="curIds"
-                                isMulti
-                                options={currencies.map((c) => ({
-                                    value: c.curId,
-                                    label: `(${c.code}) ${c.symbol}`,
-                                }))}
-                                value={currencies
-                                    .filter((c) => formData.curIds.includes(c.curId))
-                                    .map((c) => ({
-                                        value: c.curId,
-                                        label: `(${c.code}) ${c.symbol}`,
-                                    }))}
-                                onChange={(selected) => {
-                                    const selectedIds = selected ? selected.map((s) => s.value) : [];
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        curIds: selectedIds,
-                                    }));
-                                    setErrors((prev) => ({ ...prev, curIds: "" }));
-                                }}
-                                isSearchable
-                                isClearable
-                                placeholder="Select currencies"
-                                classNamePrefix="react-select"
-                            />
-                            {errors.curIds && <p className={errorClass}>{errors.curIds}</p>}
+
+
+
+
+                        <div className="rounded-2xl bg-white p-8 shadow-sm">
+                            <label className={labelClass}>Status <span className="text-red-500">*</span></label>
+                            <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            {errors.status && <p className={errorClass}>{errors.status}</p>}
                         </div>
-
-
-
-
                     </div>
 
                     <div className="mt-8 mb-10 flex justify-center gap-4">

@@ -58,6 +58,9 @@ export class CompanyEntity {
   @Column()
   ownerPhone!: string;
 
+  @Column({ nullable: true })
+  ownerDialCode!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 

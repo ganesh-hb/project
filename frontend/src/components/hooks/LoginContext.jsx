@@ -145,12 +145,22 @@ export default function LoginContext({ children }) {
     }
 
     function stopImpersonating() {
+        const impUserStr = sessionStorage.getItem("impersonatedUser");
+        let targetUserId = null;
+        if (impUserStr) {
+            try {
+                targetUserId = JSON.parse(impUserStr).userId;
+            } catch (e) {}
+        }
         fetch("/relayapi", {
             method: "POST",
             headers: {
+                ...authHeaders(),
                 endpoint: "user-stop-impersonating",
                 module: "user",
-            }
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ targetUserId }),
         }).catch(() => {});
 
         sessionStorage.removeItem("impersonatedUser");

@@ -26,7 +26,8 @@ export function DataTable({
         { id: "company", label: "Company" },
         { id: "user_status", label: "Status" },
     ],
-    emptyMessage = "No results found."
+    emptyMessage = "No results found.",
+    onRowClick
 }) {
     const [sorting, setSorting] = React.useState([]);
     const [columnFilters, setColumnFilters] = React.useState([]);
@@ -68,29 +69,6 @@ export function DataTable({
                 </button>
             </div>
 
-            {/* Per-column search inputs */}
-            {showFilters && (
-                <div className="rounded-2xl bg-white border border-gray-200 p-4 shadow-sm">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Filter by column</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-                        {filterableColumns.map(({ id, label }) => (
-                            <div key={id}>
-                                <label className="block text-xs text-gray-500 mb-1 font-medium">
-                                    {label}
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    value={getFilter(id)}
-                                    onChange={(e) => setFilter(id, e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100"
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Table */}
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -110,6 +88,27 @@ export function DataTable({
                                     ))}
                                 </TableRow>
                             ))}
+                            {showFilters && (
+                                <TableRow className="bg-gray-50 border-b border-gray-200">
+                                    {table.getHeaderGroups()[0].headers.map((header) => {
+                                        const colId = header.id;
+                                        const filterConfig = filterableColumns.find((fc) => fc.id === colId);
+                                        return (
+                                            <TableHead key={header.id} className="px-5 py-2">
+                                                {filterConfig ? (
+                                                    <input
+                                                        type="text"
+                                                        placeholder={`Search ${filterConfig.label}...`}
+                                                        value={getFilter(colId)}
+                                                        onChange={(e) => setFilter(colId, e.target.value)}
+                                                        className="w-full min-w-[100px] rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100"
+                                                    />
+                                                ) : null}
+                                            </TableHead>
+                                        );
+                                    })}
+                                </TableRow>
+                            )}
                         </TableHeader>
 
                         <TableBody>
@@ -117,7 +116,8 @@ export function DataTable({
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
-                                        className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
+                                        className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${onRowClick ? "cursor-pointer" : ""}`}
+                                        onClick={() => onRowClick && onRowClick(row.original)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell
