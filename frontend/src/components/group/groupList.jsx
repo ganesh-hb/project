@@ -109,21 +109,18 @@ export default function GroupList() {
     };
 
     return (
-        <div className="w-full min-h-screen bg-[#f5f6fa]">
+        <div className="fixed inset-0 flex flex-col bg-[#f5f6fa] overflow-hidden">
             <Header page="groups" onAddClick={() => router.push("/add-group")} />
 
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 flex flex-col min-h-0 overflow-hidden">
                 <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">Groups</span>
                 </nav>
 
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800">Groups</h1>
-                </div>
-
-                {loading && (
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                    {loading && (
                     <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">
                         Loading groups...
                     </div>
@@ -137,6 +134,7 @@ export default function GroupList() {
 
                 {!loading && !error && (
                     <DataTable
+                        title="Groups"
                         columns={groupColumns}
                         data={groups}
                         filterableColumns={[
@@ -146,12 +144,19 @@ export default function GroupList() {
                         ]}
                         emptyMessage="No groups found."
                         onRowClick={(group) => can("groupView") && router.push(`/group/${group.groupId}`)}
+                        containerClassName="flex-1 overflow-y-auto"
                     />
                 )}
+                </div>
             </div>
 
-            <div className="fixed bottom-0 right-0 p-4">
-                <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+            <div className="w-full flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3 z-30">
+                <div className="text-sm font-medium text-gray-800">
+                    View {groups.length} records
+                </div>
+                <div className="flex items-center gap-3">
+                    <AppPagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+                </div>
             </div>
         </div>
     );

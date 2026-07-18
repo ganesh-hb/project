@@ -134,24 +134,25 @@ export default function CompanyList() {
     const gotoCompany = (e, company) => { e.preventDefault(); e.stopPropagation(); if (can("companyView")) router.push(`/company/${company.companyId}`); };
 
     return (
-        <div className="w-full min-h-screen bg-[#f5f6fa]">
+        <div className="fixed inset-0 flex flex-col bg-[#f5f6fa] overflow-hidden">
             <Header page="companies" onSearch={handleSearch} viewMode={viewMode} onViewModeChange={setViewMode} onAddClick={() => router.push("/add-company")} />
 
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4 pb-20">
+            <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 flex flex-col min-h-0 overflow-hidden">
                 <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">Companies</span>
                 </nav>
 
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800">Companies</h1>
-                    <div className="flex flex-wrap items-center gap-3">
+                {viewMode !== "table" && (
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+                        <h1 className="text-2xl font-semibold text-gray-800">Companies</h1>
                     </div>
-                </div>
+                )}
 
-                {loading && <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">Loading companies...</div>}
-                {error && <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">{error}</div>}
+                <div className={viewMode === "table" ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "flex-1 min-h-0 overflow-y-auto pb-6"}>
+                    {loading && <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">Loading companies...</div>}
+                    {error && <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">{error}</div>}
 
                 {/* GRID VIEW */}
                 {!loading && !error && viewMode === "grid" && (
@@ -332,6 +333,7 @@ export default function CompanyList() {
                 {/* TABLE VIEW */}
                 {!loading && !error && viewMode === "table" && (
                     <DataTable
+                        title="Companies"
                         columns={companyColumns}
                         data={companies}
                         filterableColumns={[
@@ -343,11 +345,13 @@ export default function CompanyList() {
                             { id: "status", label: "Status" },
                         ]}
                         emptyMessage="No companies found."
+                        containerClassName="flex-1 overflow-y-auto"
                     />
                 )}
+                </div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3">
+            <div className="w-full flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3 z-30">
                 <div className="text-sm font-medium text-gray-800">
                     {totalRecords > 0
                         ? `View ${(currentPage - 1) * limit + 1} - ${Math.min(currentPage * limit, totalRecords)} of ${totalRecords}`

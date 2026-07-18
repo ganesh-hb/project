@@ -21,6 +21,9 @@ export class CurrencyEntity {
   addedDate!: Date | null;
 
   @Column({ type: 'datetime', nullable: true })
+  lastSync!: Date | null;
+
+  @Column({ type: 'datetime', nullable: true })
   updatedDate!: Date | null;
 
   @Column({ type: 'int', nullable: true })
@@ -32,18 +35,4 @@ export class CurrencyEntity {
   @Column({ type: 'enum', enum: ['Active', 'Inactive'], nullable: true })
   status!: 'Active' | 'Inactive' | null;
 
-  @Column({ type: 'tinyint', default: 0 })
-  sysRecDeleted!: number;
-
-  @Column({ type: 'int', nullable: true })
-  companyId!: number | null;
-
-  @Column({ type: 'text', nullable: true })
-  configuration!: string | null;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  thirdPartyId!: string | null;
-
-  @Column({ type: 'datetime', nullable: true })
-  lastSyncedDate!: Date | null;
 }

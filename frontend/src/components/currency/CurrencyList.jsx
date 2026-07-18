@@ -23,6 +23,37 @@ export default function CurrencyList() {
     const [totalRecords, setTotalRecords] = useState(0);
     const [currentFilters, setCurrentFilters] = useState({});
 
+    const [syncing, setSyncing] = useState(false);
+
+    const handleSync = async () => {
+        setSyncing(true);
+        try {
+            const response = await fetch("/relayapi", {
+                method: "PUT",
+                headers: {
+                    ...authHeaders(),
+                    endpoint: "sync-currency-conversion",
+                    module: "currency",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({}),
+            });
+            const payload = await response.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+
+            if (response.ok && data?.success === 1) {
+                toast.success("Conversion rates synced successfully", { position: "top-right" });
+                fetchData(1, {});
+            } else {
+                toast.error(data?.message || "Failed to sync conversion rates.", { position: "top-right" });
+            }
+        } catch (err) {
+            toast.error(`${err}`, { position: "top-right" });
+        } finally {
+            setSyncing(false);
+        }
+    };
+
     useEffect(() => {
         fetchData(1, {});
     }, []);
@@ -89,48 +120,57 @@ export default function CurrencyList() {
     };
 
     return (
-        <div className="w-full min-h-screen bg-[#f5f6fa]">
-            <Header page="currencies" onSearch={handleSearch} />
+        <div className="fixed inset-0 flex flex-col bg-[#f5f6fa] overflow-hidden">
+            <Header page="currencies" onSearch={handleSearch} onAddClick={() => router.push("/add-currency")} />
 
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4 pb-20">
+            <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 flex flex-col min-h-0 overflow-hidden">
                 <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">Currencies</span>
                 </nav>
 
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
-                    <h1 className="text-2xl font-semibold text-gray-800">Currencies</h1>
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                    {loading && (
+                        <div className="flex items-center justify-center py-20 text-gray-500 text-sm font-medium">
+                            Loading currencies...
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="flex items-center justify-center py-20 text-red-500 text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
+
+                    {!loading && !error && (
+                        <DataTable
+                            title="Currencies"
+                            actions={can && can("currencyList") && (
+                                <button
+                                    onClick={handleSync}
+                                    disabled={syncing}
+                                    className="w-full lg:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 transition shadow-sm disabled:opacity-60 cursor-pointer"
+                                >
+                                    {syncing ? "Syncing..." : "Sync Conversion Rates"}
+                                </button>
+                            )}
+                            columns={currencyColumns}
+                            data={currencies}
+                            filterableColumns={[
+                                { id: "name", label: "Currency Name" },
+                                { id: "code", label: "Code" },
+                                { id: "symbol", label: "Symbol" },
+                                { id: "status", label: "Status" },
+                            ]}
+                            emptyMessage="No currencies found."
+                            containerClassName="flex-1 overflow-y-auto"
+                        />
+                    )}
                 </div>
-
-                {loading && (
-                    <div className="flex items-center justify-center py-20 text-gray-500 text-sm font-medium">
-                        Loading currencies...
-                    </div>
-                )}
-
-                {error && (
-                    <div className="flex items-center justify-center py-20 text-red-500 text-sm font-medium">
-                        {error}
-                    </div>
-                )}
-
-                {!loading && !error && (
-                    <DataTable
-                        columns={currencyColumns}
-                        data={currencies}
-                        filterableColumns={[
-                            { id: "name", label: "Currency Name" },
-                            { id: "code", label: "Code" },
-                            { id: "symbol", label: "Symbol" },
-                            { id: "status", label: "Status" },
-                        ]}
-                        emptyMessage="No currencies found."
-                    />
-                )}
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3 z-30">
+            <div className="w-full flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3 z-30">
                 <div className="text-sm font-medium text-gray-800">
                     {totalRecords > 0
                         ? `View ${(currentPage - 1) * limit + 1} - ${Math.min(currentPage * limit, totalRecords)} of ${totalRecords}`
@@ -147,7 +187,8 @@ export default function CurrencyList() {
                         <option value={8}>8</option>
                         <option value={10}>10</option>
                         <option value={20}>20</option>
-                        <option value={30}>30</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
                     </select>
                 </div>
             </div>

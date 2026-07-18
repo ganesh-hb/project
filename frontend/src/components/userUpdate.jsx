@@ -730,7 +730,6 @@ export default function EditUserPage({ user, onBack }) {
                             </div>
                         </div>
 
-                        {/* Status (moved to last) */}
                         <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
                             <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Status</h2>
                             <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">

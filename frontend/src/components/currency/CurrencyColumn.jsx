@@ -82,6 +82,23 @@ export const currencyColumns = [
         ),
     },
     {
+        accessorKey: "lastSync",
+        header: () => <span className="font-semibold text-gray-600 text-sm">Last Sync Date</span>,
+        cell: ({ row }) => {
+            const rawDate = row.getValue("lastSync");
+
+            if (!rawDate) return <span className="text-gray-700 text-sm font-semibold">-</span>;
+
+            const formattedDate = new Intl.DateTimeFormat("en-US", {
+                dateStyle: "medium",
+                timeStyle: "short",
+            }).format(new Date(rawDate));
+
+            return <span className="text-gray-700 text-sm font-medium">{formattedDate}</span>;
+        },
+    },
+
+    {
         accessorKey: "status",
         header: sortableHeader("Status"),
         cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,

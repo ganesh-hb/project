@@ -27,7 +27,10 @@ export function DataTable({
         { id: "user_status", label: "Status" },
     ],
     emptyMessage = "No results found.",
-    onRowClick
+    onRowClick,
+    title,
+    actions,
+    containerClassName = "max-h-[650px] overflow-y-auto"
 }) {
     const [sorting, setSorting] = React.useState([]);
     const [columnFilters, setColumnFilters] = React.useState([]);
@@ -42,8 +45,6 @@ export function DataTable({
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        initialState: { pagination: { pageSize: 10 } },
     });
 
     const setFilter = (colId, value) => {
@@ -54,26 +55,33 @@ export function DataTable({
         table.getColumn(colId)?.getFilterValue() ?? "";
 
     return (
-        <div className="space-y-3">
+        <div className="flex-1 flex flex-col min-h-0 space-y-3 pb-12">
 
-            {/* Filter toggle button */}
-            <div className="flex justify-end">
-                <button
-                    onClick={() => setShowFilters((prev) => !prev)}
-                    className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 transition cursor-pointer"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-                    </svg>
-                    {showFilters ? "Hide Filters" : "Show Filters"}
-                </button>
+            {/* Table Header / Title & Actions block */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
+                {title ? (
+                    <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
+                ) : (
+                    <div></div>
+                )}
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                    {actions}
+                    <button
+                        onClick={() => setShowFilters((prev) => !prev)}
+                        className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 transition cursor-pointer"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                        </svg>
+                        {showFilters ? "Hide Filters" : "Show Filters"}
+                    </button>
+                </div>
             </div>
 
             {/* Table */}
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
+                <Table containerClassName={containerClassName}>
+                    <TableHeader className="sticky top-0 z-10 bg-gray-50">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id} className="bg-gray-50 border-b-2 border-gray-200">
                                     {headerGroup.headers.map((header) => (
@@ -141,41 +149,8 @@ export function DataTable({
                             )}
                         </TableBody>
                     </Table>
-                </div>
             </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between px-1">
-                <p className="text-sm text-gray-500">
-                    Page{" "}
-                    <span className="font-semibold text-gray-700">
-                        {table.getState().pagination.pageIndex + 1}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-semibold text-gray-700">{table.getPageCount()}</span>
-                    {" "}· {table.getFilteredRowModel().rows.length} result{table.getFilteredRowModel().rows.length !== 1 ? "s" : ""}
-                </p>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                        className="cursor-pointer"
-                    >
-                        ← Previous
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                        className="cursor-pointer"
-                    >
-                        Next →
-                    </Button>
-                </div>
-            </div>
         </div>
     );
 }

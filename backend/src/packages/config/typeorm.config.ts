@@ -33,5 +33,8 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     ActivityLogEntity,
   ],
   synchronize: true,
+  migrationsRun: true,
   logging: false,
+  migrations: [__dirname + '/../../migration/*{.ts,.js}'],
 };
+

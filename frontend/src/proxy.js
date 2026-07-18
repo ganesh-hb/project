@@ -11,6 +11,6 @@ export function proxy(request) {
 }
 
 export const config = {
-    matcher: ['/contact', '/', '/users', '/user:path*', '/', '/reset-pass', '/add-company', '/company-list', '/group-list', '/capabilities', '/capability:path*', '/forbidden', '/profile', '/currency-list', '/currency:path*'],
+    matcher: ['/contact', '/', '/users', '/user:path*', '/', '/reset-pass', '/add-company', '/company-list', '/group-list', '/capabilities', '/capability:path*', '/forbidden', '/profile', '/currency-list', '/currency:path*', '/add-currency'],
 }
 

@@ -343,7 +343,7 @@ export default function UserDetailsPage({ id }) {
                                         <h3 className="mb-5 text-xl font-semibold text-gray-800">Contact Info</h3>
                                         <div className="space-y-5">
                                             <div><p className="text-sm text-gray-500">Email</p><p className="font-medium text-gray-800">{userData.user_email}</p></div>
-                                            <div><p className="text-sm text-gray-500">Phone Number</p><p className="font-medium text-gray-800">{userData.user_phone || "N/A"}</p></div>
+                                            <div><p className="text-sm text-gray-500">Phone Number</p><p className="font-medium text-gray-800">{"+"}{user.dialCode ? user.dialCode : 0}{" "}{userData.user_phone || "-"}</p></div>
                                             <div><p className="text-sm text-gray-500">Alternate Phone Number</p><p className="font-medium text-gray-800">{userData.user_Alternatephone || "-"}</p></div>
                                         </div>
                                     </div>

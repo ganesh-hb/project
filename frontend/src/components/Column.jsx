@@ -63,6 +63,10 @@ function LoginAsCell({ row }) {
 
     const handleLoginAs = async (e) => {
         e.stopPropagation();
+        if (user.user_status === "Inactive") {
+            toast.error("Cannot log in as an inactive user", { position: "top-right" });
+            return;
+        }
         const success = await loginAs(user.user_userId);
         if (success) {
             toast.success(`Now acting as ${user.user_name}`, { position: "top-right" });

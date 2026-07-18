@@ -338,8 +338,10 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                         const addBtnConfigs = {
                             companies: { perm: "companyAdd", label: "Add Company" },
                             users: { perm: "userAdd", label: "Add User" },
-                            groups: { perm: "groupAdd", label: "Add Group" }
+                            groups: { perm: "groupAdd", label: "Add Group" },
+                            currencies: { perm: "currencyAdd", label: "Add Currency" }
                         };
+
                         const currentAddConfig = addBtnConfigs[page];
                         return currentAddConfig && can && can(currentAddConfig.perm) && onAddClick && (
                             <button

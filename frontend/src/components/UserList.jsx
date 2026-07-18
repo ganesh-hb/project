@@ -189,6 +189,10 @@ export default function UsersPage() {
 
     const handleLoginAs = async (e, user) => {
         e.stopPropagation();
+        if (user.user_status === "Inactive") {
+            toast.error("Cannot log in as an inactive user", { position: "top-right" });
+            return;
+        }
         const success = await loginAs(user.user_userId);
         if (success) {
             toast.success(`Now acting as ${user.user_name}`, { position: "top-right" });
@@ -204,10 +208,10 @@ export default function UsersPage() {
     };
 
     return (
-        <div className="w-full min-h-screen bg-[#f5f6fa] overflow-x-hidden">
+        <div className="fixed inset-0 flex flex-col bg-[#f5f6fa] overflow-hidden">
             <Header onSearch={handleSearch} page="users" viewMode={viewMode} onViewModeChange={setViewMode} onAddClick={() => router.push("/add-user")} />
 
-            <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 flex flex-col min-h-0 overflow-hidden">
                 <nav
                     className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500"
                     aria-label="Breadcrumb"
@@ -224,31 +228,15 @@ export default function UsersPage() {
                     </span>
                 </nav>
 
-                <div className="w-full">
+                {viewMode !== "table" && (
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
                         <h1 className="text-2xl font-semibold text-[#1f2937]">
                             {superAdmin ? "All Users" : companyAdmin ? "Company Users" : "Users"}
                         </h1>
-
-                        <div className="flex flex-wrap items-center gap-3">
-
-                            {/* <div className="flex border rounded-md overflow-hidden bg-white ">
-                                {["grid", "list", "table"].map((mode) => (
-                                    <button
-                                        key={mode}
-                                        onClick={() => setViewMode(mode)}
-                                        className={`px-4 py-2 text-sm font-medium transition capitalize cursor-pointer ${viewMode === mode
-                                            ? "bg-[#1d6fdc] text-white"
-                                            : "bg-white text-gray-600 hover:bg-gray-100"
-                                            }`}
-                                    >
-                                        {mode === "table" ? "Data Table" : mode.charAt(0).toUpperCase() + mode.slice(1)}
-                                    </button>
-                                ))}
-                            </div> */}
-                        </div>
                     </div>
+                )}
 
+                <div className={viewMode === "table" ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "flex-1 min-h-0 overflow-y-auto pb-6"}>
                     {loading && (
                         <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">
                             Loading users...
@@ -380,7 +368,7 @@ export default function UsersPage() {
                     )}
 
                     {!loading && !error && viewMode === "list" && (
-                        <div className="w-full bg-white rounded-2xl border border-gray-200 grid grid-cols-1 gap-5 p-4">
+                        <div className="w-full bg-white rounded-2xl border border-gray-200 grid grid-cols-1 gap-5 p-4 mb-12">
                             {users?.map((user, index) => {
                                 const rowId = user.user_userId || index;
                                 const isOpen = !!expandedRows[rowId];
@@ -486,13 +474,17 @@ export default function UsersPage() {
                     )}
 
                     {!loading && !error && viewMode === "table" && (
-                        <DataTable columns={columns} data={users} />
+                        <DataTable
+                            title={superAdmin ? "All Users" : companyAdmin ? "Company Users" : "Users"}
+                            columns={columns}
+                            data={users}
+                            containerClassName="flex-1 overflow-y-auto"
+                        />
                     )}
                 </div>
             </div>
 
-
-            <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3">
+            <div className="w-full flex items-center justify-between bg-white border-t border-gray-200 px-6 py-3 z-30">
                 <div className="text-sm font-medium text-gray-800">
                     {totalRecords > 0
                         ? `View ${(currentPage - 1) * limit + 1} - ${Math.min(currentPage * limit, totalRecords)} of ${totalRecords}`
@@ -510,7 +502,8 @@ export default function UsersPage() {
                         <option value={8}>8</option>
                         <option value={10}>10</option>
                         <option value={20}>20</option>
-                        <option value={30}>30</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
                     </select>
                 </div>
             </div>

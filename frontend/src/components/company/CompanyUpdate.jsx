@@ -598,14 +598,25 @@ export default function CompanyUpdate({ id, onBack }) {
                             </div>
                         </div>
 
-                        {/* Status field relocated to the end of the form */}
-                        <div className="rounded-2xl bg-white p-8 shadow-sm">
-                            <label className={labelClass}>Status <span className="text-red-500">*</span></label>
-                            <select name="status" value={formData.status} onChange={handleChange} className={inputClass}>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                            {errors.status && <p className={errorClass}>{errors.status}</p>}
+                        <div className="rounded-2xl bg-white p-8 shadow-sm mb-6">
+                            <h2 className="mb-6 text-lg font-semibold text-gray-700 border-b pb-3">Status</h2>
+                            <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div className="w-full">
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Status <span className="text-red-500 text-[16px]">*</span>
+                                    </label>
+                                    <select
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleChange}
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                    {errors.status && <p className="mt-1 text-sm text-red-500">{errors.status}</p>}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

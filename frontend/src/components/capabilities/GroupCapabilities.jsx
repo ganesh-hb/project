@@ -25,7 +25,7 @@ const MODULES = [
     {
         label: "Currency",
         key: "currency",
-        permissions: ["currencyList", "currencyView", null, null],
+        permissions: ["currencyList", "currencyView", "currencyAdd", "currencyUpdate"],
     },
 ];
 

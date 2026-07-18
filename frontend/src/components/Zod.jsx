@@ -240,3 +240,48 @@ export const GroupFormSchema = z.object({
         errorMap: () => ({ message: "Status is required." }),
     }),
 });
+
+export const CurrencyFormSchema = z.object({
+    name: z.string()
+        .min(1, "Please enter Currency Name."),
+    code: z.string()
+        .min(1, "Please enter Code.")
+        .min(2, "Code should be at least 2 letters.")
+        .max(255, "Code should be at most 255 characters."),
+    symbol: z.string()
+        .min(1, "Please enter Symbol.")
+        .max(10, "Symbol should be at most 10 characters."),
+    conversionRate: z
+        .coerce
+        .number({
+            required_error: "Please enter Conversion Rate.",
+            invalid_type_error: "Conversion Rate must be a number.",
+        })
+        .min(0, { message: "Conversion Rate cannot be negative." }),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please Select a valid Status." }),
+    }),
+});
+
+export const CurrencyUpdateSchema = z.object({
+    curId: z.coerce.number(),
+    name: z.string()
+        .min(1, "Please enter Currency Name."),
+    code: z.string()
+        .min(1, "Please enter Code.")
+        .min(2, "Code should be at least 2 letters.")
+        .max(255, "Code should be at most 255 characters."),
+    symbol: z.string()
+        .min(1, "Please enter Symbol.")
+        .max(10, "Symbol should be at most 10 characters."),
+    conversionRate: z
+        .coerce
+        .number({
+            required_error: "Please enter Conversion Rate.",
+            invalid_type_error: "Conversion Rate must be a number.",
+        })
+        .min(0, { message: "Conversion Rate cannot be negative." }),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please Select a valid Status." }),
+    }),
+});

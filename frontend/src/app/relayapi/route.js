@@ -76,7 +76,7 @@ export async function POST(request) {
             } catch (e) {}
 
             try {
-                await fetch(`${base}/user/user-stop-impersonating`, {
+                await fetch(`${base}/user-stop-impersonating`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

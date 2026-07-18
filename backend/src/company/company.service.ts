@@ -434,7 +434,7 @@ export class CompanyService {
           where: { companyId: targetCompanyId },
           relations: ['currency'],
         }),
-        this.currencyEntity.find({ order: { name: 'ASC' } }),
+        this.currencyEntity.find({where:{status:"Active"}, order: { name: 'ASC' } }),
         company.addedBy
           ? userRepo.findOne({
               where: { userId: company.addedBy },

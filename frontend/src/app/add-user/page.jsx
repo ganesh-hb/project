@@ -111,7 +111,9 @@ export default function AddUserPage() {
                     body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();
-                setGroups(Array.isArray(data?.data) ? data.data : []);
+                setGroups(Array.isArray(data?.data) ?
+                    data.data.filter((group) => group.status == "active") : []);
+
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });
             }
@@ -132,7 +134,8 @@ export default function AddUserPage() {
                     body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();
-                setCompanies(Array.isArray(data?.data) ? data.data : []);
+                setCompanies(Array.isArray(data?.data) ?
+                    data.data.filter((company) => company.status == "active") : []);
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });
             }

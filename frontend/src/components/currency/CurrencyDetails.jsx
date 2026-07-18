@@ -6,16 +6,18 @@ import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
+import CurrencyUpdate from "./CurrencyUpdate";
 
 export default function CurrencyDetails({ id }) {
     const router = useRouter();
     const { can } = useContext(loginContext);
     const [currency, setCurrency] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showEdit, setShowEdit] = useState(false);
 
     useEffect(() => {
         fetchCurrency();
-    }, [id]);
+    }, [id, showEdit]);
 
     const fetchCurrency = async () => {
         setLoading(true);
@@ -69,6 +71,10 @@ export default function CurrencyDetails({ id }) {
         );
     }
 
+    if (showEdit) {
+        return <CurrencyUpdate id={id} onBack={() => setShowEdit(false)} />;
+    }
+
     if (!currency) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
@@ -77,6 +83,13 @@ export default function CurrencyDetails({ id }) {
             </div>
         );
     }
+
+    const statusBadge = (status) => {
+        const s = String(status).toLowerCase();
+        if (s === "active") return "inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700";
+        if (s === "inactive") return "inline-block rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700";
+        return "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700";
+    };
 
     return (
         <div className="min-h-screen bg-[#f5f6f8] text-gray-800">
@@ -89,110 +102,114 @@ export default function CurrencyDetails({ id }) {
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={(e) => gotoPages(e, "/currency-list")}>Currencies</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">Currency</span>
-
-
-
                 </nav>
 
                 {/* Title and Edit Button */}
                 <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-xl font-bold text-gray-800">Details</h1>
-                    <button
-                        className="inline-flex h-9 items-center justify-center rounded-lg bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.98] cursor-pointer"
-                        onClick={() => { }}
-                    >
-                        Edit
-                    </button>
+                    <h1 className="mt-1 text-3xl font-semibold text-gray-800">Currency Details</h1>
+                    <div className="flex items-center gap-4">
+                        {can("currencyUpdate") && (
+                            <button
+                                className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
+                                onClick={() => setShowEdit(true)}
+                            >
+                                Edit
+                            </button>
+                        )}
+                        <button
+                            className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-300 bg-white px-8 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gray-300 active:scale-[0.98] cursor-pointer"
+                            onClick={() => router.back()}
+                        >
+                            Back
+                        </button>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-12 gap-6">
-                    {/* Left Column: Summary Card */}
-                    <div className="col-span-12 md:col-span-3">
-                        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm min-h-[350px]">
-                            <h2 className="text-lg font-bold text-gray-800">{currency.name || "N/A"}</h2>
-                            <p className="text-sm font-semibold text-gray-400 mt-0.5">{currency.code || "N/A"}</p>
-
-                            <div className="w-full border-t border-gray-100 my-4"></div>
-
-                            <button
-                                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-left text-sm font-bold text-white transition shadow-sm"
-                            >
-                                Summary
-                            </button>
+                    <div className="col-span-12 lg:col-span-3">
+                        <div className="rounded-2xl bg-white p-5 shadow-sm">
+                            <div className="border-b pb-5">
+                                <h2 className="text-xl font-semibold text-gray-800">{currency.name || "N/A"}</h2>
+                                <p className="text-sm text-gray-400 mt-1">{currency.code || "N/A"}</p>
+                            </div>
+                            <div className="mt-6 space-y-3">
+                                <button
+                                    className="w-full rounded-xl px-4 py-3 text-left font-medium transition bg-gray-600 text-white"
+                                >
+                                    Summary
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right Column: details, added info, modified info row */}
-                    <div className="col-span-12 md:col-span-9">
-                        <div className="grid grid-cols-12 gap-6">
-
-                            {/* Middle details card */}
-                            <div className="col-span-12 lg:col-span-6">
-                                <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm min-h-[220px]">
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Details</h3>
-                                    <div className="space-y-3.5 text-sm">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-400 font-medium">Currency Name</span>
-                                            <span className="text-gray-800 font-semibold text-right">{currency.name || "-"}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-400 font-medium">Currency Code</span>
-                                            <span className="text-gray-800 font-semibold text-right">{currency.code || "-"}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-400 font-medium">Currency Symbol</span>
-                                            <span className="text-gray-800 font-semibold text-right">{currency.symbol || "-"}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-400 font-medium">Last Synced Date</span>
-                                            <span className="text-gray-800 font-semibold text-right">
-                                                {currency.lastSyncedDate ? formatDate(currency.lastSyncedDate) : "-"}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-gray-400 font-medium">Status</span>
-                                            <span className="text-green-600 font-bold text-right">{currency.status || "-"}</span>
-                                        </div>
+                    {/* Right Column */}
+                    <div className="col-span-12 lg:col-span-9">
+                        <div className="grid gap-6 lg:grid-cols-2">
+                            {/* Details card */}
+                            <div className="rounded-2xl bg-white p-6 shadow-sm">
+                                <div className="flex items-center gap-4 border-b pb-5">
+                                    <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-md relative">
+                                        <span className="h-full w-full flex items-center justify-center text-2xl font-bold text-blue-600">
+                                            {currency.symbol || "$"}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-semibold text-gray-800">{currency.name || "-"}</h2>
+                                        <span className={statusBadge(currency.status)}>{currency.status}</span>
+                                    </div>
+                                </div>
+                                <div className="mt-6 space-y-4">
+                                    <div className="grid grid-cols-2">
+                                        <p className="text-gray-500">Currency Code</p>
+                                        <p className="font-medium text-gray-800">{currency.code || "-"}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <p className="text-gray-500">Currency Symbol</p>
+                                        <p className="font-medium text-gray-800">{currency.symbol || "-"}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <p className="text-gray-500">Base Currency</p>
+                                        <p className="font-medium text-gray-800">{currency.baseCurrency || "-"}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <p className="text-gray-500">Conversion Rate</p>
+                                        <p className="font-medium text-gray-800">{currency.conversionRate || "-"}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2">
+                                        <p className="text-gray-500">Last Synced Date</p>
+                                        <p className="font-medium text-gray-800">
+                                            {currency.lastSync ? formatDate(currency.lastSync) : "-"}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Added Info Card */}
-                            <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                                <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm min-h-[220px]">
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Added Info</h3>
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold shadow-inner">
-                                            S
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-blue-600">System</div>
-                                            <div className="text-xs text-gray-400 mt-0.5 font-medium">
-                                                {currency.addedDate ? formatDate(currency.addedDate) : "-"}
-                                            </div>
-                                        </div>
+                            {/* Audit / Logs card */}
+                            <div className="rounded-2xl bg-white p-6 shadow-sm">
+                                <h3 className="mb-5 text-lg font-semibold text-gray-800">Audit Information</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-sm text-gray-500">Added By</p>
+                                        <p className="font-medium text-gray-800">System</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Added Date</p>
+                                        <p className="font-medium text-gray-800">
+                                            {currency.addedDate ? formatDate(currency.addedDate) : "-"}
+                                        </p>
+                                    </div>
+                                    <div className="border-t border-gray-100 pt-4">
+                                        <p className="text-sm text-gray-500">Updated By</p>
+                                        <p className="font-medium text-gray-800">System</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500">Updated Date</p>
+                                        <p className="font-medium text-gray-800">
+                                            {currency.updatedDate ? formatDate(currency.updatedDate) : "-"}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Modified Info Card */}
-                            <div className="col-span-12 md:col-span-6 lg:col-span-3">
-                                <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm min-h-[220px]">
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Modified Info</h3>
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-10 w-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold shadow-inner">
-                                            S
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-blue-600">System</div>
-                                            <div className="text-xs text-gray-400 mt-0.5 font-medium">
-                                                {currency.updatedDate ? formatDate(currency.updatedDate) : "-"}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
                     </div>
                 </div>

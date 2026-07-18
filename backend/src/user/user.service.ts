@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
+  HttpException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -910,6 +912,10 @@ export class UserService {
 
       if (!target) return { success: 0, message: 'Target user not found' };
 
+      if (target.status === 'Inactive') {
+        throw new BadRequestException('Cannot impersonate an inactive user');
+      }
+
       const primary =
         target.userCompanyGroups?.find((u) => u.is_parent === 0) ??
         target.userCompanyGroups?.[0] ??
@@ -986,6 +992,7 @@ export class UserService {
         },
       };
     } catch (err: any) {
+      if (err instanceof HttpException) throw err;
       return { success: 0, message: err.message };
     }
   }

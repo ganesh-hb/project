@@ -161,11 +161,15 @@ export default function LoginContext({ children }) {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({ targetUserId }),
-        }).catch(() => {});
+        })
+        .then(res => res.json())
+        .then(data => console.log('stop-impersonate response:', data))
+        .catch((err) => console.error('stop-impersonate fetch error:', err));
 
         sessionStorage.removeItem("impersonatedUser");
-        sessionStorage.removeItem("activeAssignment")
+        sessionStorage.removeItem("activeAssignment");
         sessionStorage.removeItem("impersonatedPermissions");
+        localStorage.removeItem("impersonationToken");
         setImpersonating(null);
 
         const original = sessionStorage.getItem("permissions");
