@@ -25,6 +25,15 @@ export default function CompanyUpdate({ id, onBack }) {
         if (!name) return "?";
         return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
     }
+
+    const getCountryCodeByDialCode = (dialCode) => {
+        if (!dialCode) return "in";
+        const cleanDial = String(dialCode).replace("+", "").trim();
+        const allCountries = Country.getAllCountries();
+        const found = allCountries.find(c => c.phonecode === cleanDial);
+        return found ? found.isoCode.toLowerCase() : "in";
+    };
+
     const [companyFile, setCompanyFile] = useState(null);
     const [preview, setPreview] = useState("");
     const [imageRemoved, setImageRemoved] = useState(false);
@@ -120,6 +129,13 @@ export default function CompanyUpdate({ id, onBack }) {
                     setPreview(`http://localhost:4000/upload/company/${data.companyId}/${data.companyFile}`);
                 }
 
+                if (data.dialCode) {
+                    setCompanyCountryCode(getCountryCodeByDialCode(data.dialCode));
+                }
+                if (data.ownerDialCode) {
+                    setOwnerCountryCode(getCountryCodeByDialCode(data.ownerDialCode));
+                }
+
                 if (data.country) {
                     const allCountries = Country.getAllCountries();
                     const matchedCountry = allCountries.find(
@@ -127,6 +143,7 @@ export default function CompanyUpdate({ id, onBack }) {
                     );
                     if (matchedCountry) {
                         setFormData((prev) => ({ ...prev, country: matchedCountry.isoCode }));
+                        setCompanyCountryCode(matchedCountry.isoCode.toLowerCase());
                         if (data.state) {
                             const allStates = State.getStatesOfCountry(matchedCountry.isoCode);
                             const matchedState = allStates.find(

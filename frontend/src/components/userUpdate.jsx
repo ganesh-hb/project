@@ -112,7 +112,7 @@ export default function EditUserPage({ user, onBack }) {
             try {
                 const res = await fetch("/relayapi", {
                     method: "POST",
-                    headers: { ...authHeaders(), endpoint: "group-list", module: "group" },
+                    headers: { ...authHeaders(), endpoint: "group-dropdown-list", module: "group" },
                     body: JSON.stringify({ page: 1, limit: 200 }),
                 });
                 const data = await res.json();

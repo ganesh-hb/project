@@ -255,6 +255,34 @@ export class GroupService {
     return return_data;
   }
 
+  async getGroupsForDropdown(req?: any) {
+    try {
+      const authCtx = await resolveAuthContext(req, this.ucgEntity);
+      const queryBuilder = this.groupEntity?.createQueryBuilder('group');
+      
+      queryBuilder.select(['group.groupId', 'group.groupName', 'group.status']);
+      queryBuilder.where('group.status = :status', { status: 'active' });
+      queryBuilder.andWhere('group.groupName != :name', { name: 'superAdmin' });
+
+      if (!authCtx.isSuperAdmin) {
+        queryBuilder.leftJoin(
+          UserCompanyGroupEntity,
+          'creator_ucg',
+          'creator_ucg.userId = group.addedBy',
+        );
+        queryBuilder.andWhere(
+          '(group.addedBy IS NULL OR creator_ucg.companyId = :activeCompanyId)',
+          { activeCompanyId: authCtx.activeCompanyId },
+        );
+      }
+
+      const data = await queryBuilder.getMany();
+      return { success: 1, data };
+    } catch (err: any) {
+      return { success: 0, message: err.message };
+    }
+  }
+
   async getGroup(query: any, req?: any) {
     try {
       const authCtx = await resolveAuthContext(req, this.ucgEntity);

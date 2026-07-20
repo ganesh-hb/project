@@ -70,6 +70,13 @@ export class GroupController {
     return await this.groupService.getGroups(body, req);
   }
 
+  @Post('group-dropdown-list')
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermission('userUpdate')
+  async getGroupsForDropdown(@Req() req) {
+    return await this.groupService.getGroupsForDropdown(req);
+  }
+
   @Get('group-details/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard, PermissionsGuard)
   @Roles('superAdmin')

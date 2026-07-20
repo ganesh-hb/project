@@ -71,7 +71,7 @@ export default function UserDetailsPage({ id }) {
         const [gRes, cRes] = await Promise.all([
             fetch(`http://localhost:3000/relayapi`, {
                 method: "POST",
-                headers: { ...authHeaders(), endpoint: "group-list", module: "group", "Content-Type": "application/json" },
+                headers: { ...authHeaders(), endpoint: "group-dropdown-list", module: "group", "Content-Type": "application/json" },
                 body: JSON.stringify({ page: 1, limit: 200 }),
             }),
             fetch(`http://localhost:3000/relayapi`, {

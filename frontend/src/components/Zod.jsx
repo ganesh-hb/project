@@ -168,11 +168,11 @@ export const CompanyUpdateSchema = z.object({
         .max(10, { message: "Enter valid Phone Number." })
         .regex(/^\d+$/, { message: "Enter valid Phone Number." }),
     country: z.string()
-        .min(1, "Please select Country "),
+        .min(1, "Please select Country. "),
     state: z.string()
-        .min(1, "Please select State "),
+        .min(1, "Please select State. "),
     city: z.string()
-        .min(1, "Please select City "),
+        .min(1, "Please select City. "),
     postalCode: z.coerce.string({ required_error: "Please enter Postal Code." }).min(1, "Please enter Postal Code.").regex(/^\d+$/, "Postal Code must contain only numbers."),
     ownerName: z.string().min(2, "Please enter Owner Name."),
     ownerEmail: z.string().min(2, "Please enter Owner Email.")

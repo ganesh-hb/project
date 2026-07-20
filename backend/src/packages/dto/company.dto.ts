@@ -112,6 +112,7 @@ export class CompanyDto {
   ownerPhoneDialCode?: number;
 
   @IsOptional()
+  @IsNumber()
   @Transform(({ value }) => value ? Number(value) : null)
   ownerDialCode?: number;
 
@@ -222,6 +223,7 @@ export class CompanyUpdateDto {
   ownerPhoneDialCode?: number;
 
   @IsOptional()
+  @IsNumber()
   @Transform(({ value }) => value ? Number(value) : null)
   ownerDialCode?: number;
 

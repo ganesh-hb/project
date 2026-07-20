@@ -105,7 +105,7 @@ export default function AddUserPage() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        endpoint: "group-list",
+                        endpoint: "group-dropdown-list",
                         module: "group",
                     },
                     body: JSON.stringify({ page: 1, limit: 200 }),
