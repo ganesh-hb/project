@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 
@@ -24,6 +24,7 @@ export class CompanyService {
   constructor(
     private readonly fileTransfer: FileTransfer,
     private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Inject()
@@ -276,10 +277,27 @@ export class CompanyService {
 
       queryParams.updatedDate = () => 'NOW()';
 
-      await this.companyEntity.update(
-        { companyId: params.companyId },
-        queryParams,
-      );
+      // Perform all database modifications in a transaction
+      await this.dataSource.transaction(async (manager) => {
+        await manager.update(
+          CompanyEntity,
+          { companyId: params.companyId },
+          queryParams,
+        );
+
+        if (params.curIds && Array.isArray(params.curIds)) {
+          await manager.delete(CompanyCurrencyEntity, {
+            companyId: params.companyId,
+          });
+          const currencyInsertions = params.curIds.map((curId: number) => ({
+            companyId: Number(params.companyId),
+            curId: Number(curId),
+          }));
+          if (currencyInsertions.length > 0) {
+            await manager.insert(CompanyCurrencyEntity, currencyInsertions);
+          }
+        }
+      });
 
       if (companyFile) {
         await this.fileTransfer.fileTransfer3(
@@ -287,19 +305,6 @@ export class CompanyService {
           params.companyId,
           params.companyId,
         );
-      }
-
-      if (params.curIds && Array.isArray(params.curIds)) {
-        await this.companyCurrencyEntity.delete({
-          companyId: params.companyId,
-        });
-        const currencyInsertions = params.curIds.map((curId: number) => ({
-          companyId: Number(params.companyId),
-          curId: Number(curId),
-        }));
-        if (currencyInsertions.length > 0) {
-          await this.companyCurrencyEntity.insert(currencyInsertions);
-        }
       }
 
       const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.updatedBy);

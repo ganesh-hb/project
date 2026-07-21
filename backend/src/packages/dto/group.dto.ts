@@ -14,7 +14,7 @@ import {
 } from 'class-validator';
 import { EntitySchemaOptions } from 'typeorm';
 
-export enum isOptional {
+export enum isOptional {  
   YES = 'yes',
   NO = 'no',
 }
@@ -81,9 +81,13 @@ export class getGroupListDto {
   limit!: number;
 
   @IsOptional()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => filterDto)
   filters: any;
+
+  @IsOptional()
+  @IsString()
+  condition?: string;
 }
 
 export class filterDto {

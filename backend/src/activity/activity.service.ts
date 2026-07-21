@@ -17,7 +17,7 @@ export interface LogPayload {
   severity?: string;
   parameters?: Record<string, any>;
   // metadata?: Record<string, any>;
-  correlationId?: string;
+  // correlationId?: string;
 }
 
 @Injectable()
@@ -60,7 +60,7 @@ export class ActivityService {
         targetId: payload.targetId ?? undefined,
         executionStatus: payload.executionStatus,
         severity: severity,
-        correlationId: payload.correlationId ?? undefined,
+        // correlationId: payload.correlationId ?? undefined,
         parameters: payload.parameters ?? undefined,
         // metadata: payload.metadata ?? undefined,
         generatedMessage,
@@ -155,7 +155,7 @@ export class ActivityService {
         targetId: log.targetId,
         executionStatus: log.executionStatus,
         severity: log.severity,
-        correlationId: log.correlationId,
+        // correlationId: log.correlationId,
         parameters: log.parameters,
         generatedMessage: log.generatedMessage,
         createdAt: log.createdAt,

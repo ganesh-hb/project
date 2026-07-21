@@ -6,7 +6,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 
@@ -54,25 +54,116 @@ export class UserService {
     assignments: { companyId: number; groupId: number; is_parent?: number }[],
     replace = false,
   ) {
-    if (replace) {
-      await this.ucgEntity.delete({ userId });
+    if (!assignments?.length) {
+      if (replace) {
+        // Delete only child mappings, preserving the parent mapping
+        await this.ucgEntity.delete({ userId: Number(userId), is_parent: Not(0) });
+      }
+      return;
     }
 
-    if (!assignments?.length) return;
+    if (replace) {
+      // Load all existing mappings for the user
+      const existing = await this.ucgEntity.find({
+        where: { userId: Number(userId) },
+      });
 
-    const rows = assignments.map((a) =>
-      this.ucgEntity.create({
-        userId,
-        companyId: Number(a.companyId),
-        groupId: Number(a.groupId),
-        is_parent:
+      // Keep the parent row (is_parent === 0)
+      const parentRow = existing.find((a) => a.is_parent === 0);
+
+      // Distinguish primary and secondary incoming assignments
+      const incomingParent = assignments.find((a) => a.is_parent === 0);
+      const incomingChildren = assignments.filter((a) => a.is_parent !== 0);
+
+      // Update parent row in-place if submitted
+      if (parentRow && incomingParent) {
+        parentRow.companyId = Number(incomingParent.companyId);
+        parentRow.groupId = Number(incomingParent.groupId);
+        await this.ucgEntity.save(parentRow);
+      } else if (incomingParent) {
+        await this.ucgEntity.save(
+          this.ucgEntity.create({
+            userId: Number(userId),
+            companyId: Number(incomingParent.companyId),
+            groupId: Number(incomingParent.groupId),
+            is_parent: 0,
+          }),
+        );
+      }
+
+      // Diff secondary/child mappings
+      const existingChildren = existing.filter((a) => a.is_parent !== 0);
+
+      // 1. Delete child mappings not in incomingChildren
+      const toDelete = existingChildren.filter(
+        (ext) =>
+          !incomingChildren.some(
+            (inc) =>
+              Number(inc.companyId) === ext.companyId &&
+              Number(inc.groupId) === ext.groupId,
+          ),
+      );
+      if (toDelete.length > 0) {
+        await this.ucgEntity.remove(toDelete);
+      }
+
+      // 2. Insert new child mappings
+      const toInsert = incomingChildren
+        .filter(
+          (inc) =>
+            !existingChildren.some(
+              (ext) =>
+                ext.companyId === Number(inc.companyId) &&
+                ext.groupId === Number(inc.groupId),
+            ),
+        )
+        .map((inc) =>
+          this.ucgEntity.create({
+            userId: Number(userId),
+            companyId: Number(inc.companyId),
+            groupId: Number(inc.groupId),
+            is_parent: Number(userId),
+          }),
+        );
+      if (toInsert.length > 0) {
+        await this.ucgEntity.save(toInsert);
+      }
+    } else {
+      // Append mode: simply insert new mappings (handling duplicates)
+      const existing = await this.ucgEntity.find({
+        where: { userId: Number(userId) },
+      });
+
+      const rowsToInsert: UserCompanyGroupEntity[] = [];
+      for (const a of assignments) {
+        const isParentVal =
           a.is_parent === null || a.is_parent === undefined
-            ? userId
-            : a.is_parent,
-      }),
-    );
+            ? Number(userId)
+            : Number(a.is_parent);
 
-    await this.ucgEntity.save(rows);
+        const alreadyExists = existing.some(
+          (ext) =>
+            ext.companyId === Number(a.companyId) &&
+            ext.groupId === Number(a.groupId) &&
+            ext.is_parent === isParentVal,
+        );
+
+        if (!alreadyExists) {
+          rowsToInsert.push(
+            this.ucgEntity.create({
+              userId: Number(userId),
+              companyId: Number(a.companyId),
+              groupId: Number(a.groupId),
+              is_parent: isParentVal,
+            }),
+          );
+        }
+      }
+
+      if (rowsToInsert.length > 0) {
+        await this.ucgEntity.save(rowsToInsert);
+      }
+    }
   }
 
   // private async loadUserWithAssignments(userId: number) {
@@ -213,13 +304,24 @@ export class UserService {
           message: 'Access denied: user not in your company',
         };
       }
+
+      // Validate that the submitted companyId is within the viewer's scope
+      if (params.companyId) {
+        const submittedCompanyId = Number(params.companyId);
+        if (!req.scopedCompanyIds.includes(submittedCompanyId)) {
+          return {
+            success: 0,
+            message: 'Access denied: cannot modify assignment outside your company scope',
+          };
+        }
+      }
     }
 
-    const res = await this.updateUser(params, userFile);
+    const res = await this.updateUser(params, userFile, req);
     if (res.success === 1) return this.updateSuccess(res, params);
     return this.finishFailure(res);
   }
-  async updateUser(params: any, userFile?: any) {
+  async updateUser(params: any, userFile?: any, req?: any) {
     if (!params.userId) {
       return { success: 0, message: 'userId is mandatory' };
     }
@@ -255,17 +357,34 @@ export class UserService {
       await this.userEntity.save(user);
 
       if (params.companyId && params.groupId) {
-        await this.saveAssignments(
-          params.userId,
-          [
-            {
-              companyId: params.companyId,
-              groupId: params.groupId,
-              is_parent: 0,
-            },
-          ],
-          true,
-        );
+        const targetCompanyId = Number(params.companyId);
+        const targetGroupId = Number(params.groupId);
+
+        // Find the specific UCG row for this user+company to patch.
+        // This preserves all other company assignments (no full wipe).
+        const existingAssignment = await this.ucgEntity.findOne({
+          where: {
+            userId: Number(params.userId),
+            companyId: targetCompanyId,
+          },
+        });
+
+        if (existingAssignment) {
+          existingAssignment.groupId = targetGroupId;
+          await this.ucgEntity.save(existingAssignment);
+        } else {
+          // No assignment exists for this company yet — insert as secondary.
+          // is_parent: Number(userId) is the established convention for secondary
+          // assignments, matching addProfile (user.service.ts line 882).
+          await this.ucgEntity.save(
+            this.ucgEntity.create({
+              userId: Number(params.userId),
+              companyId: targetCompanyId,
+              groupId: targetGroupId,
+              is_parent: Number(params.userId),
+            }),
+          );
+        }
       }
 
       if (userFile) {
@@ -432,16 +551,43 @@ export class UserService {
     }
   }
 
-  async logout(body: any) {
+  async logout(body: any, req: any) {
     try {
+      const authUser = req?.user;
+      if (!authUser?.userId) {
+        return { success: 0, message: 'Unauthorized' };
+      }
+
+      const userId = Number(authUser.userId);
+      const email = authUser.email;
+
+      // Validate companyId is assigned to this user, fallback to primary profile otherwise
+      let companyId = body?.companyId ? Number(body.companyId) : undefined;
+      if (companyId) {
+        const hasAssignment = await this.ucgEntity.findOne({
+          where: { userId, companyId },
+        });
+        if (!hasAssignment) {
+          companyId = undefined;
+        }
+      }
+
+      if (!companyId) {
+        const primary = await this.ucgEntity.findOne({
+          where: { userId },
+          order: { is_parent: 'ASC' },
+        });
+        companyId = primary?.companyId;
+      }
+
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.USER_LOGOUT,
-        userId: body.userId,
-        companyId: body.companyId,
+        userId: userId,
+        companyId: companyId,
         actorType: 'USER',
         executionStatus: 'SUCCESS',
         severity: 'INFO',
-        parameters: { userEmail: body.email },
+        parameters: { userEmail: email },
         metadata: {},
       });
 
@@ -515,10 +661,17 @@ export class UserService {
 
       const formattedData = data.map((user) => {
         const allAssignments = user.userCompanyGroups ?? [];
-        const primary =
-          allAssignments.find((a) => a.is_parent === 0) ??
-          allAssignments[0] ??
-          null;
+        // For scoped viewers, prefer the assignment matching their company scope
+        // so the list row shows the relevant profile, not the global primary.
+        const primary = req?.scopedCompanyIds?.length
+          ? (allAssignments.find((a) =>
+              req.scopedCompanyIds.includes(a.companyId)) ??
+            allAssignments.find((a) => a.is_parent === 0) ??
+            allAssignments[0] ??
+            null)
+          : (allAssignments.find((a) => a.is_parent === 0) ??
+            allAssignments[0] ??
+            null);
         return {
           userId: user.userId,
           name: user.name,
@@ -609,9 +762,15 @@ export class UserService {
       const activeAssignment =
         profileId != null
           ? (allAssignments.find((u) => u.id === profileId) ?? null)
-          : (allAssignments.find((u) => u.is_parent === 0) ??
-            allAssignments[0] ??
-            null);
+          : req?.scopedCompanyIds?.length
+            ? (allAssignments.find((a) =>
+                req.scopedCompanyIds.includes(a.companyId)) ??
+              allAssignments.find((u) => u.is_parent === 0) ??
+              allAssignments[0] ??
+              null)
+            : (allAssignments.find((u) => u.is_parent === 0) ??
+              allAssignments[0] ??
+              null);
 
       const mapAssignment = (ucg: any) => ({
         id: ucg.id,
@@ -861,6 +1020,14 @@ export class UserService {
         };
       }
 
+      // Scope-gate: scoped admins can only add profiles for companies they manage
+      if (req?.scopedCompanyIds?.length && !req.scopedCompanyIds.includes(Number(companyId))) {
+        return {
+          success: 0,
+          message: 'Access denied: cannot add a profile for a company outside your scope',
+        };
+      }
+
       const existing = await this.ucgEntity.findOne({
         where: {
           userId: Number(userId),
@@ -883,6 +1050,58 @@ export class UserService {
       });
       await this.ucgEntity.save(row);
       return { success: 1, message: 'Profile added successfully' };
+    } catch (err: any) {
+      return { success: 0, message: err.message };
+    }
+  }
+
+  async deleteProfile(
+    body: {
+      id: number;
+      userId: number;
+    },
+    req?: any,
+  ) {
+    try {
+      const { id, userId } = body;
+      if (!id || !userId) {
+        return {
+          success: 0,
+          message: 'id and userId are required',
+        };
+      }
+
+      const row = await this.ucgEntity.findOne({
+        where: { id: Number(id) },
+      });
+
+      if (!row) {
+        return { success: 0, message: 'Profile not found' };
+      }
+
+      if (row.userId !== Number(userId)) {
+        return {
+          success: 0,
+          message: 'Profile does not belong to this user',
+        };
+      }
+
+      if (req?.scopedCompanyIds?.length && !req.scopedCompanyIds.includes(row.companyId)) {
+        return {
+          success: 0,
+          message: 'Access denied: cannot delete a profile outside your company',
+        };
+      }
+
+      if (row.is_parent === 0) {
+        return {
+          success: 0,
+          message: 'Cannot delete the primary profile',
+        };
+      }
+
+      await this.ucgEntity.delete({ id: Number(id) });
+      return { success: 1, message: 'Profile removed successfully' };
     } catch (err: any) {
       return { success: 0, message: err.message };
     }

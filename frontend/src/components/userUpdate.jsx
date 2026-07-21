@@ -185,7 +185,11 @@ export default function EditUserPage({ user, onBack }) {
                 : ""
         );
 
+        // Prefer activeAssignment from the backend (scope-aware, set by getUser fix 2)
+        // over the client-side is_parent===0 fallback, which always picks the global
+        // primary regardless of the viewing admin's company scope.
         const primary =
+            user.activeAssignment ??
             user.assignments?.find((a) => a.is_parent === 0) ??
             user.assignments?.[0] ??
             null;

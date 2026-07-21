@@ -5,6 +5,8 @@ import EditUserPage from "./userUpdate";
 import { useContext } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import Header from "./Header";
+import { toast } from "react-toastify";
+import { Trash2 } from "lucide-react";
 
 // Helper to generate initials from a name string
 const getInitials = (name) => {
@@ -13,16 +15,17 @@ const getInitials = (name) => {
     const initials = parts.map(p => p[0]).join("");
     return initials.slice(0, 2).toUpperCase();
 };
-import { authHeaders } from "@/app/lib/auth";
+import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import { createPortal } from "react-dom";
 import CompanySidePanel from "./company/CompanySidePanel";
 import UserSidePanel from "./UserSidePanel";
 
 import ActivityTimeline from '@/components/activity/ActivityTimeline';
+import Swal from "sweetalert2";
 export default function UserDetailsPage({ id }) {
     const [showEdit, setShowEdit] = useState(false);
-    const { can, canAny } = useContext(loginContext);
+    const { can, canAny, isLogin, activeAssignment } = useContext(loginContext);
     const [activeTab, setActiveTab] = useState("summary");
     const [user, setUser] = useState({});
     const [groups, setGroups] = useState([]);
@@ -117,6 +120,52 @@ export default function UserDetailsPage({ id }) {
             setAddError("Something went wrong.");
         } finally {
             setAddLoading(false);
+        }
+    };
+
+    const handleDeleteProfile = async (assignmentId) => {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "Are you sure you want to remove this profile assignment?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        });
+
+        if (!result.isConfirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch("/relayapi", {
+                method: "POST",
+                headers: {
+                    ...authHeaders(),
+                    endpoint: "user-delete-profile",
+                    module: "user",
+                },
+                body: JSON.stringify({ id: assignmentId, userId: Number(id) }),
+            });
+
+            const payload = await response.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+
+            if (data?.success === 1) {
+                toast.success(data.message || "Profile removed successfully", { position: "top-right" });
+                const deletedIdx = assignments.findIndex(a => a.id === assignmentId);
+                if (selectedProfileIndex === deletedIdx) {
+                    setSelectedProfileIndex(0);
+                } else if (selectedProfileIndex > deletedIdx) {
+                    setSelectedProfileIndex(prev => Math.max(0, prev - 1));
+                }
+                fetchUser();
+            } else {
+                toast.error(data?.message || "Failed to remove profile assignment", { position: "top-right" });
+            }
+        } catch (err) {
+            toast.error(`${err}`, { position: "top-right" });
         }
     };
 
@@ -393,9 +442,24 @@ export default function UserDetailsPage({ id }) {
                                                 className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition ${selectedProfileIndex === i ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-gray-50"}`}>
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>
-                                                    {selectedProfileIndex === i && (
-                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Active</span>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {selectedProfileIndex === i && (
+                                                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Active</span>
+                                                        )}
+                                                        {a.is_parent !== 0 && can("userUpdate") &&
+                                                            (isSuperAdmin(isLogin) || a.companyId === activeAssignment?.companyId) && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteProfile(a.id);
+                                                                    }}
+                                                                    className="rounded p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
+                                                                    title="Delete Profile"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            )}
+                                                    </div>
                                                 </div>
                                                 <div className="space-y-2 mb-4">
                                                     <div>

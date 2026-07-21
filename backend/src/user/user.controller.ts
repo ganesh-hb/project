@@ -195,8 +195,17 @@ export class UserController {
     return { encrypted: encryptResponse(result) };
   }
 
+  @Post('user-delete-profile')
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermission('userUpdate')
+  async deleteProfile(@Req() req, @Body() body: { id: number; userId: number }) {
+    const result = await this.userService.deleteProfile(body, req);
+    return { encrypted: encryptResponse(result) };
+  }
+
   @Post('user-login-as')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('superAdmin')
   async loginAs(@Body() body: { targetUserId: number }, @Req() req, @Res({ passthrough: true }) response: any) {
     const result = await this.userService.loginAs(
       Number(body.targetUserId),
@@ -230,9 +239,11 @@ export class UserController {
   }
 
   @Post('user-logout')
+  @UseGuards(AuthGuard('jwt'))
   async logout(
-    @Body() body: { userId: number; companyId?: number; email?: string },
+    @Req() req,
+    @Body() body: { companyId?: number },
   ) {
-    return this.userService.logout(body);
+    return this.userService.logout(body, req);
   }
 }

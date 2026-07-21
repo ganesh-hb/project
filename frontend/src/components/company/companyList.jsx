@@ -18,9 +18,9 @@ function getInitials(name) {
 }
 
 function statusBadgeClass(status) {
-    return status === "Active"
+    return status === "active"
         ? "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700"
-        : status === "Inactive"
+        : status === "inactive"
             ? "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700"
             : "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700";
 }
@@ -154,200 +154,200 @@ export default function CompanyList() {
                     {loading && <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">Loading companies...</div>}
                     {error && <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">{error}</div>}
 
-                {/* GRID VIEW */}
-                {!loading && !error && viewMode === "grid" && (
-                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-                        {companies.map((company, index) => (
-                            <div key={company.companyId || index} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div className="flex h-16 w-16 min-w-[64px] items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-sm">
-                                        <CompanyAvatar company={company} sizeClass="h-16 w-16" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div
-                                            className={`font-semibold text-lg truncate ${can("companyView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
-                                            onClick={(e) => gotoCompany(e, company)}
-                                        >
-                                            {company.companyName}
+                    {/* GRID VIEW */}
+                    {!loading && !error && viewMode === "grid" && (
+                        <div className="w-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+                            {companies.map((company, index) => (
+                                <div key={company.companyId || index} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div className="flex h-16 w-16 min-w-[64px] items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-sm">
+                                            <CompanyAvatar company={company} sizeClass="h-16 w-16" />
                                         </div>
-                                        <p className="text-xs text-gray-400 mt-0.5">{company.companyCode || "-"}</p>
-                                        <span className={`mt-2 ${statusBadgeClass(company.status)}`}>{formatStatus(company.status)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2 mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600">
-                                    <div className="flex gap-1"><span className="font-medium min-w-[60px]">Email:</span><span className="break-all">{company.email || "-"}</span></div>
-                                    <div className="flex gap-1"><span className="font-medium min-w-[60px]">Phone:</span><span>{company.dialCode ? `+${company.dialCode} ` : ""}{company.phone || "-"}</span></div>
-                                    <div className="flex gap-1"><span className="font-medium min-w-[60px]">Website:</span>
-                                        {company.website
-                                            ? <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate">{company.website}</a>
-                                            : <span>-</span>}
-                                    </div>
-                                    <div className="flex gap-1"><span className="font-medium min-w-[60px]">Location:</span><span>{company.city || "-"}</span></div>
-                                    <div className="border-t border-gray-100 pt-2 mt-2">
-                                        <p className="text-xs text-gray-400 mb-1">Owner</p>
-                                        <div className="flex gap-1"><span className="font-medium min-w-[60px]">Name:</span><span>{company.ownerName || "-"}</span></div>
-                                        <div className="flex gap-1"><span className="font-medium min-w-[60px]">Phone:</span><span>{company.ownerPhone || "-"}</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                        {companies.length === 0 && (
-                            <div className="col-span-full text-center text-gray-400 py-20 bg-white rounded-xl border border-gray-200">No companies found.</div>
-                        )}
-                    </div>
-                )}
-
-                {/* LIST VIEW */}
-                {!loading && !error && viewMode === "list" && (
-                    <div className="w-full bg-white rounded-2xl border border-gray-200 grid grid-cols-1 gap-5 p-4">
-                        {companies.map((company, index) => {
-                            const rowId = company.companyId || index;
-                            const isOpen = !!expandedRows[rowId];
-
-                            return (
-                                <div
-                                    key={rowId}
-                                    className="px-6 py-6 border border-gray-200 bg-gray-50/2 rounded-xl"
-                                >
-                                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start">
-                                        {/* Company (similar to Name block) */}
-                                        <div className="min-w-0">
-                                            <div className="text-sm text-gray-500 mb-1">Company</div>
-                                            <div className="flex items-center gap-3">
-                                                <CompanyAvatar company={company} sizeClass="h-10 w-10" />
-                                                <div className="min-w-0">
-                                                    <div
-                                                        className={`text-base font-semibold truncate ${can("companyView")
-                                                            ? "cursor-pointer hover:underline text-[#3563e9]"
-                                                            : "text-gray-800"
-                                                            }`}
-                                                        onClick={(e) => can("companyView") && gotoCompany(e, company)}
-                                                    >
-                                                        {company.companyName}
-                                                    </div>
-                                                    <div className="text-sm text-gray-500">
-                                                        {company.companyCode || "-"}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Email */}
-                                        <div>
-                                            <div className="text-sm text-gray-500 mb-1">Email</div>
-                                            <div className="text-base text-gray-800 break-all">
-                                                {company.email || "-"}
-                                            </div>
-                                        </div>
-
-                                        {/* Phone */}
-                                        <div>
-                                            <div className="text-sm text-gray-500 mb-1">Phone</div>
-                                            <div className="text-base text-gray-800 break-all">
-                                                {company.dialCode ? `+${company.dialCode} ` : "+0 "}
-                                                {company.phone || "-"}
-                                            </div>
-                                        </div>
-
-                                        {/* Status + Chevron (aligned like user list) */}
-                                        <div className="flex items-start justify-between">
-                                            <div>
-                                                <div className="text-sm text-gray-500 mb-1">Status</div>
-                                                <span className={statusBadgeClass(company.status)}>
-                                                    {formatStatus(company.status)}
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleRow(rowId)}
-                                                aria-label={isOpen ? "Collapse" : "Expand"}
-                                                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                        <div className="flex-1 min-w-0">
+                                            <div
+                                                className={`font-semibold text-lg truncate ${can("companyView") ? "cursor-pointer hover:underline text-[#3563e9]" : "text-gray-800"}`}
+                                                onClick={(e) => gotoCompany(e, company)}
                                             >
-                                                <ChevronDown
-                                                    className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""
-                                                        }`}
-                                                />
-                                            </button>
+                                                {company.companyName}
+                                            </div>
+                                            <p className="text-xs text-gray-400 mt-0.5">{company.companyCode || "-"}</p>
+                                            <span className={`mt-2 ${statusBadgeClass(company.status)}`}>{formatStatus(company.status)}</span>
                                         </div>
                                     </div>
 
-                                    {/* Expanded row */}
-                                    {isOpen && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4 pt-4 border-gray-100">
-                                            <div>
-                                                <div className="text-sm text-gray-500 mb-1">Website</div>
-                                                {company.website ? (
-                                                    <a
-                                                        href={company.website}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="text-base text-[#3563e9] hover:underline break-all"
-                                                    >
-                                                        {company.website}
-                                                    </a>
-                                                ) : (
-                                                    <div className="text-base text-gray-800">-</div>
-                                                )}
-                                            </div>
+                                    <div className="space-y-2 mt-3 border-t border-gray-100 pt-3 text-sm text-gray-600">
+                                        <div className="flex gap-1"><span className="font-medium min-w-[60px]">Email:</span><span className="break-all">{company.email || "-"}</span></div>
+                                        <div className="flex gap-1"><span className="font-medium min-w-[60px]">Phone:</span><span>{company.dialCode ? `+${company.dialCode} ` : ""}{company.phone || "-"}</span></div>
+                                        <div className="flex gap-1"><span className="font-medium min-w-[60px]">Website:</span>
+                                            {company.website
+                                                ? <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate">{company.website}</a>
+                                                : <span>-</span>}
+                                        </div>
+                                        <div className="flex gap-1"><span className="font-medium min-w-[60px]">Location:</span><span>{company.city || "-"}</span></div>
+                                        <div className="border-t border-gray-100 pt-2 mt-2">
+                                            <p className="text-xs text-gray-400 mb-1">Owner</p>
+                                            <div className="flex gap-1"><span className="font-medium min-w-[60px]">Name:</span><span>{company.ownerName || "-"}</span></div>
+                                            <div className="flex gap-1"><span className="font-medium min-w-[60px]">Phone:</span><span>{company.ownerPhone || "-"}</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {companies.length === 0 && (
+                                <div className="col-span-full text-center text-gray-400 py-20 bg-white rounded-xl border border-gray-200">No companies found.</div>
+                            )}
+                        </div>
+                    )}
 
-                                            <div>
-                                                <div className="text-sm text-gray-500 mb-1">Location</div>
-                                                <div className="text-base text-gray-800">
-                                                    {company.city || "-"}
+                    {/* LIST VIEW */}
+                    {!loading && !error && viewMode === "list" && (
+                        <div className="w-full bg-white rounded-2xl border border-gray-200 grid grid-cols-1 gap-5 p-4">
+                            {companies.map((company, index) => {
+                                const rowId = company.companyId || index;
+                                const isOpen = !!expandedRows[rowId];
+
+                                return (
+                                    <div
+                                        key={rowId}
+                                        className="px-6 py-6 border border-gray-200 bg-gray-50/2 rounded-xl"
+                                    >
+                                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start">
+                                            {/* Company (similar to Name block) */}
+                                            <div className="min-w-0">
+                                                <div className="text-sm text-gray-500 mb-1">Company</div>
+                                                <div className="flex items-center gap-3">
+                                                    <CompanyAvatar company={company} sizeClass="h-10 w-10" />
+                                                    <div className="min-w-0">
+                                                        <div
+                                                            className={`text-base font-semibold truncate ${can("companyView")
+                                                                ? "cursor-pointer hover:underline text-[#3563e9]"
+                                                                : "text-gray-800"
+                                                                }`}
+                                                            onClick={(e) => can("companyView") && gotoCompany(e, company)}
+                                                        >
+                                                            {company.companyName}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">
+                                                            {company.companyCode || "-"}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
 
+                                            {/* Email */}
                                             <div>
-                                                <div className="text-sm text-gray-500 mb-1">Owner Name</div>
-                                                <div className="text-base text-gray-800">
-                                                    {company.ownerName || "-"}
+                                                <div className="text-sm text-gray-500 mb-1">Email</div>
+                                                <div className="text-base text-gray-800 break-all">
+                                                    {company.email || "-"}
                                                 </div>
                                             </div>
 
+                                            {/* Phone */}
                                             <div>
-                                                <div className="text-sm text-gray-500 mb-1">Owner Phone</div>
-                                                <div className="text-base text-gray-800">
-                                                    {company.ownerDialCode
-                                                        ? `+${company.ownerDialCode} `
-                                                        : company.ownerPhone
-                                                            ? "+0 "
-                                                            : ""}
-                                                    {company.ownerPhone || "-"}
+                                                <div className="text-sm text-gray-500 mb-1">Phone</div>
+                                                <div className="text-base text-gray-800 break-all">
+                                                    {company.dialCode ? `+${company.dialCode} ` : "+0 "}
+                                                    {company.phone || "-"}
                                                 </div>
+                                            </div>
+
+                                            {/* Status + Chevron (aligned like user list) */}
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Status</div>
+                                                    <span className={statusBadgeClass(company.status)}>
+                                                        {formatStatus(company.status)}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleRow(rowId)}
+                                                    aria-label={isOpen ? "Collapse" : "Expand"}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                                >
+                                                    <ChevronDown
+                                                        className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""
+                                                            }`}
+                                                    />
+                                                </button>
                                             </div>
                                         </div>
-                                    )}
+
+                                        {/* Expanded row */}
+                                        {isOpen && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4 pt-4 border-gray-100">
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Website</div>
+                                                    {company.website ? (
+                                                        <a
+                                                            href={company.website}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-base text-[#3563e9] hover:underline break-all"
+                                                        >
+                                                            {company.website}
+                                                        </a>
+                                                    ) : (
+                                                        <div className="text-base text-gray-800">-</div>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Location</div>
+                                                    <div className="text-base text-gray-800">
+                                                        {company.city || "-"}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Owner Name</div>
+                                                    <div className="text-base text-gray-800">
+                                                        {company.ownerName || "-"}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <div className="text-sm text-gray-500 mb-1">Owner Phone</div>
+                                                    <div className="text-base text-gray-800">
+                                                        {company.ownerDialCode
+                                                            ? `+${company.ownerDialCode} `
+                                                            : company.ownerPhone
+                                                                ? "+0 "
+                                                                : ""}
+                                                        {company.ownerPhone || "-"}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {companies.length === 0 && (
+                                <div className="text-center text-gray-400 py-16">
+                                    No companies found.
                                 </div>
-                            );
-                        })}
+                            )}
+                        </div>
+                    )}
 
-                        {companies.length === 0 && (
-                            <div className="text-center text-gray-400 py-16">
-                                No companies found.
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* TABLE VIEW */}
-                {!loading && !error && viewMode === "table" && (
-                    <DataTable
-                        title="Companies"
-                        columns={companyColumns}
-                        data={companies}
-                        filterableColumns={[
-                            { id: "companyName", label: "Company" },
-                            { id: "companyCode", label: "Code" },
-                            { id: "email", label: "Email" },
-                            { id: "phone", label: "Phone" },
-                            { id: "companyLocation", label: "Location" },
-                            { id: "status", label: "Status" },
-                        ]}
-                        emptyMessage="No companies found."
-                        containerClassName="flex-1 overflow-y-auto"
-                    />
-                )}
+                    {/* TABLE VIEW */}
+                    {!loading && !error && viewMode === "table" && (
+                        <DataTable
+                            title="Companies"
+                            columns={companyColumns}
+                            data={companies}
+                            filterableColumns={[
+                                { id: "companyName", label: "Company" },
+                                { id: "companyCode", label: "Code" },
+                                { id: "email", label: "Email" },
+                                { id: "phone", label: "Phone" },
+                                { id: "companyLocation", label: "Location" },
+                                { id: "status", label: "Status" },
+                            ]}
+                            emptyMessage="No companies found."
+                            containerClassName="flex-1 overflow-y-auto"
+                        />
+                    )}
                 </div>
             </div>
 

@@ -60,14 +60,20 @@ export default function GroupList() {
     const LIMIT = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [currentFilters, setCurrentFilters] = useState({});
     useEffect(() => {
-        fetchData(1);
+        fetchData(1, {});
     }, []);
 
-    async function fetchData(page = currentPage) {
+    async function fetchData(page = currentPage, searchParams = currentFilters) {
         setLoading(true);
         setError("");
         try {
+            let body = { page, limit: LIMIT };
+            if (searchParams?.filters?.length > 0) {
+                body.condition = searchParams.condition || "All";
+                body.filters = searchParams.filters;
+            }
             const response = await fetch("/relayapi", {
                 method: "POST",
                 headers: {
@@ -75,7 +81,7 @@ export default function GroupList() {
                     endpoint: "group-list",
                     module: "group",
                 },
-                body: JSON.stringify({ page, limit: LIMIT }),
+                body: JSON.stringify(body),
             });
 
             if (response.status === 401 || response.status === 403) {
@@ -96,10 +102,16 @@ export default function GroupList() {
         }
     }
 
+    const handleSearch = (searchParams) => {
+        setCurrentPage(1);
+        setCurrentFilters(searchParams);
+        fetchData(1, searchParams);
+    };
+
     const goToPage = (page) => {
         if (page < 1 || page > totalPages) return;
         setCurrentPage(page);
-        fetchData(page);
+        fetchData(page, currentFilters);
     };
 
     const gotoPages = (e, url) => {
@@ -110,7 +122,7 @@ export default function GroupList() {
 
     return (
         <div className="fixed inset-0 flex flex-col bg-[#f5f6fa] overflow-hidden">
-            <Header page="groups" onAddClick={() => router.push("/add-group")} />
+            <Header page="groups" onSearch={handleSearch} onAddClick={() => router.push("/add-group")} />
 
             <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 flex flex-col min-h-0 overflow-hidden">
                 <nav className="mb-6 flex items-center space-x-2 text-sm font-medium text-gray-500">

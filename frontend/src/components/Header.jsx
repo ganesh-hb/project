@@ -18,8 +18,6 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
 
     // console.log(isLogin, "################################ is login header")
     const primaryAssignment =
-        // Prefer whichever profile is actively selected (handles profile-switching / non-primary logins),
-        // then fall back to the account's default primaryProfile, then any is_parent === 0 assignment
         activeAssignment ||
         (displayUser?.primaryProfile) ||
         displayUser?.assignments?.find(a => a.is_parent === 0) ||
@@ -46,16 +44,22 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                 { id: "symbol", label: "Symbol" },
                 { id: "status", label: "Status" }
             ]
-            : [
-                { id: "name", label: "Name" },
-                { id: "email", label: "Email" },
-                { id: "phone", label: "Phone" },
-                { id: "groupName", label: "Group Name" },
-                { id: "status", label: "Status" }
-            ];
+            : page === "groups"
+                ? [
+                    { id: "groupName", label: "Group Name" },
+                    { id: "groupCode", label: "Group Code" },
+                    { id: "status", label: "Status" }
+                ]
+                : [
+                    { id: "name", label: "Name" },
+                    { id: "email", label: "Email" },
+                    { id: "phone", label: "Phone" },
+                    { id: "groupName", label: "Group Name" },
+                    { id: "status", label: "Status" }
+                ];
 
     const defaultField = fieldsConfig[0]?.id || "name";
-    const isListPage = page === "users" || page === "companies" || page === "currencies";
+    const isListPage = page === "users" || page === "companies" || page === "currencies" || page === "groups";
 
     const [openProfile, setOpenProfile] = useState(false);
     const [searchValue, setSearchValue] = useState("");
@@ -457,19 +461,37 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                                                     </option>
                                                 </select>
 
-                                                <input
-                                                    type="text"
-                                                    value={row.value}
-                                                    onChange={(e) =>
-                                                        updateFilterRow(
-                                                            index,
-                                                            "value",
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    placeholder="Value"
-                                                    className="border border-gray-200 rounded px-2 py-1.5 text-sm outline-none flex-[1.5] text-black"
-                                                />
+                                                {row.field === "status" ? (
+                                                    <select
+                                                        value={row.value}
+                                                        onChange={(e) =>
+                                                            updateFilterRow(
+                                                                index,
+                                                                "value",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        className="border border-gray-200 rounded px-2 py-1.5 text-sm outline-none flex-[1.5] text-black"
+                                                    >
+                                                        <option value="">Select Status</option>
+                                                        <option value="Active">Active</option>
+                                                        <option value="Inactive">Inactive</option>
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        value={row.value}
+                                                        onChange={(e) =>
+                                                            updateFilterRow(
+                                                                index,
+                                                                "value",
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="Value"
+                                                        className="border border-gray-200 rounded px-2 py-1.5 text-sm outline-none flex-[1.5] text-black"
+                                                    />
+                                                )}
 
                                                 <button
                                                     onClick={() =>

@@ -16,7 +16,7 @@ import { CompanyEntity } from './company.entity';
 @Index('idx_activityMaster_createdAt', ['activityMasterId', 'createdAt'])
 @Index('idx_companyId', ['companyId'])
 @Index('idx_target_type_id', ['targetType', 'targetId'])
-@Index('idx_correlationId', ['correlationId'])
+// @Index('idx_correlationId', ['correlationId'])
 export class ActivityLogEntity {
   @PrimaryGeneratedColumn()
   logId!: number;
@@ -44,9 +44,6 @@ export class ActivityLogEntity {
 
   @Column()
   severity!: string;
-
-  @Column({ nullable: true })
-  correlationId!: string;
 
   @Column('json', { nullable: true })
   parameters!: any;
