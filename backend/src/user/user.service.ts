@@ -1181,6 +1181,15 @@ export class UserService {
         metadata: {},
       });
 
+      const assignments = (target.userCompanyGroups ?? []).map((ucg) => ({
+        id: ucg.id,
+        companyId: ucg.companyId,
+        companyName: ucg.company?.companyName ?? null,
+        groupId: ucg.groupId,
+        groupName: ucg.group?.groupName ?? null,
+        is_parent: ucg.is_parent,
+      }));
+
       return {
         success: 1,
         impersonationToken,
@@ -1207,6 +1216,7 @@ export class UserService {
                 is_parent: primary.is_parent,
               }
             : null,
+          assignments,
           permissions,
         },
       };

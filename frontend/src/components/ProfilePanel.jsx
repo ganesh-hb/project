@@ -8,7 +8,7 @@ import Header from "./Header";
 export default function ProfilePage() {
     const router = useRouter();
     const onClose = () => router.push("/");
-    const { isLogin, displayUser, activeAssignment, permissions } = useContext(loginContext);
+    const { isLogin, displayUser, activeAssignment, permissions, impersonating, switchProfile } = useContext(loginContext);
     const [activeTab, setActiveTab] = useState("summary");
     const [imgPreview, setImgPreview] = useState(false);
 
@@ -44,9 +44,9 @@ export default function ProfilePage() {
     };
 
     const groupedPermissions = permissions.reduce((acc, perm) => {
-        const module = perm.replace(/([A-Z][a-z]+)/g, ' $1').trim().split(' ')[0].toLowerCase();
-        if (!acc[module]) acc[module] = [];
-        acc[module].push(perm);
+        const modName = perm.replace(/([A-Z][a-z]+)/g, ' $1').trim().split(' ')[0].toLowerCase();
+        if (!acc[modName]) acc[modName] = [];
+        acc[modName].push(perm);
         return acc;
     }, {});
 
@@ -201,14 +201,18 @@ export default function ProfilePage() {
                                 {assignments.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                                         <p className="text-lg">No profiles assigned.</p>
-                                        <p className="pansswordtext-sm mt-1">Click "Add Profile" to assign this user to a company and role.</p>
+                                        <p className="pansswordtext-sm mt-1">Click &quot;Add Profile&quot; to assign this user to a company and role.</p>
                                     </div>
                                 ) : (
                                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                         {assignments.map((a, i) => (
                                             <div
                                                 key={a.id || i}
-                                                className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition ${selectedAssignment?.id === a.id ? "border-blue-400 bg-blue-50" : "border-gray-100 bg-gray-50"}`}
+                                                className={`rounded-xl border p-5 shadow-sm transition ${
+                                                    selectedAssignment?.id === a.id
+                                                        ? "border-blue-400 bg-blue-50"
+                                                        : "border-gray-100 bg-gray-50"
+                                                }`}
                                             >
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>

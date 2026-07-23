@@ -42,8 +42,9 @@ export default function AddCompany() {
         ownerName: "",
         ownerEmail: "",
         ownerPhone: "",
-        ownerDialCode: "",
+        ownerPhoneDialCode: "",
         curIds: [],
+        parentCompanyId: null,
     });
 
     const [companyFile, setCompanyFile] = useState(null);
@@ -104,6 +105,7 @@ export default function AddCompany() {
     };
 
     const [currencies, setCurrencies] = useState([]);
+    const [parentCompanies, setParentCompanies] = useState([]);
 
     useEffect(() => {
         fetch("/relayapi", {
@@ -122,6 +124,19 @@ export default function AddCompany() {
                         : []
                 )
             )
+            .catch(() => { });
+
+        fetch("/relayapi", {
+            method: "POST",
+            headers: {
+                ...authHeaders(),
+                endpoint: "company-list",
+                module: "company",
+            },
+            body: JSON.stringify({ page: 1, limit: 100 }),
+        })
+            .then((r) => r.json())
+            .then((data) => setParentCompanies(Array.isArray(data?.data) ? data.data : []))
             .catch(() => { });
     }, []);
 
@@ -196,7 +211,7 @@ export default function AddCompany() {
             try {
                 const payload = new FormData();
                 Object.entries(formData).forEach(([key, value]) => {
-                    if (["country", "state", "dialCode", "ownerDialCode"].includes(key)) return;
+                    if (["country", "state", "dialCode", "ownerDialCode", "parentCompanyId"].includes(key)) return;
                     if (value !== "" && value !== null && value !== undefined) {
                         if (key === "curIds") {
                             payload.append(key, JSON.stringify(value));
@@ -207,6 +222,7 @@ export default function AddCompany() {
                 });
                 if (formData.dialCode) payload.append("dialCode", formData.dialCode);
                 if (formData.ownerDialCode) payload.append("ownerDialCode", formData.ownerDialCode);
+                if (formData.parentCompanyId) payload.append("parentCompanyId", String(formData.parentCompanyId));
 
                 const countryName = Country.getAllCountries().find(c => c.isoCode === formData.country)?.name || formData.country;
                 const stateName = State.getStatesOfCountry(formData.country).find(s => s.isoCode === formData.state)?.name || formData.state;
@@ -298,7 +314,40 @@ export default function AddCompany() {
                                 <div>
                                     <label className={labelClass}>Website <span className="text-red-500">*</span></label>
                                     <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={inputClass} />
-                                    {errors.website && <p className={errorClass}>{errors.website}</p>}     </div>
+                                    {errors.website && <p className={errorClass}>{errors.website}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Parent Company</label>
+                                    <Select
+                                        name="parentCompanyId"
+                                        options={[
+                                            { value: "", label: "None (Root Company)" },
+                                            ...parentCompanies.map((c) => ({
+                                                value: c.companyId,
+                                                label: c.companyName,
+                                            })),
+                                        ]}
+                                        value={
+                                            formData.parentCompanyId
+                                                ? {
+                                                      value: formData.parentCompanyId,
+                                                      label:
+                                                          parentCompanies.find(
+                                                              (c) => c.companyId === formData.parentCompanyId
+                                                          )?.companyName || "Selected",
+                                                  }
+                                                : { value: "", label: "None (Root Company)" }
+                                        }
+                                        onChange={(selected) => {
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                parentCompanyId: selected && selected.value !== "" ? selected.value : null,
+                                            }));
+                                        }}
+                                        isSearchable
+                                    />
+                                </div>
 
                                 {/* Logo */}
                                 <div>

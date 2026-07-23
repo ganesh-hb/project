@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 
@@ -122,8 +122,11 @@ export class GroupService {
           'Access denied: cannot modify system groups',
         );
       }
+      const scopedCompanyIds = req?.scopedCompanyIds || [
+        authCtx.activeCompanyId,
+      ];
       const creatorUcg = await this.ucgEntity.findOne({
-        where: { userId: group.addedBy, companyId: authCtx.activeCompanyId },
+        where: { userId: group.addedBy, companyId: In(scopedCompanyIds) },
       });
       if (!creatorUcg) {
         throw new ForbiddenException(
@@ -152,8 +155,11 @@ export class GroupService {
             'Access denied: cannot modify system groups',
           );
         }
+        const scopedCompanyIds = req?.scopedCompanyIds || [
+          authCtx.activeCompanyId,
+        ];
         const creatorUcg = await this.ucgEntity.findOne({
-          where: { userId: group.addedBy, companyId: authCtx.activeCompanyId },
+          where: { userId: group.addedBy, companyId: In(scopedCompanyIds) },
         });
         if (!creatorUcg) {
           throw new ForbiddenException(
@@ -230,14 +236,17 @@ export class GroupService {
       });
 
       if (!authCtx.isSuperAdmin) {
+        const scopedCompanyIds = req?.scopedCompanyIds || [
+          authCtx.activeCompanyId,
+        ];
         queryBuilder.leftJoin(
           UserCompanyGroupEntity,
           'creator_ucg',
           'creator_ucg.userId = group.addedBy',
         );
         queryBuilder.andWhere(
-          '(group.addedBy IS NULL OR creator_ucg.companyId = :activeCompanyId)',
-          { activeCompanyId: authCtx.activeCompanyId },
+          '(group.addedBy IS NULL OR creator_ucg.companyId IN (:...scopedCompanyIds))',
+          { scopedCompanyIds },
         );
       }
 
@@ -265,14 +274,17 @@ export class GroupService {
       queryBuilder.andWhere('group.groupName != :name', { name: 'superAdmin' });
 
       if (!authCtx.isSuperAdmin) {
+        const scopedCompanyIds = req?.scopedCompanyIds || [
+          authCtx.activeCompanyId,
+        ];
         queryBuilder.leftJoin(
           UserCompanyGroupEntity,
           'creator_ucg',
           'creator_ucg.userId = group.addedBy',
         );
         queryBuilder.andWhere(
-          '(group.addedBy IS NULL OR creator_ucg.companyId = :activeCompanyId)',
-          { activeCompanyId: authCtx.activeCompanyId },
+          '(group.addedBy IS NULL OR creator_ucg.companyId IN (:...scopedCompanyIds))',
+          { scopedCompanyIds },
         );
       }
 
@@ -291,9 +303,12 @@ export class GroupService {
       const group = await this.groupEntity.findOne({ where: { groupId } });
       if (!group) throw new NotFoundException('Group not found');
 
+      const scopedCompanyIds = req?.scopedCompanyIds || [
+        authCtx.activeCompanyId,
+      ];
       if (!authCtx.isSuperAdmin && group.addedBy !== null) {
         const creatorUcg = await this.ucgEntity.findOne({
-          where: { userId: group.addedBy, companyId: authCtx.activeCompanyId },
+          where: { userId: group.addedBy, companyId: In(scopedCompanyIds) },
         });
         if (!creatorUcg) {
           throw new ForbiddenException(
@@ -309,7 +324,7 @@ export class GroupService {
             groupId,
             ...(authCtx.isSuperAdmin
               ? {}
-              : { companyId: authCtx.activeCompanyId }),
+              : { companyId: In(scopedCompanyIds) }),
           },
           relations: ['user', 'company'],
         }),

@@ -42,9 +42,16 @@ export default function GroupDetails({ id }) {
         router.push(`http://localhost:3000${url}`);
     };
 
+    const formatStatus = (status) => {
+        if (!status || typeof status !== "string") return "-";
+        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    };
+
     const statusBadge = (status) => {
-        if (status === "active") return "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700";
-        if (status === "inactive") return "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700";
+        if (!status || typeof status !== "string") return "inline-block rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700";
+        const s = status.toLowerCase();
+        if (s === "active") return "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700";
+        if (s === "inactive") return "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700";
         return "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700";
     };
 
@@ -106,7 +113,7 @@ export default function GroupDetails({ id }) {
                             <div><span className="font-medium text-gray-500">Updated By:</span> {group.updatedByName || "-"}</div>
                             <div>
                                 <span className="font-medium text-gray-500">Status:</span>{" "}
-                                <span className={statusBadge(group.status)}>{group.status.charAt(0).toUpperCase() + group.status.slice(1) || "Unknown"}</span>
+                                <span className={statusBadge(group.status)}>{formatStatus(group.status)}</span>
                             </div>
                         </div>
                     </div>

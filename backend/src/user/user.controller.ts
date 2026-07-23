@@ -117,7 +117,7 @@ export class UserController {
   @Post('user-login')
   @UseInterceptors(FileInterceptor('userFile', multerConfig))
   async login(@Body() body: login, @Res({ passthrough: true }) response: any) {
-    console.log(body);
+    // console.log(body);
     const result = await this.userService.login(body);
     if (result.success === 1 && result.token) {
       response.setHeader('x-auth-token', result.token);

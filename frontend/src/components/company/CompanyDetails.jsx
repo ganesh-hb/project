@@ -27,16 +27,19 @@ export default function CompanyDetails({ id }) {
     const fetchCompany = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:3000/relayapi`, {
+            const res = await fetch("/relayapi", {
                 method: "GET",
                 headers: {
-                    ...authHeaders(),
                     endpoint: `company-details/${id}`,
                     module: "company",
                 },
             });
             const data = await res.json();
-            setCompany(data);
+            if (res.ok && data && !data.statusCode && data.companyId) {
+                setCompany(data);
+            } else {
+                console.error("Failed to fetch company details:", data);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -50,9 +53,16 @@ export default function CompanyDetails({ id }) {
         router.push(url);
     };
 
+    const formatStatus = (status) => {
+        if (!status || typeof status !== "string") return "-";
+        return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    };
+
     const statusBadge = (status) => {
-        if (status === "active") return "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700";
-        if (status === "inactive") return "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700";
+        if (!status || typeof status !== "string") return "inline-block rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700";
+        const s = status.toLowerCase();
+        if (s === "active") return "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700";
+        if (s === "inactive") return "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700";
         return "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700";
     };
 
@@ -188,7 +198,7 @@ export default function CompanyDetails({ id }) {
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-semibold text-gray-800">{company.companyName}</h2>
-                                            <span className={statusBadge(company.status)}>{company.status.charAt(0).toUpperCase() + company.status.slice(1).toLowerCase()}</span>
+                                            <span className={statusBadge(company.status)}>{formatStatus(company.status)}</span>
                                         </div>
                                     </div>
                                     <div className="mt-6 space-y-4">

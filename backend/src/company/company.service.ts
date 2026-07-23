@@ -101,6 +101,17 @@ export class CompanyService {
       if (companyFile) queryParams.companyFile = companyFile.filename;
       if (params.addedBy) queryParams.addedBy = Number(params.addedBy);
 
+      if (params.parentCompanyId !== undefined && params.parentCompanyId !== null && params.parentCompanyId !== '') {
+        const parentId = Number(params.parentCompanyId);
+        const parentComp = await this.companyEntity.findOne({
+          where: { companyId: parentId },
+        });
+        if (!parentComp) {
+          return { success: 0, message: 'Parent company not found' };
+        }
+        queryParams.parentCompanyId = parentId;
+      }
+
       const result = await this.companyEntity.insert(queryParams);
       const insertId = result?.raw?.insertId;
 
@@ -188,7 +199,8 @@ export class CompanyService {
   async startUpdate(params: any, companyFile: any, req?: any) {
     const authCtx = await resolveAuthContext(req, this.ucgEntity);
     if (!authCtx.isSuperAdmin) {
-      if (Number(params.companyId) !== authCtx.activeCompanyId) {
+      const scoped = req?.scopedCompanyIds || [authCtx.activeCompanyId];
+      if (!scoped.includes(Number(params.companyId))) {
         return {
           success: 0,
           message: 'Access denied: cannot modify another company',
@@ -209,11 +221,65 @@ export class CompanyService {
     try {
       const authCtx = await resolveAuthContext(req, this.ucgEntity);
       if (!authCtx.isSuperAdmin) {
-        if (Number(params.companyId) !== authCtx.activeCompanyId) {
+        const scoped = req?.scopedCompanyIds || [authCtx.activeCompanyId];
+        if (!scoped.includes(Number(params.companyId))) {
           return {
             success: 0,
             message: 'Access denied: cannot modify another company',
           };
+        }
+      }
+
+      const queryParams: any = {};
+
+      if (params.parentCompanyId !== undefined) {
+        if (
+          params.parentCompanyId === null ||
+          params.parentCompanyId === '' ||
+          params.parentCompanyId === 'null'
+        ) {
+          queryParams.parentCompanyId = null;
+        } else {
+          const newParentId = Number(params.parentCompanyId);
+          const targetCompanyId = Number(params.companyId);
+
+          if (newParentId === targetCompanyId) {
+            return {
+              success: 0,
+              message: 'A company cannot be its own parent',
+            };
+          }
+
+          const parentComp = await this.companyEntity.findOne({
+            where: { companyId: newParentId },
+          });
+          if (!parentComp) {
+            return { success: 0, message: 'Parent company not found' };
+          }
+
+          let currentId: number | null = newParentId;
+          const visited = new Set<number>();
+          while (currentId !== null) {
+            if (currentId === targetCompanyId) {
+              return {
+                success: 0,
+                message:
+                  'Cannot set parent company: would create a circular dependency',
+              };
+            }
+            if (visited.has(currentId)) break;
+            visited.add(currentId);
+
+            const ancestor = await this.companyEntity.findOne({
+              where: { companyId: currentId },
+              select: ['companyId', 'parentCompanyId'],
+            });
+            currentId = ancestor?.parentCompanyId
+              ? Number(ancestor.parentCompanyId)
+              : null;
+          }
+
+          queryParams.parentCompanyId = newParentId;
         }
       }
 
@@ -246,7 +312,6 @@ export class CompanyService {
         return { success: 0, message: 'Email already exists' };
       }
 
-      const queryParams: any = {};
       if (params.companyName) queryParams.companyName = params.companyName;
       if (params.companyCode) queryParams.companyCode = params.companyCode;
       if (params.companyLocation)
@@ -365,9 +430,21 @@ export class CompanyService {
       const alias = 'company';
 
       if (!authCtx.isSuperAdmin) {
-        queryBuilder.andWhere('company.companyId = :activeCompanyId', {
-          activeCompanyId: authCtx.activeCompanyId,
-        });
+        const scopedCompanyIds = req?.scopedCompanyIds || [
+          authCtx.activeCompanyId,
+        ];
+        if (scopedCompanyIds.length > 0) {
+          queryBuilder.andWhere('company.companyId IN (:...scopedCompanyIds)', {
+            scopedCompanyIds,
+          });
+        } else {
+          return {
+            success: 1,
+            message: 'List fetched successfully',
+            total: 0,
+            data: [],
+          };
+        }
       }
 
       const queryString = await this.filter.makeFilterString(
@@ -406,10 +483,10 @@ export class CompanyService {
     try {
       const authCtx = await resolveAuthContext(req, this.ucgEntity);
       const targetCompanyId = Number(query);
-      if (
-        !authCtx.isSuperAdmin &&
-        targetCompanyId !== authCtx.activeCompanyId
-      ) {
+      const scopedCompanyIds = req?.scopedCompanyIds || [
+        authCtx.activeCompanyId,
+      ];
+      if (!authCtx.isSuperAdmin && !scopedCompanyIds.includes(targetCompanyId)) {
         throw new ForbiddenException(
           'Access denied: cannot access another company',
         );

@@ -2,6 +2,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -79,6 +81,20 @@ export class CompanyEntity {
   @Column({ nullable: true })
   postalCode!: number;
 
+  @Column({ nullable: true })
+  parentCompanyId!: number | null;
+
+  @ManyToOne(() => CompanyEntity, (company) => company.children, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parentCompanyId' })
+  parentCompany!: CompanyEntity | null;
+
+  @OneToMany(() => CompanyEntity, (company) => company.parentCompany)
+  children!: CompanyEntity[];
+
   @OneToMany(() => UserCompanyGroupEntity, (ucg) => ucg.company)
   userCompanyGroups!: UserCompanyGroupEntity[];
 }
+

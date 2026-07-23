@@ -1,5 +1,6 @@
 import { Repository } from 'typeorm';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
+import { CompanyEntity } from 'src/packages/entity/company.entity';
 import { ForbiddenException } from '@nestjs/common';
 
 export interface AuthContext {
@@ -7,6 +8,7 @@ export interface AuthContext {
   activeCompanyId: number;
   activeGroupId: number;
   activeGroupName: string | null;
+  scopedCompanyIds: number[];
 }
 
 export async function resolveAuthContext(
@@ -19,6 +21,7 @@ export async function resolveAuthContext(
       activeCompanyId: req.activeCompanyId,
       activeGroupId: req.activeGroupId,
       activeGroupName: req.activeGroupName,
+      scopedCompanyIds: req.scopedCompanyIds || [],
     };
   }
 
@@ -41,11 +44,28 @@ export async function resolveAuthContext(
     throw new ForbiddenException('No profile assigned');
   }
 
-  const context = {
-    isSuperAdmin: ucg.group?.groupName === 'superAdmin',
+  const isSuperAdmin = ucg.group?.groupName === 'superAdmin';
+  let scopedCompanyIds: number[] = [];
+
+  if (!isSuperAdmin) {
+    const companyRepo = ucgRepo.manager.getRepository(CompanyEntity);
+    const directChildren = await companyRepo.find({
+      where: { parentCompanyId: Number(ucg.companyId) },
+      select: ['companyId'],
+    });
+
+    scopedCompanyIds = [
+      Number(ucg.companyId),
+      ...directChildren.map((c) => Number(c.companyId)),
+    ];
+  }
+
+  const context: AuthContext = {
+    isSuperAdmin,
     activeCompanyId: ucg.companyId,
     activeGroupId: ucg.groupId,
     activeGroupName: ucg.group?.groupName || null,
+    scopedCompanyIds,
   };
 
   if (req) {
@@ -53,10 +73,48 @@ export async function resolveAuthContext(
     req.activeCompanyId = context.activeCompanyId;
     req.activeGroupId = context.activeGroupId;
     req.activeGroupName = context.activeGroupName;
-    req.scopedCompanyIds = context.isSuperAdmin ? [] : [ucg.companyId];
+    req.scopedCompanyIds = context.scopedCompanyIds;
     req.userRoles = [ucg.group?.groupName].filter(Boolean);
     req.activeProfileResolved = true;
   }
 
   return context;
 }
+
+
+  // if (!isSuperAdmin) {
+  //   const companyRepo = ucgRepo.manager.getRepository(CompanyEntity);
+  //   const allCompanies = await companyRepo.find({
+  //     select: ['companyId', 'parentCompanyId'],
+  //   });
+  //
+  //   const childrenMap = new Map<number, number[]>();
+  //   for (const c of allCompanies) {
+  //     if (c.parentCompanyId) {
+  //       const parentId = Number(c.parentCompanyId);
+  //       if (!childrenMap.has(parentId)) {
+  //         childrenMap.set(parentId, []);
+  //       }
+  //       childrenMap.get(parentId)!.push(Number(c.companyId));
+  //     }
+  //   }
+  //
+  //   const visited = new Set<number>();
+  //   const queue = [Number(ucg.companyId)];
+  //
+  //   while (queue.length > 0) {
+  //     const currentId = queue.shift()!;
+  //     if (!visited.has(currentId)) {
+  //       visited.add(currentId);
+  //       const children = childrenMap.get(currentId) || [];
+  //       for (const childId of children) {
+  //         if (!visited.has(childId)) {
+  //           queue.push(childId);
+  //         }
+  //       }
+  //     }
+  //   }
+  //
+  //   scopedCompanyIds = Array.from(visited);
+  // }
+

@@ -130,7 +130,11 @@ export default function LoginContext({ children }) {
                 setImpersonating(data.user);
                 setPermissions(data.user?.permissions || []);
 
-                const impersonatedAssignment = data.user?.primaryProfile || null;
+                const impersonatedAssignment =
+                    data.user?.assignments?.find((a) => a.is_parent === 0) ??
+                    data.user?.assignments?.[0] ??
+                    data.user?.primaryProfile ??
+                    null;
                 setActiveAssignment(impersonatedAssignment);
                 if (impersonatedAssignment) {
                     sessionStorage.setItem("activeAssignment", JSON.stringify(impersonatedAssignment));
@@ -187,7 +191,7 @@ export default function LoginContext({ children }) {
         if (impersonating) {
             return {
                 ...impersonating,
-                assignments: impersonating.primaryProfile ? [impersonating.primaryProfile] : [],
+                assignments: impersonating.assignments || (impersonating.primaryProfile ? [impersonating.primaryProfile] : []),
             };
         }
         return isLogin;

@@ -66,7 +66,9 @@ export default function CompanyUpdate({ id, onBack }) {
         curIds: [],
         ownerPhone: "",
         ownerDialCode: "",
+        parentCompanyId: null,
     });
+    const [parentCompanies, setParentCompanies] = useState([]);
 
     useEffect(() => {
         if (formData.country) {
@@ -88,6 +90,18 @@ export default function CompanyUpdate({ id, onBack }) {
 
     useEffect(() => {
         fetchCompany();
+        fetch("/relayapi", {
+            method: "POST",
+            headers: {
+                ...authHeaders(),
+                endpoint: "company-list",
+                module: "company",
+            },
+            body: JSON.stringify({ page: 1, limit: 100 }),
+        })
+            .then((r) => r.json())
+            .then((data) => setParentCompanies(Array.isArray(data?.data) ? data.data : []))
+            .catch(() => { });
     }, []);
 
     const fetchCompany = async () => {
@@ -121,6 +135,7 @@ export default function CompanyUpdate({ id, onBack }) {
                     ownerPhone: data.ownerPhone || "",
                     ownerDialCode: data.ownerDialCode || "",
                     curIds: data.curIds || [],
+                    parentCompanyId: data.parentCompanyId || null,
                 });
 
                 setCurrencies(data.allCurrencies || []);
@@ -142,8 +157,9 @@ export default function CompanyUpdate({ id, onBack }) {
                         (c) => c.name === data.country || c.isoCode === data.country
                     );
                     if (matchedCountry) {
+                        // Only update address fields — do NOT touch companyCountryCode here.
+                        // companyCountryCode is exclusively owned by the phone/dialCode logic above.
                         setFormData((prev) => ({ ...prev, country: matchedCountry.isoCode }));
-                        setCompanyCountryCode(matchedCountry.isoCode.toLowerCase());
                         if (data.state) {
                             const allStates = State.getStatesOfCountry(matchedCountry.isoCode);
                             const matchedState = allStates.find(
@@ -247,7 +263,7 @@ export default function CompanyUpdate({ id, onBack }) {
             payload.append("companyId", String(id));
 
             Object.entries(formData).forEach(([key, value]) => {
-                if (["country", "state", "dialCode", "ownerDialCode"].includes(key)) return;
+                if (["country", "state", "dialCode", "ownerDialCode", "parentCompanyId"].includes(key)) return;
                 if (value !== "" && value !== null && value !== undefined) {
                     if (key === "curIds") {
                         payload.append(key, JSON.stringify(value));
@@ -260,7 +276,11 @@ export default function CompanyUpdate({ id, onBack }) {
             // Append phone dial codes separately
             if (formData.dialCode) payload.append("dialCode", formData.dialCode);
             if (formData.ownerDialCode) payload.append("ownerDialCode", formData.ownerDialCode);
-
+            if (formData.parentCompanyId !== undefined && formData.parentCompanyId !== null) {
+                payload.append("parentCompanyId", String(formData.parentCompanyId));
+            } else {
+                payload.append("parentCompanyId", "null");
+            }
 
             const countryName = Country.getAllCountries().find(c => c.isoCode === formData.country)?.name || formData.country;
             const stateName = State.getStatesOfCountry(formData.country).find(s => s.isoCode === formData.state)?.name || formData.state;
@@ -269,7 +289,7 @@ export default function CompanyUpdate({ id, onBack }) {
             if (companyFile) payload.append("companyFile", companyFile);
             if (imageRemoved && !companyFile) payload.append("removeCompanyFile", "true");
 
-            const response = await fetch("http://localhost:3000/relayapi", {
+            const response = await fetch("/relayapi", {
                 method: "PUT",
                 headers: {
                     endpoint: "company-update",
@@ -279,11 +299,14 @@ export default function CompanyUpdate({ id, onBack }) {
             });
 
             const data = await response.json();
-            if (response.ok) {
+            if (response.ok && (data?.success === 1 || data?.status?.success === 1)) {
                 toast.success("Company updated successfully", { position: "top-right" });
                 setTimeout(() => onBack(), 1000);
             } else {
-                toast.error(data?.message || "Failed to update company.", { position: "top-right" });
+                const errorMsg = Array.isArray(data?.message)
+                    ? data.message.join(", ")
+                    : (data?.message || data?.status?.message || "Failed to update company.");
+                toast.error(errorMsg, { position: "top-right" });
             }
         } catch (err) {
             toast.error(`${err}`, { position: "top-right" });
@@ -388,6 +411,61 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <label className={labelClass}>Website <span className="text-red-500">*</span></label>
                                     <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://example.com" className={inputClass} />
                                     {errors.website && <p className={errorClass}>{errors.website}</p>}
+                                </div>
+
+                                <div>
+                                    <label className={labelClass}>Parent Company</label>
+                                    {(() => {
+                                        const invalidIds = new Set();
+                                        invalidIds.add(Number(id));
+                                        const queue = [Number(id)];
+                                        while (queue.length > 0) {
+                                            const curr = queue.shift();
+                                            for (const comp of parentCompanies) {
+                                                if (comp.parentCompanyId && Number(comp.parentCompanyId) === curr) {
+                                                    if (!invalidIds.has(comp.companyId)) {
+                                                        invalidIds.add(comp.companyId);
+                                                        queue.push(comp.companyId);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        const options = [
+                                            { value: "", label: "None (Root Company)" },
+                                            ...parentCompanies
+                                                .filter((c) => !invalidIds.has(c.companyId))
+                                                .map((c) => ({
+                                                    value: c.companyId,
+                                                    label: c.companyName,
+                                                })),
+                                        ];
+
+                                        return (
+                                            <Select
+                                                name="parentCompanyId"
+                                                options={options}
+                                                value={
+                                                    formData.parentCompanyId
+                                                        ? {
+                                                            value: formData.parentCompanyId,
+                                                            label:
+                                                                parentCompanies.find(
+                                                                    (c) => c.companyId === formData.parentCompanyId
+                                                                )?.companyName || "Selected",
+                                                        }
+                                                        : { value: "", label: "None (Root Company)" }
+                                                }
+                                                onChange={(selected) => {
+                                                    setFormData((prev) => ({
+                                                        ...prev,
+                                                        parentCompanyId: selected && selected.value !== "" ? selected.value : null,
+                                                    }));
+                                                }}
+                                                isSearchable
+                                            />
+                                        );
+                                    })()}
                                 </div>
 
                                 <div>

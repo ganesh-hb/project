@@ -117,6 +117,18 @@ export class CompanyDto {
   ownerDialCode?: number;
 
   @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => {
+    const val = Array.isArray(value) ? value[0] : value;
+    if (val === '' || val === 'null' || val === null || val === undefined) {
+      return null;
+    }
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  })
+  parentCompanyId?: number | null;
+
+  @IsOptional()
   companyFile: any;
 }
 
@@ -125,6 +137,18 @@ export class CompanyUpdateDto {
   @IsNotEmpty()
   @Transform(({ value }) => Number(value))
   companyId!: number;
+
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => {
+    const val = Array.isArray(value) ? value[0] : value;
+    if (val === '' || val === 'null' || val === null || val === undefined) {
+      return null;
+    }
+    const num = Number(val);
+    return isNaN(num) ? val : num;
+  })
+  parentCompanyId?: number | null;
 
   @IsOptional()
   @IsArray()
