@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditUserPage from "./userUpdate";
 import { useContext } from "react";
@@ -26,7 +26,10 @@ import Swal from "sweetalert2";
 export default function UserDetailsPage({ id }) {
     const [showEdit, setShowEdit] = useState(false);
     const { can, canAny, isLogin, activeAssignment } = useContext(loginContext);
-    const [activeTab, setActiveTab] = useState("summary");
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get("tab");
+    const validTabs = ["summary", "profiles", "activity"];
+    const [activeTab, setActiveTab] = useState(validTabs.includes(tabParam) ? tabParam : "summary");
     const [user, setUser] = useState({});
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);

@@ -10,10 +10,10 @@ import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin, isCompanyAdmin, authHeaders } from "../app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import AppPagination from "./ui/AppPagination";
-import { ChevronDown } from "lucide-react";
+import { ArrowUpDown, LogIn, RotateCw, ChevronDown, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import CompanySidePanel from "./company/CompanySidePanel";
 import { createPortal } from "react-dom";
-import { ArrowUpDown, LogIn, RotateCw } from "lucide-react";
 function getInitials(name) {
     if (!name) return "?";
     const parts = name.split(" ");
@@ -254,8 +254,52 @@ export default function UsersPage() {
                             {users?.map((user, index) => (
                                 <div
                                     key={user.user_userId || index}
-                                    className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition"
+                                    className="relative bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition"
                                 >
+                                    {can("userUpdate") && (
+                                        <div className="absolute top-4 right-4 z-10">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <span
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="inline-flex p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer"
+                                                        title="Actions"
+                                                    >
+                                                        <MoreVertical className="h-5 w-5" />
+                                                    </span>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-200 shadow-lg rounded-xl">
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/user/${user.user_userId}?tab=summary`);
+                                                        }}
+                                                    >
+                                                        Profile
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/user/${user.user_userId}?tab=profiles`);
+                                                        }}
+                                                    >
+                                                        Other Profiles
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            router.push(`/user/${user.user_userId}?tab=activity`);
+                                                        }}
+                                                    >
+                                                        Activities
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    )}
                                     <div className="flex items-start gap-4 mb-4">
                                         <div className="flex h-20 w-20 min-w-[80px] items-center justify-center overflow-hidden rounded-full bg-blue-100 text-2xl font-bold uppercase text-blue-600 shadow-md">
                                             {user.user_userFile ? (
@@ -427,23 +471,67 @@ export default function UsersPage() {
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-start justify-between">
+                                            <div className="flex items-start justify-between gap-2">
                                                 <div>
                                                     <div className="text-sm text-gray-500 mb-1">Company Name</div>
                                                     <div className="text-base text-[#3563e9] font-medium">
                                                         {formatCompanies(user.assignments, setSelectedCompanyId)}
                                                     </div>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleRow(rowId)}
-                                                    aria-label={isOpen ? "Collapse" : "Expand"}
-                                                    className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                                                >
-                                                    <ChevronDown
-                                                        className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                                                    />
-                                                </button>
+                                                <div className="flex items-center gap-1">
+                                                    {can("userUpdate") && (
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <span
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="inline-flex p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer"
+                                                                    title="Actions"
+                                                                >
+                                                                    <MoreVertical className="h-5 w-5" />
+                                                                </span>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-200 shadow-lg rounded-xl">
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        router.push(`/user/${user.user_userId}?tab=summary`);
+                                                                    }}
+                                                                >
+                                                                    Profile
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        router.push(`/user/${user.user_userId}?tab=profiles`);
+                                                                    }}
+                                                                >
+                                                                    Other Profiles
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        router.push(`/user/${user.user_userId}?tab=activity`);
+                                                                    }}
+                                                                >
+                                                                    Activities
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleRow(rowId)}
+                                                        aria-label={isOpen ? "Collapse" : "Expand"}
+                                                        className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                                                    >
+                                                        <ChevronDown
+                                                            className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                                                        />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
 

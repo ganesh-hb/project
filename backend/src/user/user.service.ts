@@ -1265,4 +1265,75 @@ export class UserService {
       return { success: 0, message: err.message };
     }
   }
+
+  async switchProfile(body: { profileId: number }, req: any) {
+    try {
+      const targetUserId: number = req?.user?.userId;
+      const isImpersonation: boolean = !!req?.user?.isImpersonation;
+      if (!targetUserId) {
+        return { success: 0, message: 'Not authenticated' };
+      }
+
+      // Security: validate that the requested profileId belongs strictly to the current session user.
+      // where: { id, userId } means a profileId from any other user returns null and is rejected here.
+      const assignment = await this.ucgEntity.findOne({
+        where: { id: body.profileId, userId: targetUserId },
+        relations: ['company', 'group'],
+      });
+
+      if (!assignment) {
+        return { success: 0, message: 'Invalid profile assignment for this user' };
+      }
+
+      // Fetch permissions for the selected group
+      const groupPerms = assignment.groupId
+        ? await this.groupPermissionEntity.find({
+            where: { groupId: assignment.groupId },
+            relations: ['permission'],
+          })
+        : [];
+
+      const permissions = groupPerms
+        .map((gp) => gp.permission?.permissionName)
+        .filter(Boolean);
+
+      // Sign a re-scoped token preserving impersonation claims when applicable
+      let token: string;
+      if (isImpersonation) {
+        token = this.jwtService.sign({
+          userId: targetUserId,
+          email: req.user.email,
+          profileId: assignment.id,
+          impersonatedBy: req.user.impersonatedBy,
+          impersonatorEmail: req.user.impersonatorEmail,
+          isImpersonation: true,
+        });
+      } else {
+        token = this.jwtService.sign({
+          userId: targetUserId,
+          email: req.user.email,
+          profileId: assignment.id,
+        });
+      }
+
+      const activeAssignment = {
+        id: assignment.id,
+        companyId: assignment.companyId,
+        companyName: assignment.company?.companyName ?? null,
+        groupId: assignment.groupId,
+        groupName: assignment.group?.groupName ?? null,
+        is_parent: assignment.is_parent,
+      };
+
+      return {
+        success: 1,
+        token,
+        isImpersonation,
+        activeAssignment,
+        permissions,
+      };
+    } catch (err: any) {
+      return { success: 0, message: err.message };
+    }
+  }
 }

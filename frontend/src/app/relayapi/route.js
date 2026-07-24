@@ -145,6 +145,27 @@ export async function POST(request) {
                     });
                 }
             }
+        } else if (endpoint === "user-switch-profile") {
+            const decrypted = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+            if (decrypted.success === 1) {
+                const impToken = res.headers.get("x-impersonation-token");
+                const authToken = res.headers.get("x-auth-token");
+                if (impToken) {
+                    nextRes.cookies.set("impersonationToken", impToken, {
+                        httpOnly: true,
+                        sameSite: "lax",
+                        secure: process.env.NODE_ENV === "production",
+                        path: "/",
+                    });
+                } else if (authToken) {
+                    nextRes.cookies.set("accessToken", authToken, {
+                        httpOnly: true,
+                        sameSite: "lax",
+                        secure: process.env.NODE_ENV === "production",
+                        path: "/",
+                    });
+                }
+            }
         } else if (endpoint === "user-logout") {
             nextRes.cookies.set("accessToken", "", {
                 httpOnly: true,

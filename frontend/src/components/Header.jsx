@@ -9,12 +9,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 
 export default function Header({ onSearch, page, viewMode, onViewModeChange, onAddClick }) {
     const router = useRouter();
-    const { displayUser, activeAssignment, logout, can } = useContext(loginContext);
+    const { displayUser, activeAssignment, logout, can, switchProfile, impersonating, stopImpersonating } = useContext(loginContext);
 
     function getInitials(name) {
         if (!name) return "?";
         return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
     }
+
 
     // console.log(isLogin, "################################ is login header")
     const primaryAssignment =
@@ -62,11 +63,11 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
     const isListPage = page === "users" || page === "companies" || page === "currencies" || page === "groups";
 
     const [openProfile, setOpenProfile] = useState(false);
+    const [switchLoading, setSwitchLoading] = useState(false);
     const [searchValue, setSearchValue] = useState("");
     const [showSearchPopup, setShowSearchPopup] = useState(false);
     const [showSidePanel, setShowSidePanel] = useState(false);
     const [filterCondition, setFilterCondition] = useState("All");
-    const { impersonating, stopImpersonating } = useContext(loginContext);
     // const [showProfilePanel, setShowProfilePanel] = useState(false);
 
     const [filterRows, setFilterRows] = useState([
@@ -622,6 +623,54 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
 
                         {openProfile && (
                             <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+
+                                {/* Profile switcher section — shown when user has more than one assignment */}
+                                {Array.isArray(displayUser?.assignments) && displayUser.assignments.length > 1 && (
+                                    <div className="border-b">
+                                        <p className="px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Switch Profile</p>
+                                        <div className="max-h-52 overflow-y-auto">
+                                            {displayUser.assignments.map((a, i) => {
+                                                const isActive = activeAssignment?.id === a.id;
+                                                const formattedGroup = a.groupName
+                                                    ? a.groupName.replace(/([A-Z])/g, " $1").trim()
+                                                    : "—";
+                                                return (
+                                                    <button
+                                                        key={a.id || i}
+                                                        id={`header-profile-switch-${a.id || i}`}
+                                                        disabled={isActive || switchLoading}
+                                                        className={`flex w-full items-center justify-between px-5 py-3 text-left transition ${isActive
+                                                            ? "bg-blue-50 cursor-default"
+                                                            : "hover:bg-gray-50 cursor-pointer"
+                                                            } ${switchLoading && !isActive ? "opacity-50" : ""}`}
+                                                        onClick={async () => {
+                                                            if (isActive || switchLoading) return;
+                                                            setSwitchLoading(true);
+                                                            const result = await switchProfile(a);
+                                                            setSwitchLoading(false);
+                                                            if (result?.success) {
+                                                                setOpenProfile(false);
+                                                                router.push("/")
+                                                                // window.location.href = "/";
+                                                            } else {
+                                                                console.error("Profile switch failed:", result?.message);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className="leading-tight">
+                                                            <p className="text-sm font-medium text-gray-800">{a.companyName || "—"}</p>
+                                                            <p className="text-xs text-gray-500">{formattedGroup}</p>
+                                                        </div>
+                                                        {isActive && (
+                                                            <span className="ml-2 text-xs font-semibold text-blue-600">✓</span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button
                                     className="flex w-full items-center gap-4 px-5 py-4 hover:bg-gray-50 border-b"
                                     onClick={() => { router.push("/profile"); setOpenProfile(false); }}

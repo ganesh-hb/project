@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import UserDetailsPage from "@/components/UserDetails";
 import RouteGuard from "@/components/RouteGuard";
 
@@ -6,7 +7,9 @@ export default async function Page({ params }) {
 
     return (
         <RouteGuard permission="userView">
-            <UserDetailsPage id={id} />
+            <Suspense fallback={null}>
+                <UserDetailsPage id={id} />
+            </Suspense>
         </RouteGuard>
     );
 }

@@ -197,9 +197,46 @@ export default function LoginContext({ children }) {
         return isLogin;
     }, [impersonating, isLogin]);
 
-    function switchProfile(assignment) {
-        setActiveAssignment(assignment);
-        sessionStorage.setItem("activeAssignment", JSON.stringify(assignment));
+    async function switchProfile(assignment) {
+        try {
+            const res = await fetch("/relayapi", {
+                method: "POST",
+                headers: {
+                    ...authHeaders(),
+                    endpoint: "user-switch-profile",
+                    module: "user",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ profileId: assignment.id }),
+            });
+            const payload = await res.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+
+            if (data?.success === 1) {
+                setActiveAssignment(data.activeAssignment);
+                setPermissions(data.permissions || []);
+                sessionStorage.setItem("activeAssignment", JSON.stringify(data.activeAssignment));
+
+                if (data.isImpersonation) {
+                    // Update the impersonated user's state to reflect the new active profile
+                    const updatedImpersonated = {
+                        ...impersonating,
+                        permissions: data.permissions || [],
+                    };
+                    setImpersonating(updatedImpersonated);
+                    sessionStorage.setItem("impersonatedUser", JSON.stringify(updatedImpersonated));
+                    sessionStorage.setItem("impersonatedPermissions", JSON.stringify(data.permissions || []));
+                } else {
+                    sessionStorage.setItem("permissions", JSON.stringify(data.permissions || []));
+                }
+
+                return { success: true };
+            } else {
+                return { success: false, message: data?.message || "Failed to switch profile" };
+            }
+        } catch (err) {
+            return { success: false, message: "Failed to switch profile" };
+        }
     }
 
     function login(data) {

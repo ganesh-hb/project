@@ -228,6 +228,25 @@ export class UserController {
     return { encrypted: encryptResponse(result) };
   }
 
+  @Post('user-switch-profile')
+  @UseGuards(AuthGuard('jwt'))
+  async switchProfile(
+    @Body() body: { profileId: number },
+    @Req() req,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    const result = await this.userService.switchProfile(body, req);
+    if (result.success === 1 && result.token) {
+      if (result.isImpersonation) {
+        response.setHeader('x-impersonation-token', result.token);
+      } else {
+        response.setHeader('x-auth-token', result.token);
+      }
+      delete (result as any).token;
+    }
+    return { encrypted: encryptResponse(result) };
+  }
+
   @Get('user-me')
   @UseGuards(AuthGuard('jwt'))
   async getMyProfile(@Req() req: any) {

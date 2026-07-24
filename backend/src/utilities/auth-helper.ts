@@ -30,15 +30,29 @@ export async function resolveAuthContext(
     throw new ForbiddenException('Not authenticated');
   }
 
-  const ucg =
-    (await ucgRepo.findOne({
-      where: { userId, is_parent: 0 },
-      relations: ['group'],
-    })) ??
-    (await ucgRepo.findOne({
-      where: { userId },
-      relations: ['group'],
-    }));
+  const profileId = req?.user?.profileId;
+
+  const ucg = profileId
+    ? ((await ucgRepo.findOne({
+        where: { id: profileId, userId },
+        relations: ['group'],
+      })) ??
+      (await ucgRepo.findOne({
+        where: { userId, is_parent: 0 },
+        relations: ['group'],
+      })) ??
+      (await ucgRepo.findOne({
+        where: { userId },
+        relations: ['group'],
+      })))
+    : ((await ucgRepo.findOne({
+        where: { userId, is_parent: 0 },
+        relations: ['group'],
+      })) ??
+      (await ucgRepo.findOne({
+        where: { userId },
+        relations: ['group'],
+      })));
 
   if (!ucg) {
     throw new ForbiddenException('No profile assigned');

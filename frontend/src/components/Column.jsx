@@ -5,7 +5,8 @@ import { useContext } from "react";
 import { loginContext } from "@/components/hooks/LoginContext";
 import { isSuperAdmin } from "@/app/lib/auth";
 import { toast } from "react-toastify";
-import { ArrowUpDown, LogIn, RotateCw } from "lucide-react";
+import { ArrowUpDown, LogIn, RotateCw, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 function StatusBadge({ status }) {
     if (!status) return <span className="text-gray-400 text-sm">-</span>;
@@ -101,6 +102,53 @@ function LoginAsCell({ row }) {
     );
 }
 
+function TabMenuCell({ row }) {
+    const router = useRouter();
+    const { can } = useContext(loginContext);
+    const user = row.original;
+
+    if (!can("userUpdate")) return null;
+
+    const navigateTab = (e, tab) => {
+        e.stopPropagation();
+        router.push(`/user/${user.user_userId}?tab=${tab}`);
+    };
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <span
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex p-1 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition cursor-pointer"
+                    title="Actions"
+                >
+                    <MoreVertical className="h-4 w-4" />
+                </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40 bg-white border border-gray-200 shadow-lg rounded-xl">
+                <DropdownMenuItem
+                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={(e) => navigateTab(e, "summary")}
+                >
+                    Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={(e) => navigateTab(e, "profiles")}
+                >
+                    Other Profiles
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={(e) => navigateTab(e, "activity")}
+                >
+                    Activities
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 function CompanyCell({ row }) {
     const assignments = row.original.assignments || [];
     const companies = [...new Set(assignments.map((a) => a.companyName).filter(Boolean))];
@@ -117,7 +165,7 @@ function CompanyCell({ row }) {
 }
 
 function sortableHeader(label) {
-    return ({ column }) => (
+    const HeaderComponent = ({ column }) => (
         <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -127,6 +175,8 @@ function sortableHeader(label) {
             <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
         </Button>
     );
+    HeaderComponent.displayName = "SortableHeader";
+    return HeaderComponent;
 }
 
 export const columns = [
@@ -192,5 +242,10 @@ export const columns = [
         id: "loginAs",
         header: () => <span className="font-semibold text-gray-600 text-sm">Login As</span>,
         cell: ({ row }) => <LoginAsCell row={row} />,
+    },
+    {
+        id: "tabMenu",
+        header: () => <span className="font-semibold text-gray-600 text-sm">Actions</span>,
+        cell: ({ row }) => <TabMenuCell row={row} />,
     },
 ];
