@@ -63,7 +63,7 @@ export default function ProfilePage() {
                 <div className="mb-6 flex items-center justify-between">
                     <h1 className="mt-1 text-3xl font-semibold text-gray-800">My Profile</h1>
                     <button
-                        className="h-12 rounded-md bg-gray-500 px-8 font-medium text-white hover:bg-gray-600 transition"
+                        className="h-12 rounded-md bg-gray-500 px-8 font-medium text-white cursor-pointer hover:bg-gray-600 transition"
                         onClick={onClose}
                     >
                         Back
@@ -81,13 +81,13 @@ export default function ProfilePage() {
                             <div className="mt-6 space-y-3">
                                 <button
                                     onClick={() => setActiveTab("summary")}
-                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "summary" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition cursor-pointer ${activeTab === "summary" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                                 >
                                     Summary
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("profiles")}
-                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "profiles" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                    className={`w-full rounded-xl px-4 py-3 text-left cursor-pointer font-medium transition ${activeTab === "profiles" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                                 >
                                     Profiles
                                     {assignments.length > 0 && (
@@ -96,13 +96,13 @@ export default function ProfilePage() {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("activity")}
-                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "activity" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium cursor-pointer transition ${activeTab === "activity" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                                 >
                                     My Activity
                                 </button>
                                 <button
                                     onClick={() => setActiveTab("permissions")}
-                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium transition ${activeTab === "permissions" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                                    className={`w-full rounded-xl px-4 py-3 text-left font-medium cursor-pointer transition ${activeTab === "permissions" ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                                 >
                                     Permissions
                                     {permissions.length > 0 && (
@@ -208,16 +208,15 @@ export default function ProfilePage() {
                                         {assignments.map((a, i) => (
                                             <div
                                                 key={a.id || i}
-                                                className={`rounded-xl border p-5 shadow-sm transition ${
-                                                    selectedAssignment?.id === a.id
-                                                        ? "border-blue-400 bg-blue-50"
-                                                        : "border-gray-100 bg-gray-50"
-                                                }`}
+                                                className={`rounded-xl border p-5 shadow-sm transition ${selectedAssignment?.id === a.id
+                                                    ? "border-blue-400 bg-blue-50"
+                                                    : "border-gray-100 bg-gray-50"
+                                                    }`}
                                             >
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>
                                                     {selectedAssignment?.id === a.id && (
-                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Active</span>
+                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Primary</span>
                                                     )}
                                                     {a.is_parent === 0 && selectedAssignment?.id !== a.id && (
                                                         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">Primary</span>

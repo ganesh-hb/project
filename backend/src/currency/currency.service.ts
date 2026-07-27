@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { CurrencyEntity } from 'src/packages/entity/currency.entity';
+import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { Filter } from 'src/utilities/filter';
 import { getCurrencyListDto, CurrencyDto, CurrencyUpdateDto } from 'src/packages/dto/currency.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -14,6 +15,9 @@ export class CurrencyService {
 
   @InjectRepository(CurrencyEntity)
   private readonly currencyEntity!: Repository<CurrencyEntity>;
+
+  @InjectRepository(UserCompanyGroupEntity)
+  private readonly ucgEntity!: Repository<UserCompanyGroupEntity>;
 
   @Inject(EventEmitter2)
   private readonly eventEmitter!: EventEmitter2;
@@ -87,6 +91,13 @@ export class CurrencyService {
 
       const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.addedBy);
       const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+      const performerUcg = performerId
+        ? await this.ucgEntity.findOne({
+            where: { userId: Number(performerId) },
+            order: { is_parent: 'ASC' },
+            relations: ['group'],
+          })
+        : null;
 
       if (performerId) {
         queryParams.addedBy = performerId;
@@ -105,6 +116,7 @@ export class CurrencyService {
         severity: 'INFO',
         parameters: {
           userEmail: performerEmail,
+          userGroup: performerUcg?.group?.groupName || 'N/A',
           name: params.name,
           code: params.code,
           impersonated: !!req?.user?.isImpersonation
@@ -149,6 +161,13 @@ export class CurrencyService {
 
       const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.updatedBy);
       const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+      const performerUcg = performerId
+        ? await this.ucgEntity.findOne({
+            where: { userId: Number(performerId) },
+            order: { is_parent: 'ASC' },
+            relations: ['group'],
+          })
+        : null;
 
       if (performerId) {
         queryParams.updatedBy = performerId;
@@ -167,6 +186,7 @@ export class CurrencyService {
         severity: 'INFO',
         parameters: {
           userEmail: performerEmail,
+          userGroup: performerUcg?.group?.groupName || 'N/A',
           name: params.name || '',
           code: params.code || '',
           impersonated: !!req?.user?.isImpersonation
@@ -225,6 +245,13 @@ export class CurrencyService {
 
       const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? null);
       const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+      const performerUcg = performerId
+        ? await this.ucgEntity.findOne({
+            where: { userId: Number(performerId) },
+            order: { is_parent: 'ASC' },
+            relations: ['group'],
+          })
+        : null;
 
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.CURRENCY_UPDATE,
@@ -236,6 +263,7 @@ export class CurrencyService {
         severity: 'INFO',
         parameters: {
           userEmail: performerEmail,
+          userGroup: performerUcg?.group?.groupName || 'N/A',
           name: 'All Currencies',
           code: 'ALL_SYNC',
           impersonated: !!req?.user?.isImpersonation

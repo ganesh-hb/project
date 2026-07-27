@@ -447,7 +447,7 @@ export default function UserDetailsPage({ id }) {
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>
                                                     <div className="flex items-center gap-2">
                                                         {selectedProfileIndex === i && (
-                                                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Active</span>
+                                                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Primary</span>
                                                         )}
                                                         {a.is_parent !== 0 && can("userUpdate") &&
                                                             (isSuperAdmin(isLogin) || a.companyId === activeAssignment?.companyId) && (

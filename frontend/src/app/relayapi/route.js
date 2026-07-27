@@ -120,6 +120,9 @@ export async function POST(request) {
         const nextRes = NextResponse.json(payload, { status: res.status });
 
         if (endpoint === "user-login") {
+            // Step 1 only verifies credentials — no token issued, no cookie to set.
+            // Cookie is set by user-select-profile (step 2) below.
+        } else if (endpoint === "user-select-profile") {
             const decrypted = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             if (decrypted.success === 1) {
                 const loginToken = res.headers.get("x-auth-token");

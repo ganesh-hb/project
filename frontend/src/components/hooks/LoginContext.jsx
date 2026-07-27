@@ -260,16 +260,18 @@ export default function LoginContext({ children }) {
         setPermissions(user.permissions || []);
     }
 
-    function logout() {
-        fetch("/relayapi", {
-            method: "POST",
-            headers: { ...authHeaders(), endpoint: "user-logout", module: "user" },
-            body: JSON.stringify({
-                userId: isLogin?.userId,
-                companyId: activeAssignment?.companyId,
-                email: isLogin?.email,
-            }),
-        }).catch(() => { });
+    async function logout() {
+        try {
+            await fetch("/relayapi", {
+                method: "POST",
+                headers: { ...authHeaders(), endpoint: "user-logout", module: "user" },
+                body: JSON.stringify({
+                    userId: isLogin?.userId,
+                    companyId: activeAssignment?.companyId,
+                    email: isLogin?.email,
+                }),
+            });
+        } catch (e) { }
 
         setLogin(null);
         setActiveAssignment(null);

@@ -23,6 +23,7 @@ import {
   getUserListDto,
   login,
   resetpass,
+  selectProfileDto,
   UserDto,
   userUpdateDto,
 } from 'src/packages/dto/user.dto';
@@ -117,12 +118,24 @@ export class UserController {
   @Post('user-login')
   @UseInterceptors(FileInterceptor('userFile', multerConfig))
   async login(@Body() body: login, @Res({ passthrough: true }) response: any) {
-    // console.log(body);
+    // Step 1: verify credentials only — no token issued here.
     const result = await this.userService.login(body);
+    return {
+      encrypted: encryptResponse(result),
+    };
+  }
+
+  @Post('user-select-profile')
+  @UseInterceptors(FileInterceptor('userFile', multerConfig))
+  async selectProfile(
+    @Body() body: selectProfileDto,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    // Step 2: verify ownership, issue real token with profileId.
+    const result = await this.userService.selectProfile(body);
     if (result.success === 1 && result.token) {
       response.setHeader('x-auth-token', result.token);
       delete (result as any).token;
-      delete (result as any).accessToken;
     }
     return {
       encrypted: encryptResponse(result),
@@ -143,16 +156,17 @@ export class UserController {
   }
 
   @Get('user-details/:id')
-  @UseGuards(AuthGuard('jwt'), PermissionsGuard, RolesGuard)
-  @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
-  @RequirePermission('userView')
+  // @UseGuards(AuthGuard('jwt'), PermissionsGuard, RolesGuard)
+  // @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+  // @RequirePermission('userView')
   async getUser(
     @Param('id') id: string,
     @Query('profileId') profileId: string,
     @Req() req: any,
   ) {
     const result = await this.userService.getUser({ id, profileId }, req);
-    return { encrypted: encryptResponse(result) };
+    return result;
+    // return { encrypted: encryptResponse(result) };
   }
 
   @Post('user-confirm-otp')
@@ -251,7 +265,7 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   async getMyProfile(@Req() req: any) {
     const result = await this.userService.getUser(
-      { id: String(req.user.userId) },
+      { id: String(req.user.userId), profileId: req.user.profileId },
       req,
     );
     return { encrypted: encryptResponse(result) };

@@ -78,6 +78,7 @@ export class GroupService {
         severity: 'INFO',
         parameters: { 
           userEmail: performerEmail,
+          userGroup: authCtx.activeGroupName || 'N/A',
           groupName: params.groupName, 
           groupCode: params.groupCode,
           impersonated: !!req?.user?.isImpersonation
@@ -193,6 +194,7 @@ export class GroupService {
         severity: 'INFO',
         parameters: { 
           userEmail: performerEmail,
+          userGroup: authCtx.activeGroupName || 'N/A',
           groupName: params.groupName, 
           groupCode: params.groupCode, 
           status: params.status,

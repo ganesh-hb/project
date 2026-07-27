@@ -27,10 +27,31 @@ const MAX_DOB = dayjs().subtract(18, "year");
 export default function AddUserPage() {
     const router = useRouter();
 
-    const gotoPages = (e, url) => {
+    const gotoPages = async (e, url) => {
         e.stopPropagation();
         e.preventDefault();
-        router.push(url);
+        const result = await MySwal.fire({
+            title: "Discard edits?",
+            text: "Changes you made will not be saved.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Discard changes",
+            cancelButtonText: "Keep editing",
+            confirmButtonColor: "#EF4444",
+            cancelButtonColor: "#1F2937",
+            reverseButtons: true,
+            focusCancel: true,
+            customClass: {
+                popup: 'rounded-[20px] shadow-2xl',
+                confirmButton: 'rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90',
+                cancelButton: 'rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:bg-black',
+                title: 'text-2xl font-bold text-gray-800',
+                htmlContainer: 'text-gray-600'
+            }
+        });
+        if (result.isConfirmed) {
+            router.push(url);
+        }
     };
 
     const [formData, setFormData] = useState({

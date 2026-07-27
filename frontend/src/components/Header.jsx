@@ -137,11 +137,11 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
 
     let image = `http://localhost:4000/upload/${displayUser?.userId}/${displayUser?.userFile}`;
 
-    const gotoLogout = (e) => {
+    const gotoLogout = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        logout();
-        router.refresh();
+        await logout();
+        router.push("/login");
     };
 
     const gotoChangePass = (e) => {

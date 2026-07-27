@@ -25,9 +25,14 @@ export default function UserSidePanel({ userId, onClose }) {
             });
             const payload = await res.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
-            setUser(data);
+            if (data && (data.success === 0 || !data.userId)) {
+                setUser(null);
+            } else {
+                setUser(data);
+            }
         } catch (err) {
             console.error(err);
+            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -76,16 +81,24 @@ export default function UserSidePanel({ userId, onClose }) {
                     <div className="flex-1">
                         {/* Avatar + name */}
                         <div className="flex items-center gap-4 px-6 py-5 border-b bg-gray-50">
-                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-50 border shadow-sm flex-shrink-0">
-                                <img
-                                    src={`http://localhost:4000/upload/${user.userId}/${user.userFile}`}
-                                    alt="avatar"
-                                    className="h-full w-full object-cover"
-                                    onError={(e) => {
-                                        e.target.style.display = "none";
-                                        e.target.parentNode.innerHTML = `<span class="text-xl font-bold text-blue-400">${user.name?.charAt(0) ?? "U"}</span>`;
-                                    }}
-                                />
+                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-50 border shadow-sm flex-shrink-0 relative">
+                                {user.userFile ? (
+                                    <img
+                                        src={`http://localhost:4000/upload/${user.userId}/${user.userFile}`}
+                                        alt="avatar"
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = "none";
+                                            if (e.target.nextSibling) e.target.nextSibling.style.display = "flex";
+                                        }}
+                                    />
+                                ) : null}
+                                <span
+                                    style={{ display: user.userFile ? "none" : "flex" }}
+                                    className="h-full w-full items-center justify-center text-xl font-bold text-blue-400 absolute inset-0 uppercase"
+                                >
+                                    {user.name?.charAt(0) ?? "U"}
+                                </span>
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-800 text-base">{user.name}</h3>

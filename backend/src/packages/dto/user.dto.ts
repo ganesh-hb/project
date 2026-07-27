@@ -306,3 +306,15 @@ export class adminResetPass {
   @IsNotEmpty()
   newPassword!: string;
 }
+
+export class selectProfileDto {
+  @IsInt()
+  @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
+  userId!: number;
+
+  @IsInt()
+  @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
+  ucgId!: number;
+}

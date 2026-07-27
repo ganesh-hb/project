@@ -127,6 +127,13 @@ export class CompanyService {
 
       const performerId = req?.user?.isImpersonation ? req?.user?.impersonatedBy : (req?.user?.userId ?? params.addedBy);
       const performerEmail = req?.user?.isImpersonation ? req?.user?.impersonatorEmail : (req?.user?.email ?? '');
+      const performerUcg = performerId
+        ? await this.ucgEntity.findOne({
+            where: { userId: Number(performerId) },
+            order: { is_parent: 'ASC' },
+            relations: ['group'],
+          })
+        : null;
 
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.COMPANY_CREATE,
@@ -139,6 +146,7 @@ export class CompanyService {
         severity: 'INFO',
         parameters: { 
           userEmail: performerEmail,
+          userGroup: performerUcg?.group?.groupName || 'N/A',
           companyName: params.companyName, 
           companyCode: params.companyCode, 
           email: params.email,
@@ -386,6 +394,7 @@ export class CompanyService {
         severity: 'INFO',
         parameters: { 
           userEmail: performerEmail,
+          userGroup: authCtx.activeGroupName || 'N/A',
           companyName: params.companyName, 
           companyCode: params.companyCode, 
           email: params.email, 

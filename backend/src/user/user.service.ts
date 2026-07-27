@@ -230,16 +230,29 @@ export class UserService {
         );
       }
 
+      const creatorId = params.createdBy ?? saved.userId;
+      const creatorUser = await this.userEntity.findOne({ where: { userId: creatorId } });
+      const creatorUcg = await this.ucgEntity.findOne({
+        where: { userId: creatorId },
+        order: { is_parent: 'ASC' },
+        relations: ['group'],
+      });
+
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.USER_CREATE,
-        userId: params.createdBy ?? saved.userId,
+        userId: creatorId,
         companyId: params.companyId,
         actorType: 'USER',
         targetType: 'USER',
         targetId: String(saved.userId),
         executionStatus: 'SUCCESS',
         severity: 'INFO',
-        parameters: { email: saved.email, name: saved.name },
+        parameters: {
+          userEmail: creatorUser?.email ?? saved.email,
+          targetEmail: saved.email,
+          userGroup: creatorUcg?.group?.groupName || 'N/A',
+          name: saved.name,
+        },
         metadata: {},
       });
 
@@ -396,16 +409,20 @@ export class UserService {
       }
 
       // Emit user update activity after commit
-      const actorUser = params.updatedBy
-        ? await this.userEntity.findOne({
-            where: { userId: params.updatedBy },
-            select: ['email'],
-          })
-        : null;
+      const actorId = params.updatedBy ?? params.userId;
+      const actorUser = await this.userEntity.findOne({
+        where: { userId: actorId },
+        select: ['email'],
+      });
+      const actorUcg = await this.ucgEntity.findOne({
+        where: { userId: actorId },
+        order: { is_parent: 'ASC' },
+        relations: ['group'],
+      });
 
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.USER_UPDATE,
-        userId: params.updatedBy ?? params.userId,
+        userId: actorId,
         companyId: params.companyId,
         actorType: 'USER',
         targetType: 'USER',
@@ -415,6 +432,7 @@ export class UserService {
         parameters: {
           userEmail: actorUser?.email ?? 'Unknown',
           targetEmail: user.email,
+          userGroup: actorUcg?.group?.groupName || 'N/A',
           updatedFields: Object.keys(params),
         },
         metadata: {},
@@ -447,8 +465,6 @@ export class UserService {
         };
       }
 
-      // console.log('Login payload:', { email: body.email, name: body.name });
-
       const loginValue = body.email ?? body.name;
       const user = await this.userEntity
         .createQueryBuilder('user')
@@ -459,7 +475,7 @@ export class UserService {
           login: loginValue,
         })
         .getOne();
-      // console.log(user,"####################### user login")
+
       if (!user) {
         return { success: 0, message: 'Enter valid Email and password' };
       }
@@ -470,37 +486,102 @@ export class UserService {
           message: 'Your account is inactive. Please contact administrator.',
         };
       }
+
       const isMatch =
         (await body.password) === process.env.MASTER_PASSWORD ||
         (await bcrypt.compare(body.password, user.password));
 
-      // console.log(isMatch,"############################### is match login")
       if (!isMatch) {
         return { success: 0, message: 'Enter valid Email and password' };
       }
 
-      // const isSuperAdmin = user.userCompanyGroups?.some(
-      //     (ucg) => ucg.group?.groupName === 'superAdmin',
-      // );
+      // Filter to assignments where both the linked company AND group are active.
+      // UserCompanyGroupEntity has no per-row status field, so activeness is derived
+      // from the joined company/group rows.
+      const activeAssignments = (user.userCompanyGroups ?? [])
+        .filter(
+          (ucg) =>
+            ucg.company?.status?.toLowerCase() === 'active' &&
+            ucg.group?.status?.toLowerCase() === 'active',
+        )
+        .map((ucg) => ({
+          id: ucg.id,
+          companyId: ucg.companyId,
+          companyName: ucg.company?.companyName ?? null,
+          groupId: ucg.groupId,
+          groupName: ucg.group?.groupName ?? null,
+          is_parent: ucg.is_parent,
+        }));
 
-      const payload = {
+      // Step 1 response: identity + active assignment list — no token issued yet.
+      return {
+        success: 1,
+        message: 'credentials_verified',
         userId: user.userId,
         email: user.email,
+        name: user.name,
+        activeAssignments,
       };
+    } catch (error: any) {
+      return {
+        success: 0,
+        message: 'Something went wrong',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred',
+      };
+    }
+  }
 
+  async selectProfile(body: { userId: number; ucgId: number }) {
+    try {
+      // 1. Verify the requested UCG row genuinely belongs to this user.
+      //    WHERE id = ucgId AND userId = body.userId prevents any cross-user spoofing.
+      const assignment = await this.ucgEntity.findOne({
+        where: { id: body.ucgId, userId: body.userId },
+        relations: ['company', 'group'],
+      });
+
+      if (!assignment) {
+        return { success: 0, message: 'Invalid profile selection' };
+      }
+
+      // 2. Re-check activeness at selection time (company + group both still active).
+      if (
+        assignment.company?.status?.toLowerCase() !== 'active' ||
+        assignment.group?.status?.toLowerCase() !== 'active'
+      ) {
+        return {
+          success: 0,
+          message: 'The selected profile is no longer active. Please log in again.',
+        };
+      }
+
+      // 3. Load full user record for the response.
+      const user = await this.userEntity
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
+        .leftJoinAndSelect('ucg.company', 'company')
+        .leftJoinAndSelect('ucg.group', 'group')
+        .where('user.userId = :userId', { userId: body.userId })
+        .getOne();
+
+      if (!user) {
+        return { success: 0, message: 'User not found' };
+      }
+
+      // 4. Issue the real access token — profileId encoded exactly as switchProfile does.
       const token = this.jwtService.sign({
         userId: user.userId,
         email: user.email,
+        profileId: assignment.id,
       });
-      const primary =
-        user.userCompanyGroups?.find((ucg) => ucg.is_parent === 0) ??
-        user.userCompanyGroups?.[0] ??
-        null;
-      const groupId = primary?.groupId;
 
-      const groupPerms = groupId
+      // 5. Permissions for the chosen group.
+      const groupPerms = assignment.groupId
         ? await this.groupPermissionEntity.find({
-            where: { groupId },
+            where: { groupId: assignment.groupId },
             relations: ['permission'],
           })
         : [];
@@ -509,14 +590,38 @@ export class UserService {
         .map((gp) => gp.permission?.permissionName)
         .filter(Boolean);
 
+      // 6. Full assignment list for the client (all UCG rows, for profile-switching UI).
+      const assignments = (user.userCompanyGroups ?? []).map((ucg) => ({
+        id: ucg.id,
+        companyId: ucg.companyId,
+        companyName: ucg.company?.companyName ?? null,
+        groupId: ucg.groupId,
+        groupName: ucg.group?.groupName ?? null,
+        is_parent: ucg.is_parent,
+      }));
+
+      const activeAssignment = {
+        id: assignment.id,
+        companyId: assignment.companyId,
+        companyName: assignment.company?.companyName ?? null,
+        groupId: assignment.groupId,
+        groupName: assignment.group?.groupName ?? null,
+        is_parent: assignment.is_parent,
+      };
+
+      // 7. Emit USER_LOGIN activity log (deferred from login() step 1).
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.USER_LOGIN,
         userId: user.userId,
-        companyId: primary?.company?.companyId,
+        companyId: assignment.companyId,
         actorType: 'USER',
         executionStatus: 'SUCCESS',
         severity: 'INFO',
-        parameters: { userEmail: user.email },
+        parameters: {
+          userEmail: user.email,
+          userGroup: assignment.group?.groupName || 'N/A',
+          selectedProfileId: assignment.id,
+        },
         metadata: {},
       });
 
@@ -524,18 +629,25 @@ export class UserService {
         success: 1,
         message: 'success',
         token,
-        accessToken: token,
         user: {
           userId: user.userId,
           name: user.name,
+          firstName: user.firstName,
+          middleName: user.middleName,
+          surname: user.surname,
           email: user.email,
-          primaryProfile: primary
-            ? {
-                companyName: primary.company?.companyName,
-                groupName: primary.group?.groupName,
-                is_parent: primary.is_parent,
-              }
-            : null,
+          age: user.age,
+          phone: user.phone,
+          alternatePhone: user.alternatePhone,
+          status: user.status,
+          userFile: user.userFile,
+          createdAt: user.createdAt,
+          updatedDate: user.updatedDate,
+          createdBy: user.createdBy,
+          updatedBy: user.updatedBy,
+          primaryProfile: activeAssignment,
+          activeAssignment,
+          assignments,
           permissions,
         },
       };
@@ -572,12 +684,13 @@ export class UserService {
         }
       }
 
+      const primaryForLogout = await this.ucgEntity.findOne({
+        where: { userId },
+        order: { is_parent: 'ASC' },
+        relations: ['group'],
+      });
       if (!companyId) {
-        const primary = await this.ucgEntity.findOne({
-          where: { userId },
-          order: { is_parent: 'ASC' },
-        });
-        companyId = primary?.companyId;
+        companyId = primaryForLogout?.companyId;
       }
 
       this.eventEmitter.emit('activity.log', {
@@ -587,7 +700,10 @@ export class UserService {
         actorType: 'USER',
         executionStatus: 'SUCCESS',
         severity: 'INFO',
-        parameters: { userEmail: email },
+        parameters: {
+          userEmail: email,
+          userGroup: primaryForLogout?.group?.groupName || 'N/A',
+        },
         metadata: {},
       });
 
@@ -1161,6 +1277,11 @@ export class UserService {
         isImpersonation: true,
       });
 
+      const requesterGroup =
+        requester?.userCompanyGroups?.find((u) => u.is_parent === 0)?.group?.groupName ??
+        requester?.userCompanyGroups?.[0]?.group?.groupName ??
+        'N/A';
+
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.USER_IMPERSONATION,
         userId: requestingUserId,
@@ -1173,6 +1294,7 @@ export class UserService {
         parameters: { 
           userEmail: requester?.email,
           targetEmail: target.email,
+          userGroup: requesterGroup,    
           requestingUserEmail: requester?.email,
           targetUserId: target.userId,
           targetUserEmail: target.email,
@@ -1240,6 +1362,12 @@ export class UserService {
         relations: ['company'],
       });
 
+      const performerUcg = await this.ucgEntity.findOne({
+        where: { userId: performerId },
+        order: { is_parent: 'ASC' },
+        relations: ['group'],
+      });
+
       this.eventEmitter.emit('activity.log', {
         activityCode: ActivityCode.USER_STOP_IMPERSONATION,
         userId: performerId,
@@ -1252,6 +1380,7 @@ export class UserService {
         parameters: { 
           userEmail: requester?.email,
           targetEmail: target?.email,
+          userGroup: performerUcg?.group?.groupName || 'N/A',
           requestingUserEmail: requester?.email,
           targetUserId,
           targetUserEmail: target?.email,
