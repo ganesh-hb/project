@@ -100,7 +100,10 @@ export default function CompanyUpdate({ id, onBack }) {
             body: JSON.stringify({ page: 1, limit: 100 }),
         })
             .then((r) => r.json())
-            .then((data) => setParentCompanies(Array.isArray(data?.data) ? data.data : []))
+            .then((resJson) => {
+                const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
+                setParentCompanies(Array.isArray(data?.data) ? data.data : []);
+            })
             .catch(() => { });
     }, []);
 
@@ -115,7 +118,8 @@ export default function CompanyUpdate({ id, onBack }) {
                     module: "company",
                 },
             });
-            const data = await res.json();
+            const resJson = await res.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             if (data?.companyId) {
                 setFormData({
                     companyName: data.companyName || "",

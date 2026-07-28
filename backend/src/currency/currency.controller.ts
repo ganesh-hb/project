@@ -13,14 +13,16 @@ export class CurrencyController {
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermission('currencyList')
   async getCurrencies(@Req() req, @Body() body: getCurrencyListDto) {
-    return await this.currencyService.getCurrencies(body, req);
+    const result = await this.currencyService.getCurrencies(body, req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Get('currency-details/:id')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermission('currencyView')
   async getCurrency(@Req() req, @Param('id') id: string) {
-    return await this.currencyService.getCurrencyDetails(Number(id), req);
+    const result = await this.currencyService.getCurrencyDetails(Number(id), req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Post('currency-add')
@@ -42,8 +44,9 @@ export class CurrencyController {
   @Put('sync-currency-conversion')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermission('currencyList')
-   async syncCurrency(@Req() req, @Body() body: getCurrencyListDto) {
-    return await this.currencyService.syncCurrency(body, req);
+  async syncCurrency(@Req() req, @Body() body: getCurrencyListDto) {
+    const result = await this.currencyService.syncCurrency(body, req);
+    return { encrypted: encryptResponse(result) };
   }
 }
 

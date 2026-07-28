@@ -6,6 +6,8 @@ import Header from "../Header";
 import CompanyUpdate from "./CompanyUpdate";
 import { loginContext } from "../hooks/LoginContext";
 
+import { decryptResponse } from "@/app/lib/crypto";
+
 export default function CompanyDetails({ id }) {
     const router = useRouter();
     const { can } = useContext(loginContext);
@@ -34,7 +36,8 @@ export default function CompanyDetails({ id }) {
                     module: "company",
                 },
             });
-            const data = await res.json();
+            const resJson = await res.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             if (res.ok && data && !data.statusCode && data.companyId) {
                 setCompany(data);
             } else {

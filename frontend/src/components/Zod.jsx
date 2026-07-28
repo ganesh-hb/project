@@ -8,7 +8,7 @@ export const userLoginSchema = z.object({
 
     password: z.string()
         .min(1, "Please enter the Password.")
-        .max(10, "Password must be at most 100 characters."),
+        .max(20, "Password must be at most 20 characters."),
 });
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;

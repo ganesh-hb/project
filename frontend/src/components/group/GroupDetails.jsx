@@ -2,6 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
 import GroupUpdate from "./GroupUpdate";
 import { loginContext } from "../hooks/LoginContext";
@@ -28,7 +29,8 @@ export default function GroupDetails({ id }) {
                     module: "group",
                 },
             });
-            const data = await res.json();
+            const resJson = await res.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             setGroup(data);
         } catch (err) {
             console.error(err);

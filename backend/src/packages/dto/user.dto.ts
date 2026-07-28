@@ -293,7 +293,7 @@ export class getUserListDto {
   limit!: number;
 
   @IsOptional()
-  @ValidateNested()
+  @ValidateNested({ each: true })
   @Type(() => filterDto)
   filters: any;
 }

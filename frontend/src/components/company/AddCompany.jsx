@@ -117,13 +117,14 @@ export default function AddCompany() {
             },
         })
             .then((r) => r.json())
-            .then((data) =>
+            .then((resJson) => {
+                const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
                 setCurrencies(
                     Array.isArray(data)
                         ? data.filter((currency) => currency.status == "Active")
                         : []
-                )
-            )
+                );
+            })
             .catch(() => { });
 
         fetch("/relayapi", {
@@ -136,7 +137,10 @@ export default function AddCompany() {
             body: JSON.stringify({ page: 1, limit: 100 }),
         })
             .then((r) => r.json())
-            .then((data) => setParentCompanies(Array.isArray(data?.data) ? data.data : []))
+            .then((resJson) => {
+                const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
+                setParentCompanies(Array.isArray(data?.data) ? data.data : []);
+            })
             .catch(() => { });
     }, []);
 

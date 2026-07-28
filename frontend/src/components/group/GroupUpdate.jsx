@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GroupFormSchema } from "../Zod";
 import { useRouter } from "next/navigation";
+import { decryptResponse } from "@/app/lib/crypto";
 const MySwal = withReactContent(Swal);
 
 export default function GroupUpdate({ id, onBack }) {
@@ -35,7 +36,8 @@ export default function GroupUpdate({ id, onBack }) {
                     module: "group",
                 },
             });
-            const data = await res.json();
+            const resJson = await res.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             if (data?.groupId) {
                 setFormData({
                     groupName: data.groupName || "",
@@ -81,7 +83,8 @@ export default function GroupUpdate({ id, onBack }) {
                 body: JSON.stringify({ groupId: Number(Array.isArray(id) ? id[0] : id), ...formData }),
             });
 
-            const data = await response.json();
+            const resJson = await response.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             if (data?.settings?.success === 1 || data?.status?.success === 1) {
                 toast.success("Group updated successfully", { position: "top-right" });
                 setTimeout(() => onBack(), 1000);

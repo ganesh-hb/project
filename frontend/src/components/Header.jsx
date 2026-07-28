@@ -4,12 +4,15 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import { useRouter } from "next/navigation";
 import { Menu, Table as TableIcon, List, LayoutGrid } from "lucide-react";
+import HeaderMenuPanel from "./HeaderMenuPanel";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 export default function Header({ onSearch, page, viewMode, onViewModeChange, onAddClick }) {
     const router = useRouter();
     const { displayUser, activeAssignment, logout, can, switchProfile, impersonating, stopImpersonating } = useContext(loginContext);
+
+    const [showMenuPanel, setShowMenuPanel] = useState(false);
 
     function getInitials(name) {
         if (!name) return "?";
@@ -721,11 +724,17 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                             </div>
                         )}
                     </div>
-
-                    {/* <button className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600">
-                        ☰
+                    <button
+                        onClick={() => setShowMenuPanel(!showMenuPanel)}
+                        className={`flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
+                            showMenuPanel
+                                ? "text-blue-600 bg-blue-50 border border-blue-200"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
+                        }`}
+                    >
+                        <span>{showMenuPanel ? "✕" : "☰"}</span>
                         <span>Menu</span>
-                    </button> */}
+                    </button>
                 </div>
             </header>
 
@@ -762,23 +771,17 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
 
                             {field.id === "status" ? (
                                 <select
-                                    value={sidePanelFilters[field.id] || ""}
+                                    value={sidePanelFilters.status || ""}
                                     onChange={(e) =>
                                         handleSidePanelFilter(
-                                            field.id,
+                                            "status",
                                             e.target.value
                                         )
                                     }
-                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-gray-600"
+                                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 text-black bg-white"
                                 >
-                                    <option value="">
-                                        Select Status
-                                    </option>
-
-                                    <option value="Active">
-                                        Active
-                                    </option>
-
+                                    <option value="">All Statuses</option>
+                                    <option value="Active">Active</option>
                                     <option value="Inactive">
                                         Inactive
                                     </option>
@@ -808,6 +811,11 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                     </button>
                 </div>
             </div>
+
+            <HeaderMenuPanel
+                isOpen={showMenuPanel}
+                onClose={() => setShowMenuPanel(false)}
+            />
         </>
     );
 }

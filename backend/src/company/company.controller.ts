@@ -24,6 +24,7 @@ import {
   PermissionsGuard,
   RequirePermission,
 } from 'src/utilities/permissions.guard';
+import { encryptResponse } from 'src/utilities/crypto';
 
 @Controller('company')
 export class CompanyController {
@@ -47,17 +48,20 @@ export class CompanyController {
 
       if (!allowedTypes.includes(companyFile.mimetype)) {
         return {
-          status: 0,
-          message: 'invalid File type',
+          encrypted: encryptResponse({
+            status: 0,
+            message: 'invalid File type',
+          }),
         };
       }
     }
     const param = { ...body, addedBy: req.user.userId };
-    return await this.companyService.startInsertCompany(
+    const result = await this.companyService.startInsertCompany(
       param,
       companyFile,
       req,
     );
+    return { encrypted: encryptResponse(result) };
   }
 
   @Put('company-update')
@@ -73,17 +77,20 @@ export class CompanyController {
       if (companyFile) {
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
         if (!allowedTypes.includes(companyFile.mimetype)) {
-          return { status: 0, message: 'invalid File type' };
+          return {
+            encrypted: encryptResponse({ status: 0, message: 'invalid File type' }),
+          };
         }
       }
       const param = { ...body, updatedBy: req.user.userId };
-      return await this.companyService.startUpdate(
+      const result = await this.companyService.startUpdate(
         param,
         companyFile || null,
         req,
       );
+      return { encrypted: encryptResponse(result) };
     } catch (err) {
-      return err;
+      return { encrypted: encryptResponse(err) };
     }
   }
 
@@ -92,19 +99,22 @@ export class CompanyController {
   @RequirePermission('companyList')
   @UseInterceptors(FileInterceptor('companyFile', multerConfig))
   async getCompanys(@Req() req, @Body() body: getCompanyListDto) {
-    return await this.companyService.getCompanies(body, req);
+    const result = await this.companyService.getCompanies(body, req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Get('company-details/:id')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermission('companyView')
   async getCompany(@Req() req, @Param('id') param) {
-    return await this.companyService.getCompany(param, req);
+    const result = await this.companyService.getCompany(param, req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Get('currency-list')
   @UseGuards(AuthGuard('jwt'))
   async getCurrencies(@Req() req) {
-    return this.companyService.getCurrencies(req);
+    const result = await this.companyService.getCurrencies(req);
+    return { encrypted: encryptResponse(result) };
   }
 }

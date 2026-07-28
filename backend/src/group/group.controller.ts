@@ -25,6 +25,7 @@ import {
 } from 'src/utilities/permissions.guard';
 import { RolesGuard } from 'src/utilities/roles.guard';
 import { Roles } from 'src/utilities/roles.decorator';
+import { encryptResponse } from 'src/utilities/crypto';
 
 @Controller('group')
 export class GroupController {
@@ -46,7 +47,8 @@ export class GroupController {
     @UploadedFile() groupFile: Express.Multer.File,
   ) {
     const param = { ...body, addedBy: req.user.userId };
-    return await this.groupService.startInsertGroup(param, req);
+    const result = await this.groupService.startInsertGroup(param, req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Put('group-update')
@@ -56,9 +58,10 @@ export class GroupController {
   async updateGroup(@Req() req, @Body() body: GroupUpdateDto) {
     try {
       const param = { ...body, updatedBy: req.user.userId };
-      return await this.groupService.startUpdate(param, req);
+      const result = await this.groupService.startUpdate(param, req);
+      return { encrypted: encryptResponse(result) };
     } catch (err) {
-      return err;
+      return { encrypted: encryptResponse(err) };
     }
   }
 
@@ -67,14 +70,16 @@ export class GroupController {
   @Roles('superAdmin')
   @RequirePermission('groupList')
   async getGroups(@Req() req, @Body() body: getGroupListDto) {
-    return await this.groupService.getGroups(body, req);
+    const result = await this.groupService.getGroups(body, req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Post('group-dropdown-list')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermission('userUpdate')
   async getGroupsForDropdown(@Req() req) {
-    return await this.groupService.getGroupsForDropdown(req);
+    const result = await this.groupService.getGroupsForDropdown(req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Get('group-details/:id')
@@ -82,21 +87,24 @@ export class GroupController {
   @Roles('superAdmin')
   @RequirePermission('groupView')
   async getGroup(@Req() req, @Param('id') param) {
-    return await this.groupService.getGroup(param, req);
+    const result = await this.groupService.getGroup(param, req);
+    return { encrypted: encryptResponse(result) };
   }
 
   @Get('permissions-all')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('superAdmin')
   async getAllPermissions() {
-    return await this.groupService.getAllPermissions();
+    const result = await this.groupService.getAllPermissions();
+    return { encrypted: encryptResponse(result) };
   }
 
   @Get('group-permissions/:groupId')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('superAdmin')
   async getGroupPermissions(@Param('groupId') groupId: string) {
-    return await this.groupService.getGroupPermissions(Number(groupId));
+    const result = await this.groupService.getGroupPermissions(Number(groupId));
+    return { encrypted: encryptResponse(result) };
   }
 
   @Post('group-permissions-save')
@@ -106,10 +114,11 @@ export class GroupController {
     @Req() req: any,
     @Body() body: { groupId: number; permissions: string[] },
   ) {
-    return await this.groupService.saveGroupPermissions(
+    const result = await this.groupService.saveGroupPermissions(
       Number(body.groupId),
       body.permissions,
       req,
     );
+    return { encrypted: encryptResponse(result) };
   }
 }

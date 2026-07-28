@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { authHeaders } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 
 export default function CompanySidePanel({ companyId, onClose }) {
     const [company, setCompany] = useState(null);
@@ -27,7 +28,8 @@ export default function CompanySidePanel({ companyId, onClose }) {
                     module: "company",
                 },
             });
-            const data = await res.json();
+            const resJson = await res.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             setCompany(data);
         } catch (err) {
             console.error(err);

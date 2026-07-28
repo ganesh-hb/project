@@ -73,6 +73,11 @@ export class UserController {
     // console.log(body,"##########################controller")
     return await this.userService.startChangePass(body);
   }
+
+    // let result =await this.userService.startChangePass(body);
+    // return{
+    //    encrypted: encryptResponse(result)
+    // }
   @Put('user-admin-reset-pass')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('superAdmin')
@@ -118,7 +123,6 @@ export class UserController {
   @Post('user-login')
   @UseInterceptors(FileInterceptor('userFile', multerConfig))
   async login(@Body() body: login, @Res({ passthrough: true }) response: any) {
-    // Step 1: verify credentials only — no token issued here.
     const result = await this.userService.login(body);
     return {
       encrypted: encryptResponse(result),
@@ -156,17 +160,16 @@ export class UserController {
   }
 
   @Get('user-details/:id')
-  // @UseGuards(AuthGuard('jwt'), PermissionsGuard, RolesGuard)
-  // @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
-  // @RequirePermission('userView')
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard, RolesGuard)
+  @Roles('superAdmin', 'companyAdmin', 'warehouseAdmin')
+  @RequirePermission('userView')
   async getUser(
     @Param('id') id: string,
     @Query('profileId') profileId: string,
     @Req() req: any,
   ) {
     const result = await this.userService.getUser({ id, profileId }, req);
-    return result;
-    // return { encrypted: encryptResponse(result) };
+    return { encrypted: encryptResponse(result) };
   }
 
   @Post('user-confirm-otp')
@@ -182,6 +185,7 @@ export class UserController {
   }
 
   @Post('user-check-password')
+  // @UseGuards(AuthGuard('jwt'))
   async checkPassword(@Body() body: { email: string; password: string }) {
     return await this.userService.checkPassword(body);
   }

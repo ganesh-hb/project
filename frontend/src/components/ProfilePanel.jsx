@@ -216,7 +216,7 @@ export default function ProfilePage() {
                                                 <div className="mb-3 flex items-center justify-between">
                                                     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Profile {i + 1}</span>
                                                     {selectedAssignment?.id === a.id && (
-                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Primary</span>
+                                                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Logged In</span>
                                                     )}
                                                     {a.is_parent === 0 && selectedAssignment?.id !== a.id && (
                                                         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">Primary</span>
