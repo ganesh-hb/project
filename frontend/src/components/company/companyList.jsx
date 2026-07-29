@@ -331,19 +331,21 @@ export default function CompanyList() {
                     )}
 
                     {/* TABLE VIEW */}
-                    {!loading && !error && viewMode === "table" && (
+                    {!error && viewMode === "table" && (
                         <DataTable
                             title="Companies"
                             columns={companyColumns}
                             data={companies}
                             filterableColumns={[
-                                { id: "companyName", label: "Company" },
-                                { id: "companyCode", label: "Code" },
-                                { id: "email", label: "Email" },
-                                { id: "phone", label: "Phone" },
-                                { id: "companyLocation", label: "Location" },
-                                { id: "status", label: "Status" },
+                                { id: "companyName", label: "Company", filterKey: "companyName" },
+                                { id: "companyCode", label: "Code", filterKey: "companyCode" },
+                                { id: "email", label: "Email", filterKey: "email" },
+                                { id: "phone", label: "Phone", filterKey: "phone" },
+                                { id: "companyLocation", label: "Location", filterKey: "city" },
+                                { id: "status", label: "Status", filterKey: "status" },
                             ]}
+                            onColumnFilterChange={handleSearch}
+                            loading={loading}
                             emptyMessage="No companies found."
                             containerClassName="flex-1 overflow-y-auto"
                         />

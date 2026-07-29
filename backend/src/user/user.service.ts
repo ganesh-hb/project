@@ -1414,6 +1414,23 @@ export class UserService {
         return { success: 0, message: 'Invalid profile assignment for this user' };
       }
 
+      // Fetch the old assignment before switching for logout event emit
+      const oldProfileId = req?.user?.profileId;
+      let oldAssignment = oldProfileId
+        ? await this.ucgEntity.findOne({
+            where: { id: oldProfileId, userId: targetUserId },
+            relations: ['company', 'group'],
+          })
+        : null;
+
+      if (!oldAssignment) {
+        oldAssignment = await this.ucgEntity.findOne({
+          where: { userId: targetUserId },
+          order: { is_parent: 'ASC' },
+          relations: ['company', 'group'],
+        });
+      }
+
       // Fetch permissions for the selected group
       const groupPerms = assignment.groupId
         ? await this.groupPermissionEntity.find({
@@ -1444,6 +1461,40 @@ export class UserService {
           profileId: assignment.id,
         });
       }
+
+      // Emit activity logs for profile transition:
+      // 1. Logout event for the OLD profile's context
+      if (oldAssignment) {
+        this.eventEmitter.emit('activity.log', {
+          activityCode: ActivityCode.USER_LOGOUT,
+          userId: targetUserId,
+          companyId: oldAssignment.companyId,
+          actorType: 'USER',
+          executionStatus: 'SUCCESS',
+          severity: 'INFO',
+          parameters: {
+            userEmail: req.user.email,
+            userGroup: oldAssignment.group?.groupName || 'N/A',
+          },
+          metadata: {},
+        });
+      }
+
+      // 2. Login event for the NEW profile's context
+      this.eventEmitter.emit('activity.log', {
+        activityCode: ActivityCode.USER_LOGIN,
+        userId: targetUserId,
+        companyId: assignment.companyId,
+        actorType: 'USER',
+        executionStatus: 'SUCCESS',
+        severity: 'INFO',
+        parameters: {
+          userEmail: req.user.email,
+          userGroup: assignment.group?.groupName || 'N/A',
+          selectedProfileId: assignment.id,
+        },
+        metadata: {},
+      });
 
       const activeAssignment = {
         id: assignment.id,

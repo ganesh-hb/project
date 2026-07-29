@@ -131,19 +131,13 @@ export default function CurrencyList() {
                 </nav>
 
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                    {loading && (
-                        <div className="flex items-center justify-center py-20 text-gray-500 text-sm font-medium">
-                            Loading currencies...
-                        </div>
-                    )}
-
                     {error && (
                         <div className="flex items-center justify-center py-20 text-red-500 text-sm font-medium">
                             {error}
                         </div>
                     )}
 
-                    {!loading && !error && (
+                    {!error && (
                         <DataTable
                             title="Currencies"
                             actions={can && can("currencyList") && (
@@ -158,11 +152,13 @@ export default function CurrencyList() {
                             columns={currencyColumns}
                             data={currencies}
                             filterableColumns={[
-                                { id: "name", label: "Currency Name" },
-                                { id: "code", label: "Code" },
-                                { id: "symbol", label: "Symbol" },
-                                { id: "status", label: "Status" },
+                                { id: "name", label: "Currency Name", filterKey: "name" },
+                                { id: "code", label: "Code", filterKey: "code" },
+                                { id: "symbol", label: "Symbol", filterKey: "symbol" },
+                                { id: "status", label: "Status", filterKey: "status" },
                             ]}
+                            onColumnFilterChange={handleSearch}
+                            loading={loading}
                             emptyMessage="No currencies found."
                             containerClassName="flex-1 overflow-y-auto"
                         />

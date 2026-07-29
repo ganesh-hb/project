@@ -206,6 +206,25 @@ export default function CompanyDetails({ id }) {
                                     </div>
                                     <div className="mt-6 space-y-4">
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Company Code</p><p className="font-medium text-gray-800">{company.companyCode || "-"}</p></div>
+                                        <div className="grid grid-cols-2">
+                                            <p className="text-gray-500">Parent Company</p>
+                                            <div className="font-medium text-gray-800">
+                                                {company.parentCompanyId && company.parentCompanyName ? (
+                                                    can("companyView") ? (
+                                                        <span
+                                                            className="text-blue-600 cursor-pointer hover:underline"
+                                                            onClick={(e) => gotoPages(e, `/company/${company.parentCompanyId}`)}
+                                                        >
+                                                            {company.parentCompanyName}
+                                                        </span>
+                                                    ) : (
+                                                        <span>{company.parentCompanyName}</span>
+                                                    )
+                                                ) : (
+                                                    <span className="text-gray-800">-</span>
+                                                )}
+                                            </div>
+                                        </div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Location</p><p className="font-medium text-gray-800">{company.city || "-"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Website</p><p className="font-medium text-gray-800">{company.website || "N/A"}</p></div>
                                         <div className="grid grid-cols-2"><p className="text-gray-500">Added By</p><p className="font-medium text-gray-800">{company.addedByName || "-"}</p></div>

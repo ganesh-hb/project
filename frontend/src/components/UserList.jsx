@@ -561,11 +561,22 @@ export default function UsersPage() {
                         </div>
                     )}
 
-                    {!loading && !error && viewMode === "table" && (
+                    {!error && viewMode === "table" && (
                         <DataTable
                             title={superAdmin ? "All Users" : companyAdmin ? "Company Users" : "Users"}
                             columns={columns}
                             data={users}
+                            filterableColumns={[
+                                { id: "user_name", label: "Name", filterKey: "name" },
+                                { id: "user_email", label: "Email", filterKey: "email" },
+                                { id: "user_phone", label: "Phone", filterKey: "phone" },
+                                { id: "user_age", label: "Age", filterKey: "age" },
+                                { id: "role", label: "Role", filterKey: "groupName" },
+                                { id: "company", label: "Company", filterKey: "companyName" },
+                                { id: "user_status", label: "Status", filterKey: "status" },
+                            ]}
+                            onColumnFilterChange={handleSearch}
+                            loading={loading}
                             containerClassName="flex-1 overflow-y-auto"
                         />
                     )}

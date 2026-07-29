@@ -5,7 +5,6 @@ import {
     flexRender,
     getCoreRowModel,
     getSortedRowModel,
-    getFilteredRowModel,
     getPaginationRowModel,
     useReactTable,
 } from "@tanstack/react-table";
@@ -18,41 +17,76 @@ export function DataTable({
     columns,
     data,
     filterableColumns = [
-        { id: "user_name", label: "Name" },
-        { id: "user_email", label: "Email" },
-        { id: "user_phone", label: "Phone" },
-        { id: "user_age", label: "Age" },
-        { id: "role", label: "Role" },
-        { id: "company", label: "Company" },
-        { id: "user_status", label: "Status" },
+        { id: "user_name", label: "Name", filterKey: "name" },
+        { id: "user_email", label: "Email", filterKey: "email" },
+        { id: "user_phone", label: "Phone", filterKey: "phone" },
+        { id: "user_age", label: "Age", filterKey: "age" },
+        { id: "role", label: "Role", filterKey: "groupName" },
+        { id: "company", label: "Company", filterKey: "companyName" },
+        { id: "user_status", label: "Status", filterKey: "status" },
     ],
     emptyMessage = "No results found.",
     onRowClick,
     title,
     actions,
-    containerClassName = "max-h-[650px] overflow-y-auto"
+    containerClassName = "max-h-[650px] overflow-y-auto",
+    onColumnFilterChange,
+    loading = false,
 }) {
     const [sorting, setSorting] = React.useState([]);
-    const [columnFilters, setColumnFilters] = React.useState([]);
     const [showFilters, setShowFilters] = React.useState(false);
+    const [filterValues, setFilterValues] = React.useState({});
+    const isFirstRender = React.useRef(true);
 
     const table = useReactTable({
-        data,
+        data: data || [],
         columns,
-        state: { sorting, columnFilters },
+        state: { sorting },
         onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
     });
 
     const setFilter = (colId, value) => {
-        table.getColumn(colId)?.setFilterValue(value || undefined);
+        setFilterValues((prev) => {
+            const next = { ...prev, [colId]: value };
+            if (!value) delete next[colId];
+            return next;
+        });
     };
 
-    const getFilter = (colId) =>
-        table.getColumn(colId)?.getFilterValue() ?? "";
+    React.useEffect(() => {
+        if (!onColumnFilterChange) return;
+
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            const filters = [];
+            Object.entries(filterValues).forEach(([cId, val]) => {
+                if (val && typeof val === "string" && val.trim() !== "") {
+                    const config = filterableColumns.find((fc) => fc.id === cId);
+                    const key = config?.filterKey || cId;
+                    filters.push({
+                        key,
+                        operator: "contains",
+                        value: val.trim()
+                    });
+                }
+            });
+
+            onColumnFilterChange({
+                filters,
+                condition: "All"
+            });
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [filterValues]);
+
+    const getFilter = (colId) => filterValues[colId] ?? "";
 
     return (
         <div className="flex-1 flex flex-col min-h-0 space-y-3 pb-12">
@@ -120,7 +154,16 @@ export function DataTable({
                         </TableHeader>
 
                         <TableBody>
-                            {table.getRowModel().rows.length ? (
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={columns.length}
+                                        className="text-center h-32 text-gray-500 text-base font-medium"
+                                    >
+                                        Loading...
+                                    </TableCell>
+                                </TableRow>
+                            ) : table.getRowModel().rows.length ? (
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}

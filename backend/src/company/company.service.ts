@@ -503,6 +503,7 @@ export class CompanyService {
 
       const company = await this.companyEntity.findOne({
         where: { companyId: targetCompanyId },
+        relations: ['parentCompany'],
       });
 
       if (!company) {
@@ -542,6 +543,7 @@ export class CompanyService {
 
       return {
         ...company,
+        parentCompanyName: company.parentCompany?.companyName ?? null,
         addedByName: addedByUser?.name ?? null,
         updatedByName: updatedByUser?.name ?? null,
         currencies: currencyMappings.map((cm) => cm.currency),

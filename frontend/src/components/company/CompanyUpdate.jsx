@@ -13,6 +13,7 @@ import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
 import withReactContent from "sweetalert2-react-content";
 import { useRouter } from "next/navigation";
+import { decryptResponse } from "@/app/lib/crypto";
 const MySwal = withReactContent(Swal);
 
 export default function CompanyUpdate({ id, onBack }) {
@@ -175,6 +176,8 @@ export default function CompanyUpdate({ id, onBack }) {
                         }
                     }
                 }
+            } else {
+                toast.error(data?.message || "Failed to load company data.", { position: "top-right" });
             }
         } catch (err) {
             toast.error("Failed to load company data.", { position: "top-right" });
@@ -302,7 +305,8 @@ export default function CompanyUpdate({ id, onBack }) {
                 body: payload,
             });
 
-            const data = await response.json();
+            const resJson = await response.json();
+            const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             if (response.ok && (data?.success === 1 || data?.status?.success === 1)) {
                 toast.success("Company updated successfully", { position: "top-right" });
                 setTimeout(() => onBack(), 1000);
