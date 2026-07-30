@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
-import GroupUpdate from "./GroupUpdate";
+import GroupFormRenderer from "./GroupFormRenderer";
 import { loginContext } from "../hooks/LoginContext";
 
 export default function GroupDetails({ id }) {
@@ -76,7 +76,7 @@ export default function GroupDetails({ id }) {
     }
 
     if (showEdit) {
-        return <GroupUpdate id={id} onBack={() => setShowEdit(false)} />;
+        return <GroupFormRenderer context="group-update" id={id} onBack={() => setShowEdit(false)} />;
     }
 
     const assignments = Array.isArray(group.assignments) ? group.assignments : [];

@@ -272,6 +272,16 @@ export class UserController {
       { id: String(req.user.userId), profileId: req.user.profileId },
       req,
     );
+    if (req.user?.isImpersonation && req.user?.impersonatedBy) {
+      const adminResult = await this.userService.getUser(
+        { id: String(req.user.impersonatedBy) },
+        req,
+      );
+      (result as any).isImpersonation = true;
+      (result as any).impersonatedBy = req.user.impersonatedBy;
+      (result as any).impersonatorEmail = req.user.impersonatorEmail;
+      (result as any).impersonatorUser = adminResult;
+    }
     return { encrypted: encryptResponse(result) };
   }
 

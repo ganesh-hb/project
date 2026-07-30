@@ -146,12 +146,13 @@ export class GroupService {
     if (!params.groupId) return { success: 0, message: 'groupId is mandatory' };
     try {
       const authCtx = await resolveAuthContext(req, this.ucgEntity);
+      const existingGroup = await this.groupEntity.findOne({
+        where: { groupId: Number(params.groupId) },
+      });
+      if (!existingGroup) return { success: 0, message: 'Group not found' };
+
       if (!authCtx.isSuperAdmin) {
-        const group = await this.groupEntity.findOne({
-          where: { groupId: params.groupId },
-        });
-        if (!group) throw new NotFoundException('Group not found');
-        if (group.addedBy === null) {
+        if (existingGroup.addedBy === null) {
           throw new ForbiddenException(
             'Access denied: cannot modify system groups',
           );
@@ -160,7 +161,7 @@ export class GroupService {
           authCtx.activeCompanyId,
         ];
         const creatorUcg = await this.ucgEntity.findOne({
-          where: { userId: group.addedBy, companyId: In(scopedCompanyIds) },
+          where: { userId: existingGroup.addedBy, companyId: In(scopedCompanyIds) },
         });
         if (!creatorUcg) {
           throw new ForbiddenException(
@@ -169,8 +170,11 @@ export class GroupService {
         }
       }
 
+      if (params.groupCode && params.groupCode !== existingGroup.groupCode) {
+        return { success: 0, message: 'groupCode cannot be changed' };
+      }
+
       if (params.groupName) queryParams.groupName = params.groupName;
-      if (params.groupCode) queryParams.groupCode = params.groupCode;
       if (params.status) queryParams.status = params.status;
       if (params.updatedBy) queryParams.updatedBy = Number(params.updatedBy);
       queryParams.updatedDate = () => 'NOW()';

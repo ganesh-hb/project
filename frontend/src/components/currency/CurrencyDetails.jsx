@@ -6,7 +6,7 @@ import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
-import CurrencyUpdate from "./CurrencyUpdate";
+import CurrencyFormRenderer from "./CurrencyFormRenderer";
 
 export default function CurrencyDetails({ id }) {
     const router = useRouter();
@@ -72,7 +72,7 @@ export default function CurrencyDetails({ id }) {
     }
 
     if (showEdit) {
-        return <CurrencyUpdate id={id} onBack={() => setShowEdit(false)} />;
+        return <CurrencyFormRenderer context="currency-update" id={id} onBack={() => setShowEdit(false)} />;
     }
 
     if (!currency) {

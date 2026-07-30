@@ -1,10 +1,10 @@
-import AddCurrency from "@/components/currency/AddCurrency";
+import CurrencyFormRenderer from "@/components/currency/CurrencyFormRenderer";
 import RouteGuard from "@/components/RouteGuard";
 
 export default function AddCurrencyPage() {
     return (
         <RouteGuard permission="currencyAdd">
-            <AddCurrency />
+            <CurrencyFormRenderer context="currency-add" />
         </RouteGuard>
     );
 }

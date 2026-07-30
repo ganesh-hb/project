@@ -15,7 +15,6 @@ export default function RouteGuard({ permission, isSuperAdminOnly = false, child
             return;
         }
         checkAccess();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authReady, isLogin]);
 
     function checkAccess() {

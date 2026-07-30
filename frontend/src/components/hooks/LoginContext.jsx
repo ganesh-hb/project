@@ -55,35 +55,93 @@ export default function LoginContext({ children }) {
                     const payload = await res.json();
                     const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
 
-                    const primary =
-                        data.activeAssignment ??
-                        data.assignments?.find((a) => a.is_parent === 0) ??
-                        data.assignments?.[0] ??
-                        null;
+                    if (data.isImpersonation && data.impersonatorUser) {
+                        const adminData = data.impersonatorUser;
+                        const adminPrimary =
+                            adminData.activeAssignment ??
+                            adminData.assignments?.find((a) => a.is_parent === 0) ??
+                            adminData.assignments?.[0] ??
+                            null;
 
-                    const normalized = {
-                        userId: data.userId,
-                        name: data.name,
-                        email: data.email,
-                        userFile: data.userFile,
-                        status: data.status,
-                        primaryProfile: primary ? {
-                            companyName: primary.companyName,
-                            groupName: primary.groupName,
-                            is_parent: primary.is_parent,
-                        } : null,
-                        assignments: data.assignments || [],
-                        permissions: data.permissions || [],
-                    };
+                        const adminNormalized = {
+                            userId: adminData.userId,
+                            name: adminData.name,
+                            email: adminData.email,
+                            userFile: adminData.userFile,
+                            status: adminData.status,
+                            primaryProfile: adminPrimary ? {
+                                companyName: adminPrimary.companyName,
+                                groupName: adminPrimary.groupName,
+                                is_parent: adminPrimary.is_parent,
+                            } : null,
+                            assignments: adminData.assignments || [],
+                            permissions: adminData.permissions || [],
+                        };
 
-                    setLogin(normalized);
-                    sessionStorage.setItem("userInfo", JSON.stringify(normalized));
-                    
-                    const isCurrentlyImpersonating = !!sessionStorage.getItem("impersonatedUser");
-                    if (!isCurrentlyImpersonating) {
-                        setActiveAssignment(primary);
-                        setPermissions(normalized.permissions);
-                        sessionStorage.setItem("permissions", JSON.stringify(normalized.permissions));
+                        setLogin(adminNormalized);
+                        sessionStorage.setItem("userInfo", JSON.stringify(adminNormalized));
+
+                        const targetPrimary =
+                            data.activeAssignment ??
+                            data.assignments?.find((a) => a.is_parent === 0) ??
+                            data.assignments?.[0] ??
+                            null;
+
+                        const targetNormalized = {
+                            userId: data.userId,
+                            name: data.name,
+                            email: data.email,
+                            userFile: data.userFile,
+                            status: data.status,
+                            primaryProfile: targetPrimary ? {
+                                companyName: targetPrimary.companyName,
+                                groupName: targetPrimary.groupName,
+                                is_parent: targetPrimary.is_parent,
+                            } : null,
+                            assignments: data.assignments || [],
+                            permissions: data.permissions || [],
+                        };
+
+                        setImpersonating(targetNormalized);
+                        sessionStorage.setItem("impersonatedUser", JSON.stringify(targetNormalized));
+                        sessionStorage.setItem("impersonatedPermissions", JSON.stringify(data.permissions || []));
+                        setPermissions(data.permissions || []);
+                        setActiveAssignment(targetPrimary);
+                        if (targetPrimary) {
+                            sessionStorage.setItem("activeAssignment", JSON.stringify(targetPrimary));
+                        }
+                        sessionStorage.setItem("permissions", JSON.stringify(adminNormalized.permissions));
+                    } else {
+                        const primary =
+                            data.activeAssignment ??
+                            data.assignments?.find((a) => a.is_parent === 0) ??
+                            data.assignments?.[0] ??
+                            null;
+
+                        const normalized = {
+                            userId: data.userId,
+                            name: data.name,
+                            email: data.email,
+                            userFile: data.userFile,
+                            status: data.status,
+                            primaryProfile: primary ? {
+                                companyName: primary.companyName,
+                                groupName: primary.groupName,
+                                is_parent: primary.is_parent,
+                            } : null,
+                            assignments: data.assignments || [],
+                            permissions: data.permissions || [],
+                        };
+
+                        setLogin(normalized);
+                        sessionStorage.setItem("userInfo", JSON.stringify(normalized));
+                        
+                        const isCurrentlyImpersonating = !!sessionStorage.getItem("impersonatedUser");
+                        if (!isCurrentlyImpersonating) {
+                            setActiveAssignment(primary);
+                            setPermissions(normalized.permissions);
+                            sessionStorage.setItem("permissions", JSON.stringify(normalized.permissions));
+                        }
                     }
                 } else {
                     setLogin(false);
@@ -156,6 +214,10 @@ export default function LoginContext({ children }) {
                 targetUserId = JSON.parse(impUserStr).userId;
             } catch (e) {}
         }
+        if (!targetUserId && impersonating) {
+            targetUserId = impersonating.userId;
+        }
+
         fetch("/relayapi", {
             method: "POST",
             headers: {
@@ -177,13 +239,31 @@ export default function LoginContext({ children }) {
         setImpersonating(null);
 
         const original = sessionStorage.getItem("permissions");
-        setPermissions(original ? JSON.parse(original) : []);
+        if (original) {
+            setPermissions(JSON.parse(original));
+        } else if (isLogin) {
+            setPermissions(isLogin.permissions || []);
+            sessionStorage.setItem("permissions", JSON.stringify(isLogin.permissions || []));
+        } else {
+            setPermissions([]);
+        }
 
         const originalAssignment = sessionStorage.getItem("originalActiveAssignment");
         if (originalAssignment) {
             setActiveAssignment(JSON.parse(originalAssignment));
             sessionStorage.setItem("activeAssignment", originalAssignment);
             sessionStorage.removeItem("originalActiveAssignment");
+        } else if (isLogin) {
+            const fallbackAssignment =
+                isLogin.activeAssignment ??
+                isLogin.assignments?.find((a) => a.is_parent === 0) ??
+                isLogin.assignments?.[0] ??
+                isLogin.primaryProfile ??
+                null;
+            if (fallbackAssignment) {
+                setActiveAssignment(fallbackAssignment);
+                sessionStorage.setItem("activeAssignment", JSON.stringify(fallbackAssignment));
+            }
         }
     }
 

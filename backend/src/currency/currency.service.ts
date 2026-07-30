@@ -138,24 +138,24 @@ export class CurrencyService {
     if (!params.curId) {
       return { success: 0, message: 'curId is mandatory' };
     }
-
     try {
-      if (params.code) {
-        const existingCode = await this.currencyEntity.findOne({
-          where: {
-            code: params.code,
-            curId: Not(Number(params.curId)),
-          },
-        });
-        if (existingCode) {
-          return { success: 0, message: 'Currency code already exists' };
-        }
+      const existingCurrency = await this.currencyEntity.findOne({
+        where: { curId: Number(params.curId) },
+      });
+      if (!existingCurrency) {
+        return { success: 0, message: 'Currency not found' };
+      }
+
+      if (params.code && params.code !== existingCurrency.code) {
+        return { success: 0, message: 'Currency code cannot be changed' };
+      }
+
+      if (params.symbol && params.symbol !== existingCurrency.symbol) {
+        return { success: 0, message: 'Currency symbol cannot be changed' };
       }
 
       const queryParams: any = {};
       if (params.name) queryParams.name = params.name;
-      if (params.code) queryParams.code = params.code;
-      if (params.symbol) queryParams.symbol = params.symbol;
       if (params.conversionRate !== undefined) queryParams.conversionRate = Number(params.conversionRate);
       if (params.status) queryParams.status = params.status;
 

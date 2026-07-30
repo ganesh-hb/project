@@ -1,10 +1,10 @@
-import AddGroup from "@/components/group/AddGroup";
+import GroupFormRenderer from "@/components/group/GroupFormRenderer";
 import RouteGuard from "@/components/RouteGuard";
 
 export default function addGroupPage() {
     return (
         <RouteGuard permission="groupAdd" isSuperAdminOnly>
-            <AddGroup />
+            <GroupFormRenderer context="group-add" />
         </RouteGuard>
     );
 }
