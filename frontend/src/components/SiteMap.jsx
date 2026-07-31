@@ -91,6 +91,8 @@ export default function SiteMap() {
                     Welcome { }
                 </h2>
 
+                <img src="https://loading.io/asset/814523" alt="" />
+
                 <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
                     {dashboardSections.map((section, index) => (
                         <div

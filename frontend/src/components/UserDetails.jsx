@@ -370,8 +370,8 @@ export default function UserDetailsPage({ id }) {
                                         <div className="grid grid-cols-2">
                                             <p className="text-gray-500">Created By</p>
                                             <p
-                                                className={`font-medium ${user.createdById ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
-                                                onClick={() => user.createdById && setSelectedUserPanelId(user.createdById)}
+                                                className={`font-medium ${user.createdById && can("userView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                                onClick={() => user.createdById && can("userView") && setSelectedUserPanelId(user.createdById)}
                                             >
                                                 {userData.user_createdBy ?? "-"}
                                             </p>
@@ -380,8 +380,8 @@ export default function UserDetailsPage({ id }) {
                                         <div className="grid grid-cols-2">
                                             <p className="text-gray-500">Updated By</p>
                                             <p
-                                                className={`font-medium ${user.updatedById ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
-                                                onClick={() => user.updatedById && setSelectedUserPanelId(user.updatedById)}
+                                                className={`font-medium ${user.updatedById && can("userView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                                onClick={() => user.updatedById && can("userView") && setSelectedUserPanelId(user.updatedById)}
                                             >
                                                 {userData.user_updatedBy ?? "-"}
                                             </p>

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { CurrencyEntity } from 'src/packages/entity/currency.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
+import { UserEntity } from 'src/packages/entity/user.entity';
 import { Filter } from 'src/utilities/filter';
 import { getCurrencyListDto, CurrencyDto, CurrencyUpdateDto } from 'src/packages/dto/currency.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -18,6 +19,9 @@ export class CurrencyService {
 
   @InjectRepository(UserCompanyGroupEntity)
   private readonly ucgEntity!: Repository<UserCompanyGroupEntity>;
+
+  @InjectRepository(UserEntity)
+  private readonly userEntity!: Repository<UserEntity>;
 
   @Inject(EventEmitter2)
   private readonly eventEmitter!: EventEmitter2;
@@ -65,9 +69,21 @@ export class CurrencyService {
     if (!currency) {
       throw new NotFoundException('Currency not found');
     }
-    const baseCurrency:string=process.env.CURRENCY_CONVERSION || "";
-    return{...currency,baseCurrency}
-    
+
+    const addedByUser = currency.addedBy
+      ? await this.userEntity.findOne({ where: { userId: currency.addedBy } })
+      : null;
+    const updatedByUser = currency.updatedBy
+      ? await this.userEntity.findOne({ where: { userId: currency.updatedBy } })
+      : null;
+
+    const baseCurrency: string = process.env.CURRENCY_CONVERSION || "";
+    return {
+      ...currency,
+      addedByName: addedByUser?.name ?? null,
+      updatedByName: updatedByUser?.name ?? null,
+      baseCurrency,
+    };
   }
   
 

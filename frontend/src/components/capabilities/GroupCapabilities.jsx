@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
 import { loginContext } from "../hooks/LoginContext";
 
@@ -37,19 +38,13 @@ export default function GroupCapabilities({ id }) {
     const router = useRouter();
     const groupId = Number(Array.isArray(id) ? id[0] : id);
 
-    const [superAdmin, setSuperAdmin] = useState(null);
+    const superAdmin = useMemo(() => isSuperAdmin(isLogin), [isLogin]);
     const [fetching, setFetching] = useState(true);
     const [loading, setLoading] = useState(false);
     const [group, setGroup] = useState(null);
     const [formData, setFormData] = useState({ groupName: "", groupCode: "", status: "active" });
     const [errors, setErrors] = useState({});
     const [checked, setChecked] = useState(() => Object.fromEntries(ALL_PERMS.map((p) => [p, false])));
-
-    useEffect(() => {
-        if (isLogin) {
-            setSuperAdmin(isSuperAdmin(isLogin));
-        }
-    }, [isLogin]);
 
     useEffect(() => {
         if (isLogin) {
@@ -79,8 +74,10 @@ export default function GroupCapabilities({ id }) {
                 })
             ]);
 
-            const groupData = await resGroup.json();
-            const permsData = await resPerms.json();
+            const groupPayload = await resGroup.json();
+            const groupData = groupPayload?.encrypted ? decryptResponse(groupPayload.encrypted) : groupPayload;
+            const permsPayload = await resPerms.json();
+            const permsData = permsPayload?.encrypted ? decryptResponse(permsPayload.encrypted) : permsPayload;
 
             if (groupData?.groupId) {
                 setGroup(groupData);
@@ -183,7 +180,8 @@ export default function GroupCapabilities({ id }) {
                 }),
             });
 
-            const permData = await permRes.json();
+            const permPayload = await permRes.json();
+            const permData = permPayload?.encrypted ? decryptResponse(permPayload.encrypted) : permPayload;
             if (permData?.success === 1) {
                 toast.success("Capabilities saved successfully", { position: "top-right" });
                 setTimeout(() => router.push("/capabilities"), 1000);

@@ -2,6 +2,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
+import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
 import { loginContext } from "../hooks/LoginContext";
 
@@ -27,7 +28,8 @@ export default function CapabilitiesList() {
                 },
                 body: JSON.stringify({ page: 1, limit: 100 }),
             });
-            const data = await res.json();
+            const payload = await res.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             setGroups(data?.data || []);
         } catch (err) {
             console.error(err);

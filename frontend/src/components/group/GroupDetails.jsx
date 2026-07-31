@@ -6,6 +6,7 @@ import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
 import GroupFormRenderer from "./GroupFormRenderer";
 import { loginContext } from "../hooks/LoginContext";
+import { ThreeDot } from "react-loading-indicators";
 
 export default function GroupDetails({ id }) {
     const router = useRouter();
@@ -32,6 +33,7 @@ export default function GroupDetails({ id }) {
             const resJson = await res.json();
             const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
             setGroup(data);
+
         } catch (err) {
             console.error(err);
         } finally {
@@ -61,7 +63,8 @@ export default function GroupDetails({ id }) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
                 <Header page="group-details" />
-                <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div>
+                <ThreeDot color={["#32cd32", "#327fcd", "#cd32cd", "#cd8032"]} />
+                {/* <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div> */}
             </div>
         );
     }

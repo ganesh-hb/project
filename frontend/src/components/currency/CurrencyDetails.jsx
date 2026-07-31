@@ -1,12 +1,14 @@
 "use client";
 
 import { useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import CurrencyFormRenderer from "./CurrencyFormRenderer";
+import UserSidePanel from "../UserSidePanel";
 
 export default function CurrencyDetails({ id }) {
     const router = useRouter();
@@ -14,6 +16,7 @@ export default function CurrencyDetails({ id }) {
     const [currency, setCurrency] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showEdit, setShowEdit] = useState(false);
+    const [selectedUserPanelId, setSelectedUserPanelId] = useState(null);
 
     useEffect(() => {
         fetchCurrency();
@@ -33,6 +36,7 @@ export default function CurrencyDetails({ id }) {
             const payload = await res.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
             setCurrency(data);
+            console.log(data, "currency details ")
         } catch (err) {
             console.error(err);
         } finally {
@@ -190,7 +194,12 @@ export default function CurrencyDetails({ id }) {
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-sm text-gray-500">Added By</p>
-                                        <p className="font-medium text-gray-800">System</p>
+                                        <p
+                                            className={`font-medium ${currency.addedBy && can("userView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                            onClick={() => currency.addedBy && can("userView") && setSelectedUserPanelId(currency.addedBy)}
+                                        >
+                                            {currency.addedByName || "-"}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Added Date</p>
@@ -200,7 +209,12 @@ export default function CurrencyDetails({ id }) {
                                     </div>
                                     <div className="border-t border-gray-100 pt-4">
                                         <p className="text-sm text-gray-500">Updated By</p>
-                                        <p className="font-medium text-gray-800">System</p>
+                                        <p
+                                            className={`font-medium ${currency.updatedBy && can("userView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
+                                            onClick={() => currency.updatedBy && can("userView") && setSelectedUserPanelId(currency.updatedBy)}
+                                        >
+                                            {currency.updatedByName || "-"}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-500">Updated Date</p>
@@ -214,6 +228,14 @@ export default function CurrencyDetails({ id }) {
                     </div>
                 </div>
             </div>
+
+            {selectedUserPanelId && typeof document !== "undefined" && createPortal(
+                <UserSidePanel
+                    userId={selectedUserPanelId}
+                    onClose={() => setSelectedUserPanelId(null)}
+                />,
+                document.body
+            )}
         </div>
     );
 }

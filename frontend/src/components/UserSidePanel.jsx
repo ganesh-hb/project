@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
+import { Lock, UserX } from "lucide-react";
 
 export default function UserSidePanel({ userId, onClose }) {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [errorType, setErrorType] = useState(null);
 
     useEffect(() => {
         if (!userId) return;
@@ -14,6 +16,7 @@ export default function UserSidePanel({ userId, onClose }) {
 
     const fetchUser = async () => {
         setLoading(true);
+        setErrorType(null);
         try {
             const res = await fetch("/relayapi", {
                 method: "GET",
@@ -23,15 +26,40 @@ export default function UserSidePanel({ userId, onClose }) {
                     module: "user",
                 },
             });
+
+            if (res.status === 403 || res.status === 401) {
+                setErrorType("forbidden");
+                setUser(null);
+                return;
+            }
+
             const payload = await res.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
-            if (data && (data.success === 0 || !data.userId)) {
+
+            const isForbidden =
+                data?.statusCode === 403 ||
+                data?.statusCode === 401 ||
+                data?.error === "Forbidden" ||
+                data?.error === "Unauthorized" ||
+                (typeof data?.message === "string" &&
+                    (data.message.toLowerCase().includes("permission") ||
+                        data.message.toLowerCase().includes("access denied") ||
+                        data.message.toLowerCase().includes("forbidden") ||
+                        data.message.toLowerCase().includes("unauthorized") ||
+                        data.message.toLowerCase().includes("no profile assigned")));
+
+            if (isForbidden) {
+                setErrorType("forbidden");
+                setUser(null);
+            } else if (!res.ok || (data && (data.success === 0 || !data.userId))) {
+                setErrorType("not-found");
                 setUser(null);
             } else {
                 setUser(data);
             }
         } catch (err) {
             console.error(err);
+            setErrorType("not-found");
             setUser(null);
         } finally {
             setLoading(false);
@@ -74,9 +102,30 @@ export default function UserSidePanel({ userId, onClose }) {
                         Loading...
                     </div>
                 ) : !user ? (
-                    <div className="flex items-center justify-center flex-1 text-red-400 text-sm">
-                        User not found.
-                    </div>
+                    errorType === "forbidden" ? (
+                        <div className="flex flex-col items-center justify-center flex-1 px-6 py-12 text-center">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-50 text-amber-600 mb-4 shadow-sm border border-amber-100">
+                                <Lock className="h-7 w-7" />
+                            </div>
+                            <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 mb-2">
+                                Error 403
+                            </span>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-1">Access Restricted</h3>
+                            <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+                                You don't have permission to view this user's details.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center flex-1 px-6 py-12 text-center">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500 mb-4 shadow-sm border border-red-100">
+                                <UserX className="h-7 w-7" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-800 mb-1">User Not Found</h3>
+                            <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+                                This user may have been removed or the link is no longer valid.
+                            </p>
+                        </div>
+                    )
                 ) : (
                     <div className="flex-1">
                         {/* Avatar + name */}

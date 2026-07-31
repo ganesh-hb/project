@@ -5,6 +5,7 @@ import { CurrencyService } from './currency.service';
 import { CurrencyEntity } from 'src/packages/entity/currency.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { UserEntity } from 'src/packages/entity/user.entity';
 import { Filter } from 'src/utilities/filter';
 
 @Module({
@@ -13,6 +14,7 @@ import { Filter } from 'src/utilities/filter';
       CurrencyEntity,
       UserCompanyGroupEntity,
       GroupPermissionEntity,
+      UserEntity,
     ]),
   ],
   controllers: [CurrencyController],

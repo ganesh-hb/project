@@ -10,20 +10,20 @@ export default function RouteGuard({ permission, isSuperAdminOnly = false, child
     const [authState, setAuthState] = useState("loading"); // "loading" | "ok" | "denied"
 
     useEffect(() => {
-        if (!authReady) {
-            setAuthState("loading");
-            return;
-        }
         checkAccess();
     }, [authReady, isLogin]);
 
     function checkAccess() {
+        if (!authReady && !isLogin) return;
+
         // No session at all → redirect to login
-        if (!isLogin) {
+        if (authReady && !isLogin) {
             router.replace("/login");
             setAuthState("denied");
             return;
         }
+
+        if (!isLogin) return;
 
         // superAdmin-only pages
         if (isSuperAdminOnly) {
@@ -45,15 +45,6 @@ export default function RouteGuard({ permission, isSuperAdminOnly = false, child
         }
 
         setAuthState("ok");
-    }
-
-    if (authState === "loading") {
-        // Minimal skeleton — prevents any flash of protected content
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#f5f6f8]">
-                <div className="text-gray-400 text-sm animate-pulse">Loading…</div>
-            </div>
-        );
     }
 
     if (authState === "denied") return null;

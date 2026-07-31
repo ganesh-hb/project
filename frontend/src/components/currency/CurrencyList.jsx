@@ -158,7 +158,7 @@ export default function CurrencyList() {
                                 { id: "status", label: "Status", filterKey: "status" },
                             ]}
                             onColumnFilterChange={handleSearch}
-                            loading={loading}
+                            // loading={loading}
                             emptyMessage="No currencies found."
                             containerClassName="flex-1 overflow-y-auto"
                         />

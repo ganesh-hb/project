@@ -132,29 +132,29 @@ export default function GroupList() {
                 </nav>
 
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                {error && (
-                    <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">
-                        {error}
-                    </div>
-                )}
+                    {error && (
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">
+                            {error}
+                        </div>
+                    )}
 
-                {!error && (
-                    <DataTable
-                        title="Groups"
-                        columns={groupColumns}
-                        data={groups}
-                        filterableColumns={[
-                            { id: "groupName", label: "Group Name", filterKey: "groupName" },
-                            { id: "groupCode", label: "Group Code", filterKey: "groupCode" },
-                            { id: "status", label: "Status", filterKey: "status" },
-                        ]}
-                        onColumnFilterChange={handleSearch}
-                        loading={loading}
-                        emptyMessage="No groups found."
-                        onRowClick={(group) => can("groupView") && router.push(`/group/${group.groupId}`)}
-                        containerClassName="flex-1 overflow-y-auto"
-                    />
-                )}
+                    {!error && (
+                        <DataTable
+                            title="Groups"
+                            columns={groupColumns}
+                            data={groups}
+                            filterableColumns={[
+                                { id: "groupName", label: "Group Name", filterKey: "groupName" },
+                                { id: "groupCode", label: "Group Code", filterKey: "groupCode" },
+                                { id: "status", label: "Status", filterKey: "status" },
+                            ]}
+                            onColumnFilterChange={handleSearch}
+                            // loading={loading}
+                            emptyMessage="No groups found."
+                            onRowClick={(group) => can("groupView") && router.push(`/group/${group.groupId}`)}
+                            containerClassName="flex-1 overflow-y-auto"
+                        />
+                    )}
                 </div>
             </div>
 
