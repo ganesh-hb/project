@@ -8,6 +8,7 @@ import Header from "../Header";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
 import AppPagination from "../ui/AppPagination";
+import Loader from "../ui/Loader";
 import { DataTable } from "../data-table";
 import { currencyColumns } from "./CurrencyColumn";
 
@@ -59,7 +60,7 @@ export default function CurrencyList() {
     }, []);
 
     async function fetchData(page = currentPage, searchParams = currentFilters, limitOverride = limit) {
-        setLoading(true);
+        // setLoading(true);
         setError("");
         try {
             let body = { page, limit: limitOverride };
@@ -131,13 +132,19 @@ export default function CurrencyList() {
                 </nav>
 
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                    {loading && (
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 flex items-center justify-center">
+                            <Loader label="Loading currencies..." />
+                        </div>
+                    )}
+
                     {error && (
                         <div className="flex items-center justify-center py-20 text-red-500 text-sm font-medium">
                             {error}
                         </div>
                     )}
 
-                    {!error && (
+                    {!loading && !error && (
                         <DataTable
                             title="Currencies"
                             actions={can && can("currencyList") && (
@@ -158,7 +165,7 @@ export default function CurrencyList() {
                                 { id: "status", label: "Status", filterKey: "status" },
                             ]}
                             onColumnFilterChange={handleSearch}
-                            // loading={loading}
+                            loading={loading}
                             emptyMessage="No currencies found."
                             containerClassName="flex-1 overflow-y-auto"
                         />

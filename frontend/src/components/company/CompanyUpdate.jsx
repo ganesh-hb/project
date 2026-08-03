@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Header from "../Header";
+import Loader from "../ui/Loader";
 import { authHeaders } from "@/app/lib/auth";
 import { CompanyUpdateSchema } from "../Zod";
 import PhoneInput from "react-phone-input-2";
@@ -331,7 +332,9 @@ export default function CompanyUpdate({ id, onBack }) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
                 <Header page="company-update" />
-                <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div>
+                <div className="flex items-center justify-center py-20">
+                    <Loader label="Loading company data..." />
+                </div>
             </div>
         );
     }

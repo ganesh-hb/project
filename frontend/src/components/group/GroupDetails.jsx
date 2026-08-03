@@ -6,6 +6,7 @@ import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
 import GroupFormRenderer from "./GroupFormRenderer";
 import { loginContext } from "../hooks/LoginContext";
+import Loader from "../ui/Loader";
 import { ThreeDot } from "react-loading-indicators";
 
 export default function GroupDetails({ id }) {
@@ -63,8 +64,9 @@ export default function GroupDetails({ id }) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
                 <Header page="group-details" />
-                <ThreeDot color={["#32cd32", "#327fcd", "#cd32cd", "#cd8032"]} />
-                {/* <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div> */}
+                <div className="flex items-center justify-center py-20">
+                    <Loader label="Loading group details..." />
+                </div>
             </div>
         );
     }

@@ -8,9 +8,13 @@ import Header from "../Header";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
 import AppPagination from "../ui/AppPagination";
+import Loader from "../ui/Loader";
+import ImagePreviewModal from "../ui/ImagePreviewModal";
 import { ChevronDown } from "lucide-react";
 import { DataTable } from "../data-table";
-import { companyColumns } from "./CompanyColumn";
+import { getCompanyColumns, companyColumns } from "./CompanyColumn";
+import CompanySidePanel from "./CompanySidePanel";
+import { createPortal } from "react-dom";
 
 function getInitials(name) {
     if (!name) return "?";
@@ -54,25 +58,11 @@ export function CompanyAvatar({ company, sizeClass = "h-10 w-10" }) {
                     {getInitials(company.companyName)}
                 </span>
             )}
-            {imgPreview && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-                    onClick={() => setImgPreview(false)}
-                >
-                    <div
-                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
-                            onClick={() => setImgPreview(false)}
-                        >
-                            ✕
-                        </button>
-                        <img src={imageUrl} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
-                    </div>
-                </div>
-            )}
+            <ImagePreviewModal
+                open={imgPreview}
+                onClose={() => setImgPreview(false)}
+                imageUrl={imageUrl}
+            />
         </>
     );
 }
@@ -90,6 +80,7 @@ export default function CompanyList() {
     const [currentFilters, setCurrentFilters] = useState({});
     const [viewMode, setViewMode] = useState("grid");
     const [expandedRows, setExpandedRows] = useState({});
+    const [selectedCompanyId, setSelectedCompanyId] = useState(null);
 
     const toggleRow = (id) => setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -131,7 +122,7 @@ export default function CompanyList() {
     const handleLimitChange = (newLimit) => { setLimit(newLimit); setCurrentPage(1); fetchData(1, currentFilters, newLimit); };
     const goToPage = (page) => { if (page < 1 || page > totalPages) return; setCurrentPage(page); fetchData(page, currentFilters); };
     const gotoPages = (e, url) => { e.preventDefault(); e.stopPropagation(); router.push(`http://localhost:3000${url}`); };
-    const gotoCompany = (e, company) => { e.preventDefault(); e.stopPropagation(); if (can("companyView")) router.push(`/company/${company.companyId}`); };
+    const gotoCompany = (e, company) => { e.preventDefault(); e.stopPropagation(); if (can("companyView")) setSelectedCompanyId(company.companyId); };
 
     return (
         <div className="fixed inset-0 flex flex-col bg-[#f5f6fa] overflow-hidden">
@@ -151,7 +142,11 @@ export default function CompanyList() {
                 )}
 
                 <div className={viewMode === "table" ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "flex-1 min-h-0 overflow-y-auto pb-6"}>
-                    {loading && <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">Loading companies...</div>}
+                    {loading && (
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 flex items-center justify-center">
+                            <Loader label="Loading companies..." />
+                        </div>
+                    )}
                     {error && <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">{error}</div>}
 
                     {/* GRID VIEW */}
@@ -334,7 +329,7 @@ export default function CompanyList() {
                     {!error && viewMode === "table" && (
                         <DataTable
                             title="Companies"
-                            columns={companyColumns}
+                            columns={getCompanyColumns((companyId) => setSelectedCompanyId(companyId))}
                             data={companies}
                             filterableColumns={[
                                 { id: "companyName", label: "Company", filterKey: "companyName" },
@@ -371,6 +366,17 @@ export default function CompanyList() {
                     </select>
                 </div>
             </div>
+            {selectedCompanyId && typeof document !== "undefined" && createPortal(
+                <CompanySidePanel
+                    companyId={selectedCompanyId}
+                    onClose={() => setSelectedCompanyId(null)}
+                    onMoreDetails={(companyId) => {
+                        setSelectedCompanyId(null);
+                        router.push(`/company/${companyId}`);
+                    }}
+                />,
+                document.body
+            )}
         </div>
     );
 }

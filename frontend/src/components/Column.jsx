@@ -23,13 +23,21 @@ function StatusBadge({ status }) {
     );
 }
 
-function NameCell({ row }) {
+function NameCell({ row, onUserClick }) {
     const router = useRouter();
     const { can } = useContext(loginContext);
+    const handleClick = () => {
+        if (!can("userView")) return;
+        if (onUserClick) {
+            onUserClick(row.original.user_userId);
+        } else {
+            router.push(`/user/${row.original.user_userId}`);
+        }
+    };
     return (
         <span
             className={`font-semibold text-base ${can("userView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
-            onClick={() => can("userView") && router.push(`/user/${row.original.user_userId}`)}
+            onClick={handleClick}
         >
             {row.getValue("user_name")}
         </span>
@@ -179,11 +187,11 @@ function sortableHeader(label) {
     return HeaderComponent;
 }
 
-export const columns = [
+export const getColumns = (onUserClick) => [
     {
         accessorKey: "user_name",
         header: sortableHeader("Name"),
-        cell: ({ row }) => <NameCell row={row} />,
+        cell: ({ row }) => <NameCell row={row} onUserClick={onUserClick} />,
         filterFn: "includesString",
     },
     {
@@ -249,3 +257,5 @@ export const columns = [
         cell: ({ row }) => <TabMenuCell row={row} />,
     },
 ];
+
+export const columns = getColumns();

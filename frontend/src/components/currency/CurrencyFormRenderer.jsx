@@ -3,6 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Header from "../Header";
+import Loader from "../ui/Loader";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { authHeaders } from "@/app/lib/auth";
@@ -219,7 +220,9 @@ export default function CurrencyFormRenderer({ context = "currency-add", id, onB
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
                 <Header page={config.headerPage} />
-                <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div>
+                <div className="flex items-center justify-center py-20">
+                    <Loader label="Loading currency data..." />
+                </div>
             </div>
         );
     }

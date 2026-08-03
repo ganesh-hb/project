@@ -5,6 +5,8 @@ import EditUserPage from "./userUpdate";
 import { useContext } from "react";
 import { loginContext } from "./hooks/LoginContext";
 import Header from "./Header";
+import Loader from "./ui/Loader";
+import ImagePreviewModal from "./ui/ImagePreviewModal";
 import { toast } from "react-toastify";
 import { Trash2 } from "lucide-react";
 
@@ -31,6 +33,7 @@ export default function UserDetailsPage({ id }) {
     const validTabs = ["summary", "profiles", "activity"];
     const [activeTab, setActiveTab] = useState(validTabs.includes(tabParam) ? tabParam : "summary");
     const [user, setUser] = useState({});
+    const [loading, setLoading] = useState(true);
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [showAddProfile, setShowAddProfile] = useState(false);
@@ -52,15 +55,22 @@ export default function UserDetailsPage({ id }) {
     };
 
     const fetchUser = async (profileId = null) => {
-        const headers = { ...authHeaders(), endpoint: `user-details/${id}`, module: "user" };
-        if (profileId) headers["x-profile-id"] = String(profileId);
-        const allData = await fetch(`http://localhost:3000/relayapi`, {
-            method: "GET",
-            headers,
-        });
-        const payload = await allData.json();
-        const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
-        setUser(data);
+        setLoading(true);
+        try {
+            const headers = { ...authHeaders(), endpoint: `user-details/${id}`, module: "user" };
+            if (profileId) headers["x-profile-id"] = String(profileId);
+            const allData = await fetch(`http://localhost:3000/relayapi`, {
+                method: "GET",
+                headers,
+            });
+            const payload = await allData.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+            setUser(data || {});
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -86,8 +96,10 @@ export default function UserDetailsPage({ id }) {
                 body: JSON.stringify({ page: 1, limit: 200 }),
             }),
         ]);
-        const gData = await gRes.json();
-        const cData = await cRes.json();
+        const gPayload = await gRes.json();
+        const cPayload = await cRes.json();
+        const gData = gPayload.encrypted ? decryptResponse(gPayload.encrypted) : gPayload;
+        const cData = cPayload.encrypted ? decryptResponse(cPayload.encrypted) : cPayload;
         setGroups(gData?.data || []);
         setCompanies(cData?.data || []);
     };
@@ -189,6 +201,17 @@ export default function UserDetailsPage({ id }) {
         user_updatedDate: user.updatedDate,
         assignments: user.assignments || [],
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#f5f6f8]">
+                <Header page="user-details" />
+                <div className="flex items-center justify-center py-20">
+                    <Loader label="Loading user details..." />
+                </div>
+            </div>
+        );
+    }
 
     if (showEdit) {
         return <EditUserPage user={userData} onBack={() => setShowEdit(false)} />;
@@ -321,25 +344,11 @@ export default function UserDetailsPage({ id }) {
                                             >
                                                 {getInitials(user.firstName ? `${user.firstName} ${user.surname}` : user.name)}
                                             </span>
-                                            {imgPreview && (
-                                                <div
-                                                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-                                                    onClick={() => setImgPreview(false)}
-                                                >
-                                                    <div
-                                                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <button
-                                                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
-                                                            onClick={() => setImgPreview(false)}
-                                                        >
-                                                            ✕
-                                                        </button>
-                                                        <img src={imageurl} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
-                                                    </div>
-                                                </div>
-                                            )}
+                                            <ImagePreviewModal
+                                                open={imgPreview}
+                                                onClose={() => setImgPreview(false)}
+                                                imageUrl={imageurl}
+                                            />
                                         </div>
                                         <div className="min-w-0">
                                             <h2 className="text-2xl font-semibold capitalize text-gray-800 truncate max-w-full"> {user.firstName ? `${user.firstName} ${user.surname}` : user.name}</h2>

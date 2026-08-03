@@ -7,6 +7,7 @@ import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
+import Loader from "../ui/Loader";
 import CurrencyFormRenderer from "./CurrencyFormRenderer";
 import UserSidePanel from "../UserSidePanel";
 
@@ -70,7 +71,9 @@ export default function CurrencyDetails({ id }) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
                 <Header page="currency-details" />
-                <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div>
+                <div className="flex items-center justify-center py-20">
+                    <Loader label="Loading currency details..." />
+                </div>
             </div>
         );
     }

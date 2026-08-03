@@ -8,6 +8,7 @@ import Header from "../Header";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
 import AppPagination from "../ui/AppPagination";
+import Loader from "../ui/Loader";
 import { DataTable } from "../data-table";
 
 const groupColumns = [
@@ -61,12 +62,13 @@ export default function GroupList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [currentFilters, setCurrentFilters] = useState({});
+
     useEffect(() => {
         fetchData(1, {});
     }, []);
 
     async function fetchData(page = currentPage, searchParams = currentFilters) {
-        setLoading(true);
+        // setLoading(true);
         setError("");
         try {
             let body = { page, limit: LIMIT };
@@ -132,13 +134,19 @@ export default function GroupList() {
                 </nav>
 
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                    {loading && (
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 flex items-center justify-center">
+                            <Loader label="Loading groups..." />
+                        </div>
+                    )}
+
                     {error && (
                         <div className="bg-white rounded-xl border border-gray-200 p-8 text-red-600 font-semibold">
                             {error}
                         </div>
                     )}
 
-                    {!error && (
+                    {!loading && !error && (
                         <DataTable
                             title="Groups"
                             columns={groupColumns}

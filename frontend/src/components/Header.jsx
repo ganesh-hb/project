@@ -65,6 +65,11 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
     const defaultField = fieldsConfig[0]?.id || "name";
     const isListPage = page === "users" || page === "companies" || page === "currencies" || page === "groups";
 
+    const [hasMounted, setHasMounted] = useState(false);
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
+
     const [openProfile, setOpenProfile] = useState(false);
     const [switchLoading, setSwitchLoading] = useState(false);
     const [searchValue, setSearchValue] = useState("");
@@ -351,7 +356,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                         };
 
                         const currentAddConfig = addBtnConfigs[page];
-                        return currentAddConfig && can && can(currentAddConfig.perm) && onAddClick && (
+                        return currentAddConfig && hasMounted && can && can(currentAddConfig.perm) && onAddClick && (
                             <button
                                 onClick={onAddClick}
                                 className="cursor-pointer flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition shadow-sm"
@@ -592,7 +597,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                             className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1 hover:bg-gray-100"
                         >
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-blue-100">
-                                {displayUser?.userFile
+                                {hasMounted && displayUser?.userFile
                                     ? <img
                                         src={image}
                                         alt="profile"
@@ -602,20 +607,20 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                                     : null
                                 }
                                 <span
-                                    style={{ display: displayUser?.userFile ? 'none' : 'flex' }}
+                                    style={{ display: (hasMounted && displayUser?.userFile) ? 'none' : 'flex' }}
                                     className="h-full w-full items-center justify-center text-sm font-bold text-blue-600 absolute inset-0"
                                 >
-                                    {getInitials(displayUser?.name)}
+                                    {hasMounted ? getInitials(displayUser?.name) : ""}
                                 </span>
                             </div>
 
                             <div className="leading-tight">
                                 <h4 className="text-sm font-semibold text-gray-800">
-                                    {displayUser?.name || "guest"}
+                                    {hasMounted ? (displayUser?.name || "guest") : "guest"}
                                 </h4>
                                 <p className="text-xs text-gray-500">
-                                    {formattedGroupName || "N/A"}{" "}|{" "}
-                                    {formattedCompanyName || "N/A"}
+                                    {hasMounted ? (formattedGroupName || "N/A") : "N/A"}{" "}|{" "}
+                                    {hasMounted ? (formattedCompanyName || "N/A") : "N/A"}
                                 </p>
                             </div>
 
@@ -628,7 +633,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                             <div className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
 
                                 {/* Profile switcher section — shown when user has more than one assignment */}
-                                {Array.isArray(displayUser?.assignments) && displayUser.assignments.length > 1 && (
+                                {hasMounted && Array.isArray(displayUser?.assignments) && displayUser.assignments.length > 1 && (
                                     <div className="border-b">
                                         <p className="px-5 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Switch Profile</p>
                                         <div className="max-h-52 overflow-y-auto">
@@ -698,7 +703,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                                     </span>
                                 </button>
 
-                                {impersonating ? (
+                                {hasMounted && impersonating ? (
                                     <button
                                         className="flex w-full items-center gap-4 px-5 py-4 hover:bg-blue-50"
                                         onClick={() => {
@@ -726,11 +731,10 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                     </div>
                     <button
                         onClick={() => setShowMenuPanel(!showMenuPanel)}
-                        className={`flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-                            showMenuPanel
+                        className={`flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-md transition-colors cursor-pointer ${showMenuPanel
                                 ? "text-blue-600 bg-blue-50 border border-blue-200"
                                 : "text-gray-700 hover:text-blue-600 hover:bg-gray-100"
-                        }`}
+                            }`}
                     >
                         <span>{showMenuPanel ? "✕" : "☰"}</span>
                         <span>Menu</span>
@@ -815,6 +819,7 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
             <HeaderMenuPanel
                 isOpen={showMenuPanel}
                 onClose={() => setShowMenuPanel(false)}
+                hasMounted={hasMounted}
             />
         </>
     );

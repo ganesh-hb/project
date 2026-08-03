@@ -12,6 +12,7 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import Loader from "./ui/Loader";
 
 export function DataTable({
     columns,
@@ -158,9 +159,9 @@ export function DataTable({
                                 <TableRow>
                                     <TableCell
                                         colSpan={columns.length}
-                                        className="text-center h-32 text-gray-500 text-base font-medium"
+                                        className="text-center h-48 py-8"
                                     >
-                                        Loading...
+                                        <Loader label="Loading data..." />
                                     </TableCell>
                                 </TableRow>
                             ) : table.getRowModel().rows.length ? (

@@ -28,16 +28,24 @@ function StatusBadge({ status }) {
 
 import { CompanyAvatar } from "./companyList";
 
-function CompanyNameCell({ row }) {
+function CompanyNameCell({ row, onCompanyClick }) {
     const router = useRouter();
     const { can } = useContext(loginContext);
     const company = row.original;
+    const handleClick = () => {
+        if (!can("companyView")) return;
+        if (onCompanyClick) {
+            onCompanyClick(company.companyId);
+        } else {
+            router.push(`/company/${company.companyId}`);
+        }
+    };
     return (
         <div className="flex items-center gap-3">
             <CompanyAvatar company={company} sizeClass="h-8 w-8" />
             <span
-                className={`font-semibold text-base ${can("companyView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
-                onClick={() => can("companyView") && router.push(`/company/${company.companyId}`)}
+                className={`font-semibold text-base ${can("companyView") ? "text-[#3563e9] cursor-pointer hover:underline" : "text-gray-800"}`}
+                onClick={handleClick}
             >
                 {company.companyName}
             </span>
@@ -60,11 +68,11 @@ function sortableHeader(label) {
     return SortableHeaderComponent;
 }
 
-export const companyColumns = [
+export const getCompanyColumns = (onCompanyClick) => [
     {
         accessorKey: "companyName",
         header: sortableHeader("Company"),
-        cell: ({ row }) => <CompanyNameCell row={row} />,
+        cell: ({ row }) => <CompanyNameCell row={row} onCompanyClick={onCompanyClick} />,
         filterFn: "includesString",
     },
     {
@@ -132,3 +140,5 @@ export const companyColumns = [
         filterFn: "includesString",
     },
 ];
+
+export const companyColumns = getCompanyColumns();

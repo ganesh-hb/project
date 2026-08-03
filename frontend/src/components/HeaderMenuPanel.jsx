@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin } from "@/app/lib/auth";
 
-export default function HeaderMenuPanel({ isOpen, onClose }) {
+export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
     const router = useRouter();
     const { isLogin, impersonating, permissions } = useContext(loginContext);
 
@@ -16,6 +16,9 @@ export default function HeaderMenuPanel({ isOpen, onClose }) {
         const activeUser = impersonating || isLogin;
         setSuperAdmin(isSuperAdmin(activeUser));
     }, [isLogin, impersonating, permissions]);
+
+    const activePermissions = hasMounted ? (permissions || []) : [];
+    const isSuper = hasMounted ? superAdmin : false;
 
     const rawCategories = [
         {
@@ -29,16 +32,16 @@ export default function HeaderMenuPanel({ isOpen, onClose }) {
             id: "users",
             title: "Users",
             items: [
-                { label: "Users", redirectTo: "/users", show: permissions?.includes("userList") },
+                { label: "Users", redirectTo: "/users", show: activePermissions.includes("userList") },
             ]
         },
         {
             id: "master",
             title: "Master",
             items: [
-                { label: "Companies", redirectTo: "/company-list", show: permissions?.includes("companyList") },
-                { label: "Groups", redirectTo: "/group-list", show: permissions?.includes("groupList") },
-                { label: "Currencies", redirectTo: "/currency-list", show: permissions?.includes("currencyList") || superAdmin },
+                { label: "Companies", redirectTo: "/company-list", show: activePermissions.includes("companyList") },
+                { label: "Groups", redirectTo: "/group-list", show: activePermissions.includes("groupList") },
+                { label: "Currencies", redirectTo: "/currency-list", show: activePermissions.includes("currencyList") || isSuper },
             ]
         }
     ];

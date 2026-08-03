@@ -115,8 +115,9 @@ export default function EditUserPage({ user, onBack }) {
                     headers: { ...authHeaders(), endpoint: "group-dropdown-list", module: "group" },
                     body: JSON.stringify({ page: 1, limit: 200 }),
                 });
-                const data = await res.json();
-                setGroups(data.data || []);
+                const payload = await res.json();
+                const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+                setGroups(data?.data || []);
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });
             }
@@ -132,8 +133,9 @@ export default function EditUserPage({ user, onBack }) {
                     headers: { ...authHeaders(), endpoint: "company-list", module: "company" },
                     body: JSON.stringify({ page: 1, limit: 200 }),
                 });
-                const data = await res.json();
-                setCompanies(data.data || []);
+                const payload = await res.json();
+                const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+                setCompanies(data?.data || []);
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });
             }

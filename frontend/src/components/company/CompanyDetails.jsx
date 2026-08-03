@@ -5,6 +5,8 @@ import { authHeaders } from "@/app/lib/auth";
 import Header from "../Header";
 import CompanyUpdate from "./CompanyUpdate";
 import { loginContext } from "../hooks/LoginContext";
+import Loader from "../ui/Loader";
+import ImagePreviewModal from "../ui/ImagePreviewModal";
 
 import { decryptResponse } from "@/app/lib/crypto";
 
@@ -73,7 +75,9 @@ export default function CompanyDetails({ id }) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
                 <Header page="company-details" />
-                <div className="p-8 text-gray-500 text-lg font-semibold">Loading...</div>
+                <div className="flex items-center justify-center py-20">
+                    <Loader label="Loading company details..." />
+                </div>
             </div>
         );
     }
@@ -179,25 +183,11 @@ export default function CompanyDetails({ id }) {
                                             >
                                                 {getInitials(company.companyName)}
                                             </span>
-                                            {imgPreview && (
-                                                <div
-                                                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-                                                    onClick={() => setImgPreview(false)}
-                                                >
-                                                    <div
-                                                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <button
-                                                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold"
-                                                            onClick={() => setImgPreview(false)}
-                                                        >
-                                                            ✕
-                                                        </button>
-                                                        <img src={imageUrl} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
-                                                    </div>
-                                                </div>
-                                            )}
+                                            <ImagePreviewModal
+                                                open={imgPreview}
+                                                onClose={() => setImgPreview(false)}
+                                                imageUrl={imageUrl}
+                                            />
                                         </div>
                                         <div>
                                             <h2 className="text-2xl font-semibold text-gray-800">{company.companyName}</h2>

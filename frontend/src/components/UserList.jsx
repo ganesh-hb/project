@@ -3,16 +3,19 @@ import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import Header from "./Header";
 import { userListContext } from "./hooks/UserListContext";
+import AppPagination from "./ui/AppPagination";
+import Loader from "./ui/Loader";
+import ImagePreviewModal from "./ui/ImagePreviewModal";
 import { toast } from "react-toastify";
 import { DataTable } from "./data-table";
 import { columns } from "./Column";
 import { loginContext } from "./hooks/LoginContext";
 import { isSuperAdmin, isCompanyAdmin, authHeaders } from "../app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
-import AppPagination from "./ui/AppPagination";
 import { ArrowUpDown, LogIn, RotateCw, ChevronDown, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import CompanySidePanel from "./company/CompanySidePanel";
+import UserSidePanel from "./UserSidePanel";
 import { createPortal } from "react-dom";
 function getInitials(name) {
     if (!name) return "?";
@@ -58,7 +61,7 @@ export default function UsersPage() {
     const [viewMode, setViewMode] = useState("grid");
     const [count, setCount] = useState(1);
     const [selectedCompanyId, setSelectedCompanyId] = useState(null);
-
+    const [selectedUserId, setSelectedUserId] = useState(null);
 
     const [superAdmin, setSuperAdmin] = useState(false);
     const [companyAdmin, setCompanyAdmin] = useState(false);
@@ -162,7 +165,7 @@ export default function UsersPage() {
     const gotoUser = (e, user) => {
         e.preventDefault();
         e.stopPropagation();
-        router.push(`http://localhost:3000/user/${user.user_userId}`);
+        setSelectedUserId(user.user_userId);
     };
 
     const route = useRouter();
@@ -238,8 +241,8 @@ export default function UsersPage() {
 
                 <div className={viewMode === "table" ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "flex-1 min-h-0 overflow-y-auto pb-6"}>
                     {loading && (
-                        <div className="bg-white rounded-xl border border-gray-200 p-8 text-xl font-semibold text-gray-500">
-                            Loading users...
+                        <div className="bg-white rounded-xl border border-gray-200 p-8 flex items-center justify-center">
+                            <Loader label="Loading users..." />
                         </div>
                     )}
 
@@ -564,7 +567,7 @@ export default function UsersPage() {
                     {!error && viewMode === "table" && (
                         <DataTable
                             title={superAdmin ? "All Users" : companyAdmin ? "Company Users" : "Users"}
-                            columns={columns}
+                            columns={getColumns((userId) => setSelectedUserId(userId))}
                             data={users}
                             filterableColumns={[
                                 { id: "user_name", label: "Name", filterKey: "name" },
@@ -606,36 +609,33 @@ export default function UsersPage() {
                     </select>
                 </div>
             </div>
+            {selectedUserId && typeof document !== "undefined" && createPortal(
+                <UserSidePanel
+                    userId={selectedUserId}
+                    onClose={() => setSelectedUserId(null)}
+                    onMoreDetails={(userId) => {
+                        setSelectedUserId(null);
+                        router.push(`/user/${userId}`);
+                    }}
+                />,
+                document.body
+            )}
             {selectedCompanyId && typeof document !== "undefined" && createPortal(
                 <CompanySidePanel
                     companyId={selectedCompanyId}
                     onClose={() => setSelectedCompanyId(null)}
+                    onMoreDetails={(companyId) => {
+                        setSelectedCompanyId(null);
+                        router.push(`/company/${companyId}`);
+                    }}
                 />,
                 document.body
             )}
-            {previewUser && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-                    onClick={() => setPreviewUser(null)}
-                >
-                    <div
-                        className="relative bg-white rounded-2xl shadow-2xl p-4 max-w-sm w-full mx-4"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <button
-                            className="absolute top-2 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer"
-                            onClick={() => setPreviewUser(null)}
-                        >
-                            ✕
-                        </button>
-                        <img
-                            src={`http://localhost:4000/upload/${previewUser.user_userId}/${previewUser.user_userFile}`}
-                            alt="preview"
-                            className="w-full rounded-xl object-contain max-h-80"
-                        />
-                    </div>
-                </div>
-            )}
+            <ImagePreviewModal
+                open={!!previewUser}
+                onClose={() => setPreviewUser(null)}
+                imageUrl={previewUser ? `http://localhost:4000/upload/${previewUser.user_userId}/${previewUser.user_userFile}` : ""}
+            />
         </div>
     );
 }
