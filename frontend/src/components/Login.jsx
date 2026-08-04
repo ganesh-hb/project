@@ -26,10 +26,10 @@ async function callSelectProfile(userId, ucgId) {
 // ─── Group badge colour mapping ───────────────────────────────────────────────
 
 const GROUP_COLOURS = {
-    superAdmin:      { bg: "#f0f4ff", border: "#6366f1", badge: "#6366f1", text: "#3730a3" },
-    companyAdmin:    { bg: "#f0fdf4", border: "#22c55e", badge: "#22c55e", text: "#166534" },
-    warehouseAdmin:  { bg: "#fff7ed", border: "#f97316", badge: "#f97316", text: "#9a3412" },
-    user:            { bg: "#f0f9ff", border: "#0ea5e9", badge: "#0ea5e9", text: "#0c4a6e" },
+    superAdmin: { bg: "#f0f4ff", border: "#6366f1", badge: "#6366f1", text: "#3730a3" },
+    companyAdmin: { bg: "#f0fdf4", border: "#22c55e", badge: "#22c55e", text: "#166534" },
+    warehouseAdmin: { bg: "#fff7ed", border: "#f97316", badge: "#f97316", text: "#9a3412" },
+    user: { bg: "#f0f9ff", border: "#0ea5e9", badge: "#0ea5e9", text: "#0c4a6e" },
 };
 
 function groupColour(groupName) {
@@ -210,7 +210,7 @@ export default function LoginPage() {
                 setMessage(msg);
                 return;
             }
-
+            console.log(data, "data ")
             const { userId, email, name, activeAssignments = [] } = data;
 
             if (activeAssignments.length === 0) {

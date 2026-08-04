@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { loginContext } from "@/components/hooks/LoginContext";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Eye } from "lucide-react";
 
 function StatusBadge({ status }) {
     if (!status) return <span className="text-gray-400 text-sm">-</span>;
@@ -21,15 +21,29 @@ function StatusBadge({ status }) {
     );
 }
 
-function CurrencyNameCell({ row }) {
+function CurrencyNameCell({ row, onPreview }) {
     const router = useRouter();
     const { can } = useContext(loginContext);
     const currency = row.original;
+    const curId = currency.curId || currency.currencyId;
     return (
         <div className="flex items-center gap-3">
             <span
-                className={`font-semibold text-base ${can("currencyView") ? "text-blue-600 cursor-pointer hover:underline" : "text-gray-800"}`}
-                onClick={() => can("currencyView") && router.push(`/currency/${currency.curId}`)}
+                className={`font-semibold text-base ${can("currencyView")
+                    ? "text-blue-600 cursor-pointer hover:underline"
+                    : "text-gray-800"
+                    }`}
+                onClick={(e) => {
+                    if (!can("currencyView")) return;
+
+                    e.stopPropagation();
+
+                    if (onPreview) {
+                        onPreview(curId);
+                    } else {
+                        router.push(`/currency/${curId}`);
+                    }
+                }}
             >
                 {currency.name || "Unknown"}
             </span>
@@ -52,11 +66,11 @@ function sortableHeader(label) {
     return SortableHeaderComponent;
 }
 
-export const currencyColumns = [
+export const getCurrencyColumns = (onPreview) => [
     {
         accessorKey: "name",
         header: sortableHeader("Currency Name"),
-        cell: ({ row }) => <CurrencyNameCell row={row} />,
+        cell: ({ row }) => <CurrencyNameCell row={row} onPreview={onPreview} />,
         filterFn: "includesString",
     },
     {
@@ -105,3 +119,5 @@ export const currencyColumns = [
         filterFn: "includesString",
     },
 ];
+
+export const currencyColumns = getCurrencyColumns();

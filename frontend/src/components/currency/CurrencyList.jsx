@@ -10,7 +10,9 @@ import { authHeaders } from "@/app/lib/auth";
 import AppPagination from "../ui/AppPagination";
 import Loader from "../ui/Loader";
 import { DataTable } from "../data-table";
-import { currencyColumns } from "./CurrencyColumn";
+import { getCurrencyColumns } from "./CurrencyColumn";
+import CurrencySidePanel from "./CurrencySidePanel";
+import { createPortal } from "react-dom";
 
 export default function CurrencyList() {
     const router = useRouter();
@@ -23,6 +25,7 @@ export default function CurrencyList() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const [currentFilters, setCurrentFilters] = useState({});
+    const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
 
     const [syncing, setSyncing] = useState(false);
 
@@ -156,7 +159,7 @@ export default function CurrencyList() {
                                     {syncing ? "Syncing..." : "Sync Conversion Rates"}
                                 </button>
                             )}
-                            columns={currencyColumns}
+                            columns={getCurrencyColumns((currencyId) => setSelectedCurrencyId(currencyId))}
                             data={currencies}
                             filterableColumns={[
                                 { id: "name", label: "Currency Name", filterKey: "name" },
@@ -195,6 +198,18 @@ export default function CurrencyList() {
                     </select>
                 </div>
             </div>
+
+            {selectedCurrencyId && typeof document !== "undefined" && createPortal(
+                <CurrencySidePanel
+                    currencyId={selectedCurrencyId}
+                    onClose={() => setSelectedCurrencyId(null)}
+                    onMoreDetails={(currencyId) => {
+                        setSelectedCurrencyId(null);
+                        router.push(`/currency/${currencyId}`);
+                    }}
+                />,
+                document.body
+            )}
         </div>
     );
 }

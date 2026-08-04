@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { UserCompanyGroupEntity } from './user.company.group.entity';
+import { ItemCategoryEntity } from '../../item_category/entity/item-category.entity';
 
 @Entity('company')
 export class CompanyEntity {
@@ -96,5 +97,8 @@ export class CompanyEntity {
 
   @OneToMany(() => UserCompanyGroupEntity, (ucg) => ucg.company)
   userCompanyGroups!: UserCompanyGroupEntity[];
+
+  @OneToMany(() => ItemCategoryEntity, (itemCategory) => itemCategory.company)
+  itemCategories!: ItemCategoryEntity[];
 }
 

@@ -4,10 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
-import { loginContext } from "./hooks/LoginContext";
-import { ResetPasswordSchema } from "./Zod";
-import RouteGuard from "./RouteGuard";
-import Header from "./Header";
+import Header from "../Header";
+import { loginContext } from "../hooks/LoginContext";
+import RouteGuard from "../RouteGuard";
+import { ResetPasswordSchema } from "../Zod";
 
 export default function AdminResetPassword() {
     const router = useRouter();

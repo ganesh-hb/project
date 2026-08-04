@@ -12,6 +12,7 @@ import { CurrencyEntity } from '../entity/currency.entity';
 import { CompanyCurrencyEntity } from '../entity/company.currency.entity';
 import { ActivityMasterEntity } from '../entity/activity-master.entity';
 import { ActivityLogEntity } from '../entity/activity-log.entity';
+import { ItemCategoryEntity } from '../../item_category/entity/item-category.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: (process.env.DB_CLIENT as 'mysql') ?? 'mysql',
@@ -31,6 +32,7 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     CompanyCurrencyEntity,
     ActivityMasterEntity,
     ActivityLogEntity,
+    ItemCategoryEntity,
   ],
   synchronize: true,
   migrationsRun: true,

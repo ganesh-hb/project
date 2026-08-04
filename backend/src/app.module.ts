@@ -12,6 +12,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserModule } from './user/user.module';
 import { CurrencyModule } from './currency/currency.module';
+import { ItemCategoryModule } from './item_category/item.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { CurrencyModule } from './currency/currency.module';
     CompanyModule,
     ActivityModule,
     CurrencyModule,
+    ItemCategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

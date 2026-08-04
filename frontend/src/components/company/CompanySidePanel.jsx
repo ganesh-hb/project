@@ -2,18 +2,12 @@
 import { useEffect, useState } from "react";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
-import Loader from "../ui/Loader";
-import { useSlideOverPanel } from "../hooks/useSlideOverPanel";
+import SidePanel from "../common/SidePanel";
+import { getInitials } from "@/lib/utils";
 
 export default function CompanySidePanel({ companyId, onClose, onMoreDetails }) {
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
-    const { isOpen, handleClose } = useSlideOverPanel(onClose, 300);
-
-    function getInitials(name) {
-        if (!name) return "?";
-        return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
-    }
 
     useEffect(() => {
         if (!companyId) return;
@@ -41,167 +35,79 @@ export default function CompanySidePanel({ companyId, onClose, onMoreDetails }) 
         }
     };
 
-    const statusBadge = (status) => {
-        if (status === "active" || status === "Active")
-            return "inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700";
-        if (status === "inactive" || status === "Inactive")
-            return "inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700";
-        return "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700";
-    };
+    const websiteValue = company?.website ? (
+        <a
+            href={company.website}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 hover:underline"
+        >
+            {company.website}
+        </a>
+    ) : (
+        "N/A"
+    );
+
+    const cityStateCountry = company
+        ? [company.city, company.state, company.country].filter(Boolean).join(", ") || "N/A"
+        : "N/A";
+
+    const sections = company
+        ? [
+              {
+                  title: "Basic Info",
+                  rows: [
+                      { label: "Location", value: company.companyLocation || "N/A" },
+                      { label: "Website", value: websiteValue },
+                  ],
+              },
+              {
+                  title: "Contact",
+                  rows: [
+                      { label: "Email", value: company.email || "N/A" },
+                      {
+                          label: "Phone",
+                          value: `${company.dialCode ? `+${company.dialCode} ` : ""}${company.phone || "N/A"}`,
+                      },
+                  ],
+              },
+              {
+                  title: "Address",
+                  rows: [
+                      { label: "Address", value: company.AddressLineOne || "N/A" },
+                      { label: "City / State", value: cityStateCountry },
+                      { label: "Postal Code", value: company.postalCode || "N/A" },
+                  ],
+              },
+              {
+                  title: "Owner",
+                  rows: [
+                      { label: "Name", value: company.ownerName || "N/A" },
+                      { label: "Email", value: company.ownerEmail || "N/A" },
+                      { label: "Phone", value: company.ownerPhone || "N/A" },
+                  ],
+              },
+          ]
+        : [];
+
+    const avatarUrl = company?.companyFile
+        ? `http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`
+        : null;
 
     return (
-        <>
-            {/* Backdrop */}
-            <div
-                className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-                    isOpen ? "opacity-100" : "opacity-0"
-                }`}
-                onClick={handleClose}
-            />
-
-            {/* Side panel */}
-            <div
-                className={`fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-2xl overflow-y-auto flex flex-col transform transition-transform duration-300 ease-in-out ${
-                    isOpen ? "translate-x-0" : "translate-x-full"
-                }`}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between border-b px-6 py-4 bg-white sticky top-0 z-10">
-                    <h2 className="text-lg font-semibold text-gray-800">Company Details</h2>
-                    <button
-                        onClick={handleClose}
-                        className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
-                    >
-                        ✕
-                    </button>
-                </div>
-
-                {loading ? (
-                    <div className="flex items-center justify-center flex-1 transition-opacity duration-200">
-                        <Loader label="Loading company details..." />
-                    </div>
-                ) : !company ? (
-                    <div className="flex items-center justify-center flex-1 text-red-400 text-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        Company not found.
-                    </div>
-                ) : (
-                    <div className="flex-1 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2">
-                        {/* Logo + name */}
-                        <div className="flex items-center gap-4 px-6 py-5 border-b bg-gray-50">
-                            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-blue-50 border shadow-sm flex-shrink-0 relative transition-transform hover:scale-105 duration-200">
-                                {company.companyFile
-                                    ? <img
-                                        src={`http://localhost:4000/upload/company/${company.companyId}/${company.companyFile}`}
-                                        alt="logo"
-                                        className="h-full w-full object-cover transition-opacity duration-300"
-                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                                    />
-                                    : null
-                                }
-                                <span
-                                    style={{ display: company.companyFile ? 'none' : 'flex' }}
-                                    className="h-full w-full items-center justify-center text-xl font-bold text-blue-400 absolute inset-0"
-                                >
-                                    {getInitials(company.companyName)}
-                                </span>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-gray-800 text-base">{company.companyName}</h3>
-                                <p className="text-xs text-gray-400 mt-0.5">{company.companyCode}</p>
-                                <span className={`mt-1 transition-all duration-200 ${statusBadge(company.status)}`}>{company.status}</span>
-                            </div>
-                        </div>
-
-                        {onMoreDetails && (
-                            <div className="px-6 py-3 border-b">
-                                <button
-                                    onClick={() => onMoreDetails(companyId)}
-                                    className="w-full rounded-lg bg-gray-100 hover:bg-gray-200 active:bg-gray-300 active:scale-[0.99] text-gray-800 font-medium text-sm py-2.5 transition-all duration-150 shadow-sm hover:shadow text-center"
-                                >
-                                    More Details
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Basic Info */}
-                        <div className="px-6 py-4 border-b">
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Basic Info</h4>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Location</p>
-                                    <p className="text-sm font-medium text-gray-800">{company.companyLocation || "N/A"}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Website</p>
-                                    <p className="text-sm font-medium text-gray-800 break-all">
-                                        {company.website
-                                            ? <a href={company.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{company.website}</a>
-                                            : "N/A"
-                                        }
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Contact */}
-                        <div className="px-6 py-4 border-b">
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Contact</h4>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="text-sm font-medium text-gray-800 break-all">{company.email || "N/A"}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Phone</p>
-                                    <p className="text-sm font-medium text-gray-800">
-                                        {company.dialCode ? `+${company.dialCode} ` : ""}{company.phone || "N/A"}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Address */}
-                        <div className="px-6 py-4 border-b">
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Address</h4>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Address</p>
-                                    <p className="text-sm font-medium text-gray-800">{company.AddressLineOne || "N/A"}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">City / State</p>
-                                    <p className="text-sm font-medium text-gray-800">
-                                        {[company.city, company.state, company.country].filter(Boolean).join(", ") || "N/A"}
-                                    </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Postal Code</p>
-                                    <p className="text-sm font-medium text-gray-800">{company.postalCode || "N/A"}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Owner */}
-                        <div className="px-6 py-4">
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Owner</h4>
-                            <div className="space-y-3">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Name</p>
-                                    <p className="text-sm font-medium text-gray-800">{company.ownerName || "N/A"}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="text-sm font-medium text-gray-800 break-all">{company.ownerEmail || "N/A"}</p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <p className="text-sm text-gray-500">Phone</p>
-                                    <p className="text-sm font-medium text-gray-800">{company.ownerPhone || "N/A"}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </>
+        <SidePanel
+            onClose={onClose}
+            loading={loading}
+            errorType={!company && !loading ? "not-found" : null}
+            title="Company Details"
+            avatar={avatarUrl}
+            initials={getInitials(company?.companyName)}
+            name={company?.companyName || ""}
+            subtitle={company?.companyCode || ""}
+            status={company?.status || ""}
+            onMoreDetails={onMoreDetails}
+            moreDetailsId={companyId}
+            sections={sections}
+        />
     );
 }

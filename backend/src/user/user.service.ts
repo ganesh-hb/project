@@ -373,28 +373,28 @@ export class UserService {
         const targetCompanyId = Number(params.companyId);
         const targetGroupId = Number(params.groupId);
 
-        // Find the specific UCG row for this user+company to patch.
-        // This preserves all other company assignments (no full wipe).
-        const existingAssignment = await this.ucgEntity.findOne({
+        // Load all existing UCG rows for this user
+        const existingAssignments = await this.ucgEntity.find({
           where: {
             userId: Number(params.userId),
-            companyId: targetCompanyId,
           },
         });
 
-        if (existingAssignment) {
-          existingAssignment.groupId = targetGroupId;
-          await this.ucgEntity.save(existingAssignment);
+        const primaryAssignment = existingAssignments.find(
+          (a) => a.is_parent === 0,
+        );
+
+        if (primaryAssignment) {
+          primaryAssignment.companyId = targetCompanyId;
+          primaryAssignment.groupId = targetGroupId;
+          await this.ucgEntity.save(primaryAssignment);
         } else {
-          // No assignment exists for this company yet — insert as secondary.
-          // is_parent: Number(userId) is the established convention for secondary
-          // assignments, matching addProfile (user.service.ts line 882).
           await this.ucgEntity.save(
             this.ucgEntity.create({
               userId: Number(params.userId),
               companyId: targetCompanyId,
               groupId: targetGroupId,
-              is_parent: Number(params.userId),
+              is_parent: 0,
             }),
           );
         }
