@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { GroupPermissionEntity } from 'src/group/entity/capability.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { resolveAuthContext } from './auth-helper';
 

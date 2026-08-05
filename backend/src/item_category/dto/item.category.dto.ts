@@ -45,11 +45,10 @@ export class categoryListDto {
 export class ItemCategoryDto {
   @IsString()
   @IsNotEmpty()
-  itemCategoryCode!: string;
+  itemCategoryName!: string;
 
-  @IsOptional()
-  @IsString()
-  type?: string;
+  @IsIn(['Goods', 'Service'])
+  type!: 'Goods' | 'Service';
 
   @IsInt()
   @IsNotEmpty()
@@ -75,11 +74,12 @@ export class ItemCategoryUpdateDto {
 
   @IsOptional()
   @IsString()
-  itemCategoryCode?: string;
+  itemCategoryName?: string;
 
   @IsOptional()
   @IsString()
-  type?: string;
+  @IsIn(['Goods', 'Service'])
+  type?: 'Goods' | 'Service';
 
   @IsOptional()
   @IsString()

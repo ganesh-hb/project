@@ -1,3 +1,4 @@
+import { ActivityLogEntity } from 'src/activity/entity/activity-log.entity';
 import {
   Column,
   CreateDateColumn,
@@ -6,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ActivityLogEntity } from './activity-log.entity';
 
 @Entity('activity_master')
 export class ActivityMasterEntity {

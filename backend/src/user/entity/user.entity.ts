@@ -5,7 +5,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { UserCompanyGroupEntity } from './user.company.group.entity';
+import { UserCompanyGroupEntity } from '../../packages/entity/user.company.group.entity';
 
 @Entity('user')
 export class UserEntity {

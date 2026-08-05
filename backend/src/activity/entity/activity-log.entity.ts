@@ -7,9 +7,9 @@ import {
   PrimaryGeneratedColumn,
   Index,
 } from 'typeorm';
-import { ActivityMasterEntity } from './activity-master.entity';
-import { UserEntity } from './user.entity';
-import { CompanyEntity } from './company.entity';
+import { UserEntity } from '../../user/entity/user.entity';
+import { CompanyEntity } from 'src/company/entity/company.entity';
+import { ActivityMasterEntity } from 'src/activity/entity/activity-master.entity';
 
 @Entity('activity_log')
 @Index('idx_user_createdAt', ['userId', 'createdAt'])

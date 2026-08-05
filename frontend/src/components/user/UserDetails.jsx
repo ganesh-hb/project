@@ -3,10 +3,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditUserPage from "./userUpdate";
 import { useContext } from "react";
-import { loginContext } from "./hooks/LoginContext";
-import Header from "./Header";
-import Loader from "./ui/Loader";
-import ImagePreviewModal from "./ui/ImagePreviewModal";
+import { loginContext } from "../hooks/LoginContext";
+import Header from "../Header";
+import Loader from "../ui/Loader";
+import ImagePreviewModal from "../ui/ImagePreviewModal";
 import { toast } from "react-toastify";
 import { Trash2 } from "lucide-react";
 
@@ -20,11 +20,12 @@ const getInitials = (name) => {
 import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import { createPortal } from "react-dom";
-import CompanySidePanel from "./company/CompanySidePanel";
-import UserSidePanel from "./UserSidePanel";
+import CompanySidePanel from "../company/CompanySidePanel";
+
 
 import ActivityTimeline from '@/components/activity/ActivityTimeline';
 import Swal from "sweetalert2";
+import UserSidePanel from "./UserSidePanel";
 export default function UserDetailsPage({ id }) {
     const [showEdit, setShowEdit] = useState(false);
     const { can, canAny, isLogin, activeAssignment } = useContext(loginContext);

@@ -1,0 +1,128 @@
+import { ItemCategoryFormSchema, ItemCategoryUpdateSchema } from "../../Zod";
+
+export const itemCategoryFormConfig = {
+    contexts: {
+        "item-category-add": {
+            mode: "add",
+            title: "Add Item Category",
+            api: {
+                method: "POST",
+                endpoint: "item-category-add",
+                module: "item-category",
+            },
+            schema: ItemCategoryFormSchema,
+            submitButtonText: "Add Item Category",
+            loadingButtonText: "Creating...",
+            successMessage: "Item category created successfully",
+            fields: [
+                {
+                    name: "itemCategoryName",
+                    label: "Item Category Name",
+                    type: "text",
+                    placeholder: "e.g. Hardware",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
+                    name: "type",
+                    label: "Type",
+                    type: "select",
+                    required: true,
+                    defaultValue: "Goods",
+                    readOnly: false,
+                    hidden: false,
+                    options: [
+                        { label: "Goods", value: "Goods" },
+                        { label: "Service", value: "Service" },
+                    ],
+                },
+                {
+                    name: "companyId",
+                    label: "Company",
+                    type: "company-select",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
+                    name: "status",
+                    label: "Status",
+                    type: "select",
+                    required: true,
+                    defaultValue: "Active",
+                    readOnly: false,
+                    hidden: false,
+                    options: [
+                        { label: "Active", value: "Active" },
+                        { label: "Inactive", value: "Inactive" },
+                    ],
+                },
+            ],
+        },
+        "item-category-update": {
+            mode: "update",
+            title: "Edit Item Category",
+            api: {
+                fetchEndpoint: "item-category-details",
+                method: "PUT",
+                endpoint: "item-category-update",
+                module: "item-category",
+            },
+            schema: ItemCategoryUpdateSchema,
+            submitButtonText: "Update Item Category",
+            loadingButtonText: "Updating...",
+            successMessage: "Item category updated successfully",
+            fields: [
+                {
+                    name: "itemCategoryName",
+                    label: "Item Category Name",
+                    type: "text",
+                    placeholder: "e.g. Hardware",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
+                    name: "type",
+                    label: "Type",
+                    type: "select",
+                    required: true,
+                    defaultValue: "Goods",
+                    readOnly: false,
+                    hidden: false,
+                    options: [
+                        { label: "Goods", value: "Goods" },
+                        { label: "Service", value: "Service" },
+                    ],
+                },
+                {
+                    name: "companyId",
+                    label: "Company",
+                    type: "company-select",
+                    required: true,
+                    defaultValue: "",
+                    // In update mode, company cannot change
+                    readOnly: true,
+                    hidden: false,
+                },
+                {
+                    name: "status",
+                    label: "Status",
+                    type: "select",
+                    required: true,
+                    defaultValue: "Active",
+                    readOnly: false,
+                    hidden: false,
+                    options: [
+                        { label: "Active", value: "Active" },
+                        { label: "Inactive", value: "Inactive" },
+                    ],
+                },
+            ],
+        },
+    },
+};

@@ -4,9 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 
-import { UserEntity } from 'src/packages/entity/user.entity';
-import { GroupEntity } from 'src/packages/entity/group.entity';
-import { CompanyEntity } from 'src/packages/entity/company.entity';
+import { UserEntity } from 'src/user/entity/user.entity';
 import { FileTransfer } from 'src/utilities/file.transfer';
 import { Filter } from 'src/utilities/filter';
 import { Mailer } from 'src/utilities/mailer';
@@ -16,7 +14,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from 'src/utilities/jwt.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { RolesGuard } from 'src/utilities/roles.guard';
-import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { GroupPermissionEntity } from 'src/group/entity/capability.entity';
+import { CompanyEntity } from 'src/company/entity/company.entity';
+import { GroupEntity } from 'src/group/entity/group.entity';
 
 @Module({
   imports: [

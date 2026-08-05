@@ -1,11 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
-import { CurrencyEntity } from 'src/packages/entity/currency.entity';
+import { CurrencyEntity } from 'src/currency/entity/currency.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
-import { UserEntity } from 'src/packages/entity/user.entity';
+import { UserEntity } from 'src/user/entity/user.entity';
 import { Filter } from 'src/utilities/filter';
-import { getCurrencyListDto, CurrencyDto, CurrencyUpdateDto } from 'src/packages/dto/currency.dto';
+import { getCurrencyListDto, CurrencyDto, CurrencyUpdateDto } from 'src/currency/dto/currency.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 

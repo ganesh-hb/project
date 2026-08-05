@@ -1,10 +1,10 @@
 "use client";
 import { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginContext } from "./hooks/LoginContext";
+import { loginContext } from "../hooks/LoginContext";
 import ActivityTimeline from '@/components/activity/ActivityTimeline';
-import Header from "./Header";
-import ImagePreviewModal from "./ui/ImagePreviewModal";
+import Header from "../Header";
+import ImagePreviewModal from "../ui/ImagePreviewModal";
 
 export default function ProfilePage() {
     const router = useRouter();

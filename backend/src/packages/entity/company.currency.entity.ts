@@ -5,8 +5,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CompanyEntity } from './company.entity';
-import { CurrencyEntity } from './currency.entity';
+import { CurrencyEntity } from '../../currency/entity/currency.entity';
+import { CompanyEntity } from 'src/company/entity/company.entity';
 
 @Entity('company_currency')
 export class CompanyCurrencyEntity {

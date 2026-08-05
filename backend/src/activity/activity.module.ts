@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ActivityMasterEntity } from 'src/packages/entity/activity-master.entity';
-import { ActivityLogEntity } from 'src/packages/entity/activity-log.entity';
+import { ActivityLogEntity } from 'src/activity/entity/activity-log.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { ActivityController } from './activity.controller';
 import { ActivityService } from './activity.service';
@@ -12,6 +11,7 @@ import { RolesGuard } from 'src/utilities/roles.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from 'src/utilities/jwt.strategy';
+import { ActivityMasterEntity } from './entity/activity-master.entity';
 
 @Module({
   imports: [

@@ -7,9 +7,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserEntity } from './user.entity';
-import { CompanyEntity } from './company.entity';
-import { GroupEntity } from './group.entity';
+import { UserEntity } from '../../user/entity/user.entity';
+import { CompanyEntity } from 'src/company/entity/company.entity';
+import { GroupEntity } from 'src/group/entity/group.entity';
 
 @Entity('user_company_group')
 export class UserCompanyGroupEntity {

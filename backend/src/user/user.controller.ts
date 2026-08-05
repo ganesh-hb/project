@@ -26,7 +26,7 @@ import {
   selectProfileDto,
   UserDto,
   userUpdateDto,
-} from 'src/packages/dto/user.dto';
+} from 'src/user/dto/user.dto';
 import { encryptResponse } from 'src/utilities/crypto';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles, CompanyScoped } from 'src/utilities/roles.decorator';

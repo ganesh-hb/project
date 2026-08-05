@@ -1,12 +1,12 @@
 'use client'
 
 import { useRouter } from "next/navigation";
-import { loginContext } from "./hooks/LoginContext";
+import { loginContext } from "../hooks/LoginContext";
 import { useContext, useState } from "react";
-import Header from "./Header";
+import Header from "../Header";
 import { toast } from "react-toastify";
 import { authHeaders } from "@/app/lib/auth";
-import { ChangePasswordSchema } from "./Zod";
+import { ChangePasswordSchema } from "../Zod";
 
 
 export default function ChangePassword() {

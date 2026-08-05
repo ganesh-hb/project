@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
-import { CompanyEntity } from 'src/packages/entity/company.entity';
 import { ForbiddenException } from '@nestjs/common';
+import { CompanyEntity } from 'src/company/entity/company.entity';
 
 export interface AuthContext {
   isSuperAdmin: boolean;

@@ -1,3 +1,4 @@
+import { CompanyEntity } from 'src/company/entity/company.entity';
 import {
   Column,
   Entity,
@@ -5,7 +6,6 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CompanyEntity } from '../../packages/entity/company.entity';
 
 @Entity('item_category')
 export class ItemCategoryEntity {
@@ -14,6 +14,9 @@ export class ItemCategoryEntity {
 
   @Column()
   itemCategoryCode!: string;
+
+  @Column()
+  itemCategoryName!: string;
 
   @Column({ nullable: true })
   type?: string;

@@ -8,8 +8,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserCompanyGroupEntity } from './user.company.group.entity';
 import { ItemCategoryEntity } from '../../item_category/entity/item-category.entity';
+import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 
 @Entity('company')
 export class CompanyEntity {

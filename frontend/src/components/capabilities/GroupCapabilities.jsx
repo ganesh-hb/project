@@ -28,6 +28,11 @@ const MODULES = [
         key: "currency",
         permissions: ["currencyList", "currencyView", "currencyAdd", "currencyUpdate"],
     },
+    {
+        label: "Item Category",
+        key: "itemCategory",
+        permissions: ["itemCategoryList", "itemCategoryView", "itemCategoryAdd", "itemCategoryUpdate"],
+    },
 ];
 
 const COL_HEADERS = ["List", "View", "Add", "Update"];

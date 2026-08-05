@@ -10,7 +10,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 import { ItemCategoryEntity } from 'src/item_category/entity/item-category.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
-import { UserEntity } from 'src/packages/entity/user.entity';
+import { UserEntity } from 'src/user/entity/user.entity';
 import { Filter } from 'src/utilities/filter';
 import { resolveAuthContext } from 'src/utilities/auth-helper';
 import {
@@ -35,6 +35,25 @@ export class ItemCategoryService {
 
   @Inject(EventEmitter2)
   private readonly eventEmitter!: EventEmitter2;
+
+//auto generation of the code
+  private async generateCategoryCode(
+    itemCategoryName: string,
+    companyId: number,
+  ): Promise<string> {
+    const prefix = itemCategoryName.trim().substring(0, 8).toUpperCase();
+    let counter = 1;
+    let code: string;
+    do {
+      code = `${prefix}${String(counter).padStart(3, '0')}`;
+      const existing = await this.itemCategoryEntity.findOne({
+        where: { itemCategoryCode: code, companyId: Number(companyId) },
+      });
+      if (!existing) break;
+      counter++;
+    } while (true);
+    return code;
+  }
 
   async categoryList(param: categoryListDto, req?: any) {
     let return_data: any = {};
@@ -146,20 +165,11 @@ export class ItemCategoryService {
         }
       }
 
-      if (params.itemCategoryCode) {
-        const existingCode = await this.itemCategoryEntity.findOne({
-          where: {
-            itemCategoryCode: params.itemCategoryCode,
-            companyId: Number(params.companyId),
-          },
-        });
-        if (existingCode) {
-          return {
-            success: 0,
-            message: 'Item category code already exists for this company',
-          };
-        }
-      }
+      // Auto-generate unique code scoped per company
+      const itemCategoryCode = await this.generateCategoryCode(
+        params.itemCategoryName,
+        Number(params.companyId),
+      );
 
       const performerId = req?.user?.isImpersonation
         ? req?.user?.impersonatedBy
@@ -169,11 +179,12 @@ export class ItemCategoryService {
         : (req?.user?.email ?? '');
 
       const queryParams: any = {
-        itemCategoryCode: params.itemCategoryCode,
+        itemCategoryCode,
+        itemCategoryName: params.itemCategoryName,
         companyId: Number(params.companyId),
         status: params.status,
+        type: params.type,
       };
-      if (params.type) queryParams.type = params.type;
       if (performerId) queryParams.addedBy = Number(performerId);
       queryParams.addedDate = new Date();
 
@@ -192,7 +203,8 @@ export class ItemCategoryService {
         parameters: {
           userEmail: performerEmail,
           userGroup: authCtx.activeGroupName || 'N/A',
-          itemCategoryCode: params.itemCategoryCode,
+          itemCategoryCode,
+          itemCategoryName: params.itemCategoryName,
           type: params.type || '',
           companyId: params.companyId,
           impersonated: !!req?.user?.isImpersonation,
@@ -235,17 +247,9 @@ export class ItemCategoryService {
         }
       }
 
-      if (
-        params.itemCategoryCode &&
-        params.itemCategoryCode !== existingCategory.itemCategoryCode
-      ) {
-        return {
-          success: 0,
-          message: 'itemCategoryCode cannot be changed',
-        };
-      }
-
       const queryParams: any = {};
+      if (params.itemCategoryName !== undefined)
+        queryParams.itemCategoryName = params.itemCategoryName;
       if (params.type !== undefined) queryParams.type = params.type;
       if (params.status) queryParams.status = params.status;
 
@@ -277,6 +281,8 @@ export class ItemCategoryService {
           userEmail: performerEmail,
           userGroup: authCtx.activeGroupName || 'N/A',
           itemCategoryCode: existingCategory.itemCategoryCode,
+          itemCategoryName:
+            params.itemCategoryName ?? existingCategory.itemCategoryName,
           type: params.type ?? existingCategory.type ?? '',
           status: params.status ?? existingCategory.status,
           impersonated: !!req?.user?.isImpersonation,

@@ -285,3 +285,29 @@ export const CurrencyUpdateSchema = z.object({
         errorMap: () => ({ message: "Please Select a valid Status." }),
     }),
 });
+
+export const ItemCategoryFormSchema = z.object({
+    itemCategoryName: z.string()
+        .min(1, "Please enter Item Category Name."),
+    type: z.enum(["Goods", "Service"], {
+        errorMap: () => ({ message: "Please select a valid Type." }),
+    }),
+    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+        .min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const ItemCategoryUpdateSchema = z.object({
+    itemCategoryId: z.coerce.number(),
+    itemCategoryName: z.string()
+        .min(1, "Please enter Item Category Name."),
+    type: z.enum(["Goods", "Service"], {
+        errorMap: () => ({ message: "Please select a valid Type." }),
+    }),
+    companyId: z.coerce.number().min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});

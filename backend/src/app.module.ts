@@ -13,10 +13,13 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserModule } from './user/user.module';
 import { CurrencyModule } from './currency/currency.module';
 import { ItemCategoryModule } from './item_category/item.module';
+import { PermissionEntity } from './group/entity/capability.entity';
+import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
+    TypeOrmModule.forFeature([PermissionEntity, ActivityMasterEntity]),
     ConfigModule.forRoot({ isGlobal: true }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'upload'),

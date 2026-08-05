@@ -21,7 +21,7 @@
 //     );
 // }
 
-import ChangePassword from "@/components/ChnagePass";
+import ChangePassword from "@/components/user/ChnagePass";
 
 export default function ChangePasswordPage() {
     return <ChangePassword />;

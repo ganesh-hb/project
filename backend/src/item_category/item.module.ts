@@ -3,11 +3,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ItemCategoryController } from './item.controller';
 import { ItemCategoryService } from './item.service';
 import { ItemCategoryEntity } from 'src/item_category/entity/item-category.entity';
-import { CompanyEntity } from '../packages/entity/company.entity';
 import { UserCompanyGroupEntity } from '../packages/entity/user.company.group.entity';
-import { UserEntity } from '../packages/entity/user.entity';
-import { GroupPermissionEntity } from '../packages/entity/capability.entity';
+import { UserEntity } from '../user/entity/user.entity';
+import { GroupPermissionEntity } from '../group/entity/capability.entity';
 import { Filter } from 'src/utilities/filter';
+import { CompanyEntity } from 'src/company/entity/company.entity';
 
 @Module({
   imports: [

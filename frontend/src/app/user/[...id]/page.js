@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import UserDetailsPage from "@/components/UserDetails";
+import UserDetailsPage from "@/components/user/UserDetails";
 import RouteGuard from "@/components/RouteGuard";
 
 export default async function Page({ params }) {

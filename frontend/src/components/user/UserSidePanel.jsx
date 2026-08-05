@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
-import SidePanel from "./common/SidePanel";
+import SidePanel from "../common/SidePanel";
+
 
 export default function UserSidePanel({ userId, onClose, onMoreDetails }) {
     const [user, setUser] = useState(null);
@@ -70,36 +71,36 @@ export default function UserSidePanel({ userId, onClose, onMoreDetails }) {
 
     const sections = user
         ? [
-              {
-                  title: "Basic Info",
-                  rows: [
-                      { label: "UserName", value: user.name || "N/A" },
-                      { label: "Age", value: user.age ?? "N/A" },
-                  ],
-              },
-              {
-                  title: "Contact",
-                  rows: [
-                      { label: "Email", value: user.email || "N/A" },
-                      {
-                          label: "Phone",
-                          value: `${user.dialCode ? `+${user.dialCode} ` : ""}${user.phone || "N/A"}`,
-                      },
-                  ],
-              },
-              {
-                  title: "Role & Company",
-                  rows: [
-                      {
-                          label: "Role",
-                          value: primary?.groupName
-                              ? primary.groupName.replace(/([A-Z])/g, " $1").trim()
-                              : "N/A",
-                      },
-                      { label: "Company", value: primary?.companyName || "N/A" },
-                  ],
-              },
-          ]
+            {
+                title: "Basic Info",
+                rows: [
+                    { label: "UserName", value: user.name || "N/A" },
+                    { label: "Age", value: user.age ?? "N/A" },
+                ],
+            },
+            {
+                title: "Contact",
+                rows: [
+                    { label: "Email", value: user.email || "N/A" },
+                    {
+                        label: "Phone",
+                        value: `${user.dialCode ? `+${user.dialCode} ` : ""}${user.phone || "N/A"}`,
+                    },
+                ],
+            },
+            {
+                title: "Role & Company",
+                rows: [
+                    {
+                        label: "Role",
+                        value: primary?.groupName
+                            ? primary.groupName.replace(/([A-Z])/g, " $1").trim()
+                            : "N/A",
+                    },
+                    { label: "Company", value: primary?.companyName || "N/A" },
+                ],
+            },
+        ]
         : [];
 
     const avatarUrl = user?.userFile

@@ -1,3 +1,5 @@
+import { GroupPermissionEntity } from 'src/group/entity/capability.entity';
+import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import {
   Column,
   CreateDateColumn,
@@ -6,8 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserCompanyGroupEntity } from './user.company.group.entity';
-import { GroupPermissionEntity } from './capability.entity';
+
 
 @Entity('group')
 export class GroupEntity {

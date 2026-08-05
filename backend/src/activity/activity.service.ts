@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ActivityLogEntity } from 'src/packages/entity/activity-log.entity';
-import { ActivityMasterEntity } from 'src/packages/entity/activity-master.entity';
+import { ActivityLogEntity } from 'src/activity/entity/activity-log.entity';
 import { Filter } from 'src/utilities/filter';
-import { GetActivityListDto } from 'src/packages/dto/activity.dto';
+import { GetActivityListDto } from 'src/activity/dto/activity.dto';
+import { ActivityMasterEntity } from './entity/activity-master.entity';
 
 export interface LogPayload {
   activityCode: string;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { ResetPasswordSchema } from './Zod';
+import { ResetPasswordSchema } from '../Zod';
 
 export default function ResetPassword() {
     const router = useRouter();

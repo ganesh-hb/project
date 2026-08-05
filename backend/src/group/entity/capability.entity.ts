@@ -1,3 +1,4 @@
+import { GroupEntity } from 'src/group/entity/group.entity';
 import {
   Column,
   Entity,
@@ -5,7 +6,6 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { GroupEntity } from './group.entity';
 
 @Entity('permissions')
 export class PermissionEntity {

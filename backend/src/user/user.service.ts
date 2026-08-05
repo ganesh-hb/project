@@ -10,9 +10,7 @@ import { Repository, Not } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 
-import { UserEntity } from 'src/packages/entity/user.entity';
-import { GroupEntity } from 'src/packages/entity/group.entity';
-import { CompanyEntity } from 'src/packages/entity/company.entity';
+import { UserEntity } from 'src/user/entity/user.entity';
 
 import { FileTransfer } from 'src/utilities/file.transfer';
 import { Filter } from 'src/utilities/filter';
@@ -20,8 +18,10 @@ import { Mailer } from 'src/utilities/mailer';
 import bcrypt from 'bcrypt';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { JwtService } from '@nestjs/jwt';
-import { GroupPermissionEntity } from 'src/packages/entity/capability.entity';
+import { GroupPermissionEntity } from 'src/group/entity/capability.entity';
 import { resolveAuthContext } from 'src/utilities/auth-helper';
+import { CompanyEntity } from 'src/company/entity/company.entity';
+import { GroupEntity } from 'src/group/entity/group.entity';
 
 @Injectable()
 export class UserService {

@@ -17,7 +17,7 @@ import {
   getGroupListDto,
   GroupDto,
   GroupUpdateDto,
-} from 'src/packages/dto/group.dto';
+} from 'src/group/dto/group.dto';
 import { AuthGuard } from '@nestjs/passport';
 import {
   PermissionsGuard,

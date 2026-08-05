@@ -1,18 +1,18 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import 'dotenv/config';
-import { UserEntity } from 'src/packages/entity/user.entity';
-import { GroupEntity } from '../entity/group.entity';
-import { CompanyEntity } from '../entity/company.entity';
+import { UserEntity } from 'src/user/entity/user.entity';
 import { UserCompanyGroupEntity } from '../entity/user.company.group.entity';
 import {
   PermissionEntity,
   GroupPermissionEntity,
-} from '../entity/capability.entity';
-import { CurrencyEntity } from '../entity/currency.entity';
+} from '../../group/entity/capability.entity';
+import { CurrencyEntity } from '../../currency/entity/currency.entity';
 import { CompanyCurrencyEntity } from '../entity/company.currency.entity';
-import { ActivityMasterEntity } from '../entity/activity-master.entity';
-import { ActivityLogEntity } from '../entity/activity-log.entity';
+import { ActivityLogEntity } from '../../activity/entity/activity-log.entity';
 import { ItemCategoryEntity } from '../../item_category/entity/item-category.entity';
+import { CompanyEntity } from 'src/company/entity/company.entity';
+import { GroupEntity } from 'src/group/entity/group.entity';
+import { ActivityMasterEntity } from 'src/activity/entity/activity-master.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: (process.env.DB_CLIENT as 'mysql') ?? 'mysql',

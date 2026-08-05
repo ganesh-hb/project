@@ -27,44 +27,52 @@ export default function SiteMap() {
         );
     }
 
-    const dashboardSections = [
+    const rawSections = [
         {
             title: "Dashboards",
-            items: ["Sitemap"],
-            redirectTo: '/',
-            show: true,
+            items: [
+                { label: "Sitemap", redirectTo: "/", show: true },
+            ],
+        },
+        {
+            title: "Item Management",
+            items: [
+                { label: "Item Category", redirectTo: "/item-category-list", show: permissions.includes("itemCategoryList") },
+            ],
         },
         {
             title: "Users",
-            items: ["Users"],
-            redirectTo: '/users',
-            show: permissions.includes("userList"),
+            items: [
+                { label: "Users", redirectTo: "/users", show: permissions.includes("userList") },
+            ],
         },
         {
             title: "Companies",
-            items: ["Companies"],
-            redirectTo: '/company-list',
-            show: permissions.includes("companyList"),
+            items: [
+                { label: "Companies", redirectTo: "/company-list", show: permissions.includes("companyList") },
+            ],
         },
         {
             title: "Groups",
-            items: ["Groups"],
-            redirectTo: '/group-list',
-            show: permissions.includes("groupList"),
+            items: [
+                { label: "Groups", redirectTo: "/group-list", show: permissions.includes("groupList") },
+            ],
         },
         {
             title: "Currencies",
-            items: ["Currencies"],
-            redirectTo: '/currency-list',
-            show: permissions.includes("currencyList") || superAdmin,
+            items: [
+                { label: "Currencies", redirectTo: "/currency-list", show: permissions.includes("currencyList") || superAdmin },
+            ],
         },
         {
             title: "Settings",
-            items: ["Capabilities"],
-            redirectTo: '/capabilities',
-            show: superAdmin,
+            items: [
+                { label: "Capabilities", redirectTo: "/capabilities", show: superAdmin },
+            ],
         },
-    ].filter((s) => s.show);
+    ];
+
+    const dashboardSections = rawSections.filter((s) => s.items.some((i) => i.show));
 
     const gotoPage = (e, item) => {
         router.push(item);
@@ -106,14 +114,14 @@ export default function SiteMap() {
                             </div>
 
                             <ul className="space-y-3 px-6 py-5">
-                                {section.items.map((item, itemIndex) => (
+                                {section.items.filter((i) => i.show).map((item, itemIndex) => (
                                     <li
                                         key={itemIndex}
                                         className="flex items-center text-gray-600 hover:text-black cursor-pointer transition"
-                                        onClick={(e) => { gotoPage(e, section.redirectTo) }}
+                                        onClick={(e) => { gotoPage(e, item.redirectTo) }}
                                     >
                                         <span className="mr-3 text-xs">•</span>
-                                        {item}
+                                        {item.label}
                                     </li>
                                 ))}
                             </ul>

@@ -18,7 +18,7 @@ import {
   CompanyDto,
   CompanyUpdateDto,
   getCompanyListDto,
-} from 'src/packages/dto/company.dto';
+} from 'src/company/dto/company.dto';
 import { AuthGuard } from '@nestjs/passport';
 import {
   PermissionsGuard,

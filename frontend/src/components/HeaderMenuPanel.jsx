@@ -42,15 +42,43 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                 { label: "Companies", redirectTo: "/company-list", show: activePermissions.includes("companyList") },
                 { label: "Groups", redirectTo: "/group-list", show: activePermissions.includes("groupList") },
                 { label: "Currencies", redirectTo: "/currency-list", show: activePermissions.includes("currencyList") || isSuper },
+                {
+                    groupLabel: "Item Management",
+                    children: [
+                        { label: "Item Category", redirectTo: "/item-category-list", show: activePermissions.includes("itemCategoryList") },
+                    ]
+                },
             ]
         }
     ];
 
     const menuCategories = rawCategories
-        .map(cat => ({
-            ...cat,
-            items: cat.items.filter(item => item.show)
-        }))
+        .map(cat => {
+            const filteredItems = cat.items
+                .map(item => {
+                    if (item.children) {
+                        const visibleChildren = item.children.filter(child => child.show);
+                        return visibleChildren.length > 0
+                            ? { ...item, children: visibleChildren }
+                            : null;
+                    }
+                    return item.show ? item : null;
+                })
+                .filter(Boolean);
+
+            const totalLeafCount = filteredItems.reduce((acc, item) => {
+                if (item.children) {
+                    return acc + item.children.length;
+                }
+                return acc + 1;
+            }, 0);
+
+            return {
+                ...cat,
+                items: filteredItems,
+                count: totalLeafCount,
+            };
+        })
         .filter(cat => cat.items.length > 0);
 
     const currentCat = menuCategories.find(c => c.id === activeCategory) || menuCategories[0];
@@ -89,7 +117,7 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                             >
                                 <span>{cat.title}</span>
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200/60 text-gray-600">
-                                    {cat.items.length}
+                                    {cat.count}
                                 </span>
                             </button>
                         );
@@ -99,34 +127,69 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                 {/* Right main area: category items */}
                 <div className="flex-1 p-6 overflow-y-auto bg-white">
                     {currentCat && (
-                        <div>
-                            <div className="mb-6 pb-3 border-b border-gray-100">
+                        <div className="space-y-6">
+                            <div className="pb-3 border-b border-gray-100">
                                 <h3 className="text-lg font-bold text-gray-800">{currentCat.title}</h3>
-                                {/* <p className="text-xs text-gray-500 mt-0.5">
-                                    Available views and tools in this section
-                                </p> */}
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {currentCat.items.map((item, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => {
-                                            onClose();
-                                            router.push(item.redirectTo);
-                                        }}
-                                        className="group flex flex-col gap-1 p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-semibold text-gray-800 group-hover:text-blue-600">
-                                                {item.label}
-                                            </span>
-                                            <span className="text-gray-400 group-hover:text-blue-600 text-sm">
-                                                →
-                                            </span>
+
+                            {/* Flat Items */}
+                            {currentCat.items.some(item => !item.children) && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {currentCat.items
+                                        .filter(item => !item.children)
+                                        .map((item, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    onClose();
+                                                    router.push(item.redirectTo);
+                                                }}
+                                                className="group flex flex-col gap-1 p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left"
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-semibold text-gray-800 group-hover:text-blue-600">
+                                                        {item.label}
+                                                    </span>
+                                                    <span className="text-gray-400 group-hover:text-blue-600 text-sm">
+                                                        →
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                </div>
+                            )}
+
+                            {/* Grouped Sub-sections */}
+                            {currentCat.items
+                                .filter(item => item.children)
+                                .map((group, gIdx) => (
+                                    <div key={gIdx} className="space-y-3 pt-2">
+                                        <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                                            {group.groupLabel}
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {group.children.map((child, cIdx) => (
+                                                <button
+                                                    key={cIdx}
+                                                    onClick={() => {
+                                                        onClose();
+                                                        router.push(child.redirectTo);
+                                                    }}
+                                                    className="group flex flex-col gap-1 p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-500 hover:shadow-md transition-all cursor-pointer text-left"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-semibold text-gray-800 group-hover:text-blue-600">
+                                                            {child.label}
+                                                        </span>
+                                                        <span className="text-gray-400 group-hover:text-blue-600 text-sm">
+                                                            →
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            ))}
                                         </div>
-                                    </button>
+                                    </div>
                                 ))}
-                            </div>
                         </div>
                     )}
                 </div>

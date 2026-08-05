@@ -3,8 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { GroupController } from './group.controller';
 import { GroupService } from './group.service';
-
-import { GroupEntity } from 'src/packages/entity/group.entity';
 import { FileTransfer } from 'src/utilities/file.transfer';
 import { Filter } from 'src/utilities/filter';
 import { Mailer } from 'src/utilities/mailer';
@@ -12,7 +10,8 @@ import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.e
 import {
   PermissionEntity,
   GroupPermissionEntity,
-} from 'src/packages/entity/capability.entity';
+} from 'src/group/entity/capability.entity';
+import { GroupEntity } from './entity/group.entity';
 
 @Module({
   imports: [

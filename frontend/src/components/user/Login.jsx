@@ -2,12 +2,11 @@
 
 import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginContext } from "./hooks/LoginContext";
-import { userLoginSchema } from "./Zod";
+import { loginContext } from "../hooks/LoginContext";
+import { userLoginSchema } from "../Zod";
 import { toast } from "react-toastify";
 import { decryptResponse } from "@/app/lib/crypto";
 
-// ─── Profile-selection helpers ───────────────────────────────────────────────
 
 async function callSelectProfile(userId, ucgId) {
     const res = await fetch("/relayapi", {
@@ -22,8 +21,6 @@ async function callSelectProfile(userId, ucgId) {
     const payload = await res.json();
     return payload.encrypted ? decryptResponse(payload.encrypted) : payload;
 }
-
-// ─── Group badge colour mapping ───────────────────────────────────────────────
 
 const GROUP_COLOURS = {
     superAdmin: { bg: "#f0f4ff", border: "#6366f1", badge: "#6366f1", text: "#3730a3" },
