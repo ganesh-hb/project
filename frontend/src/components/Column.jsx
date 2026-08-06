@@ -61,12 +61,11 @@ function RoleCell({ row }) {
 
 function LoginAsCell({ row }) {
     const router = useRouter();
-    const { isLogin, impersonating, loginAs } = useContext(loginContext);
+    const { isLogin, impersonating, loginAs, displayUser } = useContext(loginContext);
     const user = row.original;
+    const superAdmin = isSuperAdmin(displayUser);
 
-    const superAdmin = isSuperAdmin(isLogin);
-
-    const canLoginAs = superAdmin && !impersonating && user.user_userId !== isLogin?.userId;
+    const canLoginAs = superAdmin && !impersonating && user.user_userId !== displayUser?.userId;
 
     if (!canLoginAs) return <span className="text-gray-400 text-sm">-</span>;
 
@@ -187,75 +186,84 @@ function sortableHeader(label) {
     return HeaderComponent;
 }
 
-export const getColumns = (onUserClick) => [
-    {
-        accessorKey: "user_name",
-        header: sortableHeader("Name"),
-        cell: ({ row }) => <NameCell row={row} onUserClick={onUserClick} />,
-        filterFn: "includesString",
-    },
-    {
-        accessorKey: "user_email",
-        header: sortableHeader("Email"),
-        cell: ({ row }) => (
-            <span className="text-gray-700 text-sm">{row.getValue("user_email") || "-"}</span>
-        ),
-        filterFn: "includesString",
-    },
-    {
-        accessorKey: "user_phone",
-        header: sortableHeader("Phone"),
-        cell: ({ row }) => (
-            <span className="text-gray-700 text-sm">{row.getValue("user_phone") || "-"}</span>
-        ),
-        filterFn: "includesString",
-    },
-    {
-        accessorKey: "user_age",
-        header: sortableHeader("Age"),
-        cell: ({ row }) => (
-            <span className="text-gray-700 text-sm">{row.getValue("user_age") || "-"}</span>
-        ),
-        filterFn: "includesString",
-    },
-    {
-        id: "role",
-        header: () => <span className="font-semibold text-gray-600 text-sm">Role</span>,
-        cell: ({ row }) => <RoleCell row={row} />,
-        filterFn: (row, _id, filterValue) => {
-            const assignments = row.original.assignments || [];
-            return assignments.some((a) =>
-                a.groupName?.toLowerCase().includes(filterValue.toLowerCase())
-            );
+export const getColumns = (onUserClick, isSuperAdminUser = false) => {
+    const cols = [
+        {
+            accessorKey: "user_name",
+            header: sortableHeader("Name"),
+            cell: ({ row }) => <NameCell row={row} onUserClick={onUserClick} />,
+            filterFn: "includesString",
         },
-    },
-    {
-        id: "company",
-        header: () => <span className="font-semibold text-gray-600 text-sm">Company</span>,
-        cell: ({ row }) => <CompanyCell row={row} />,
-        filterFn: (row, _id, filterValue) => {
-            const assignments = row.original.assignments || [];
-            return assignments.some((a) =>
-                a.companyName?.toLowerCase().includes(filterValue.toLowerCase())
-            );
+        {
+            accessorKey: "user_email",
+            header: sortableHeader("Email"),
+            cell: ({ row }) => (
+                <span className="text-gray-700 text-sm">{row.getValue("user_email") || "-"}</span>
+            ),
+            filterFn: "includesString",
         },
-    },
-    {
-        accessorKey: "user_status",
-        header: sortableHeader("Status"),
-        cell: ({ row }) => <StatusBadge status={row.getValue("user_status")} />,
-        filterFn: "includesString",
-    },
-    {
-        id: "loginAs",
-        header: () => <span className="font-semibold text-gray-600 text-sm">Login As</span>,
-        cell: ({ row }) => <LoginAsCell row={row} />,
-    },
-    {
+        {
+            accessorKey: "user_phone",
+            header: sortableHeader("Phone"),
+            cell: ({ row }) => (
+                <span className="text-gray-700 text-sm">{row.getValue("user_phone") || "-"}</span>
+            ),
+            filterFn: "includesString",
+        },
+        {
+            accessorKey: "user_age",
+            header: sortableHeader("Age"),
+            cell: ({ row }) => (
+                <span className="text-gray-700 text-sm">{row.getValue("user_age") || "-"}</span>
+            ),
+            filterFn: "includesString",
+        },
+        {
+            id: "role",
+            header: () => <span className="font-semibold text-gray-600 text-sm">Role</span>,
+            cell: ({ row }) => <RoleCell row={row} />,
+            filterFn: (row, _id, filterValue) => {
+                const assignments = row.original.assignments || [];
+                return assignments.some((a) =>
+                    a.groupName?.toLowerCase().includes(filterValue.toLowerCase())
+                );
+            },
+        },
+        {
+            id: "company",
+            header: () => <span className="font-semibold text-gray-600 text-sm">Company</span>,
+            cell: ({ row }) => <CompanyCell row={row} />,
+            filterFn: (row, _id, filterValue) => {
+                const assignments = row.original.assignments || [];
+                return assignments.some((a) =>
+                    a.companyName?.toLowerCase().includes(filterValue.toLowerCase())
+                );
+            },
+        },
+        {
+            accessorKey: "user_status",
+            header: sortableHeader("Status"),
+            cell: ({ row }) => <StatusBadge status={row.getValue("user_status")} />,
+            filterFn: "includesString",
+        },
+    ];
+
+    console.log(isSuperAdminUser, "is superAdmin")
+    if (isSuperAdminUser) {
+        cols.push({
+            id: "loginAs",
+            header: () => <span className="font-semibold text-gray-600 text-sm">Login As</span>,
+            cell: ({ row }) => <LoginAsCell row={row} />,
+        });
+    }
+
+    cols.push({
         id: "tabMenu",
         header: () => <span className="font-semibold text-gray-600 text-sm">Actions</span>,
         cell: ({ row }) => <TabMenuCell row={row} />,
-    },
-];
+    });
+
+    return cols;
+};
 
 export const columns = getColumns();

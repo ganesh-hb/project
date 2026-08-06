@@ -36,7 +36,7 @@ export class ItemCategoryService {
   @Inject(EventEmitter2)
   private readonly eventEmitter!: EventEmitter2;
 
-//auto generation of the code
+  // Auto-generation of code
   private async generateCategoryCode(
     itemCategoryName: string,
     companyId: number,
@@ -55,12 +55,64 @@ export class ItemCategoryService {
     return code;
   }
 
+  // cycle prevention
+  private async validateParentCategory(
+    parentCategoryId: number,
+    companyId: number,
+    currentCategoryId?: number,
+  ): Promise<string | null> {
+    if (currentCategoryId && Number(parentCategoryId) === Number(currentCategoryId)) {
+      return 'A category cannot be its own parent';
+    }
+
+    const parent = await this.itemCategoryEntity.findOne({
+      where: { itemCategoryId: Number(parentCategoryId) },
+    });
+
+    if (!parent) {
+      return 'Parent category not found';
+    }
+
+    if (parent.status !== 'Active') {
+      return 'Selected parent category must be Active';
+    }
+
+    if (Number(parent.companyId) !== Number(companyId)) {
+      return 'Parent category must belong to the same company';
+    }
+
+    // cycle prevention 
+    if (currentCategoryId) {
+      let currParentId: number | null | undefined = parent.parentCategoryId;
+      const visited = new Set<number>([Number(currentCategoryId), Number(parentCategoryId)]);
+
+      while (currParentId) {
+        const numParentId = Number(currParentId);
+        if (numParentId === Number(currentCategoryId)) {
+          return 'Invalid parent category: selected category is a descendant of the current category (circular reference)';
+        }
+        if (visited.has(numParentId)) {
+          break; 
+        }
+        visited.add(numParentId);
+
+        const ancestor = await this.itemCategoryEntity.findOne({
+          where: { itemCategoryId: numParentId },
+        });
+        currParentId = ancestor?.parentCategoryId;
+      }
+    }
+
+    return null;
+  }
+
   async categoryList(param: categoryListDto, req?: any) {
     let return_data: any = {};
     try {
       const authCtx = await resolveAuthContext(req, this.ucgEntity);
       const queryBuilder =
-        this.itemCategoryEntity.createQueryBuilder('itemCategory');
+        this.itemCategoryEntity.createQueryBuilder('itemCategory')
+        .leftJoinAndSelect('itemCategory.parentCategory', 'parentCategory');
 
       if (!authCtx.isSuperAdmin) {
         const scopedCompanyIds = req?.scopedCompanyIds || [
@@ -99,7 +151,13 @@ export class ItemCategoryService {
       queryBuilder.skip(skip).take(limit);
       queryBuilder.orderBy('itemCategory.itemCategoryId', 'DESC');
 
-      const [data, total] = await queryBuilder.getManyAndCount();
+      const [rawHits, total] = await queryBuilder.getManyAndCount();
+
+      // Explicit response flattening for parentCategoryName & parentCategoryId side by side
+      const data = rawHits.map((cat) => ({
+        ...cat,
+        parentCategoryName: cat.parentCategory?.itemCategoryName ?? null,
+      }));
 
       return_data = {
         success: 1,
@@ -117,6 +175,7 @@ export class ItemCategoryService {
     const authCtx = await resolveAuthContext(req, this.ucgEntity);
     const category = await this.itemCategoryEntity.findOne({
       where: { itemCategoryId: id },
+      relations: ['parentCategory'],
     });
     if (!category) {
       throw new NotFoundException('Item category not found');
@@ -144,6 +203,7 @@ export class ItemCategoryService {
 
     return {
       ...category,
+      parentCategoryName: category.parentCategory?.itemCategoryName ?? null,
       addedByName: addedByUser?.name ?? null,
       updatedByName: updatedByUser?.name ?? null,
     };
@@ -165,6 +225,17 @@ export class ItemCategoryService {
         }
       }
 
+      // Validate Parent Category 
+      if (params.parentCategoryId) {
+        const errMsg = await this.validateParentCategory(
+          Number(params.parentCategoryId),
+          Number(params.companyId),
+        );
+        if (errMsg) {
+          return { success: 0, message: errMsg };
+        }
+      }
+
       // Auto-generate unique code scoped per company
       const itemCategoryCode = await this.generateCategoryCode(
         params.itemCategoryName,
@@ -182,6 +253,7 @@ export class ItemCategoryService {
         itemCategoryCode,
         itemCategoryName: params.itemCategoryName,
         companyId: Number(params.companyId),
+        parentCategoryId: params.parentCategoryId ? Number(params.parentCategoryId) : null,
         status: params.status,
         type: params.type,
       };
@@ -205,6 +277,7 @@ export class ItemCategoryService {
           userGroup: authCtx.activeGroupName || 'N/A',
           itemCategoryCode,
           itemCategoryName: params.itemCategoryName,
+          parentCategoryId: params.parentCategoryId ? Number(params.parentCategoryId) : null,
           type: params.type || '',
           companyId: params.companyId,
           impersonated: !!req?.user?.isImpersonation,
@@ -247,11 +320,27 @@ export class ItemCategoryService {
         }
       }
 
+      // Validate parentCategoryId 
+      if (params.parentCategoryId !== undefined) {
+        if (params.parentCategoryId !== null && Number(params.parentCategoryId) > 0) {
+          const errMsg = await this.validateParentCategory(
+            Number(params.parentCategoryId),
+            Number(existingCategory.companyId),
+            Number(params.itemCategoryId),
+          );
+          if (errMsg) {
+            return { success: 0, message: errMsg };
+          }
+        }
+      }
+
       const queryParams: any = {};
       if (params.itemCategoryName !== undefined)
         queryParams.itemCategoryName = params.itemCategoryName;
       if (params.type !== undefined) queryParams.type = params.type;
       if (params.status) queryParams.status = params.status;
+      if (params.parentCategoryId !== undefined)
+        queryParams.parentCategoryId = params.parentCategoryId ? Number(params.parentCategoryId) : null;
 
       const performerId = req?.user?.isImpersonation
         ? req?.user?.impersonatedBy
@@ -283,6 +372,10 @@ export class ItemCategoryService {
           itemCategoryCode: existingCategory.itemCategoryCode,
           itemCategoryName:
             params.itemCategoryName ?? existingCategory.itemCategoryName,
+          parentCategoryId:
+            params.parentCategoryId !== undefined
+              ? (params.parentCategoryId ? Number(params.parentCategoryId) : null)
+              : existingCategory.parentCategoryId,
           type: params.type ?? existingCategory.type ?? '',
           status: params.status ?? existingCategory.status,
           impersonated: !!req?.user?.isImpersonation,

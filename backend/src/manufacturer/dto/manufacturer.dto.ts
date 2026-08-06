@@ -21,7 +21,7 @@ export class filterDto {
   operator!: string;
 }
 
-export class categoryListDto {
+export class manufacturerListDto {
   @IsOptional()
   @IsInt()
   @Transform(({ value }) => Number(value))
@@ -42,13 +42,10 @@ export class categoryListDto {
   filters?: filterDto[];
 }
 
-export class ItemCategoryDto {
+export class ManufacturerDto {
   @IsString()
   @IsNotEmpty()
-  itemCategoryName!: string;
-
-  @IsIn(['Goods', 'Service'])
-  type!: 'Goods' | 'Service';
+  manufacturerName!: string;
 
   @IsInt()
   @IsNotEmpty()
@@ -62,39 +59,24 @@ export class ItemCategoryDto {
 
   @IsOptional()
   @IsInt()
-  @Transform(({ value }) => (value ? Number(value) : null))
-  parentCategoryId?: number | null;
-
-  @IsOptional()
-  @IsInt()
   @Transform(({ value }) => Number(value))
   addedBy?: number;
 }
 
-export class ItemCategoryUpdateDto {
+export class ManufacturerUpdateDto {
   @IsInt()
   @IsNotEmpty()
   @Transform(({ value }) => Number(value))
-  itemCategoryId!: number;
+  manufacturerId!: number;
 
   @IsOptional()
   @IsString()
-  itemCategoryName?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsIn(['Goods', 'Service'])
-  type?: 'Goods' | 'Service';
+  manufacturerName?: string;
 
   @IsOptional()
   @IsString()
   @IsIn(['Active', 'Inactive'])
   status?: 'Active' | 'Inactive';
-
-  @IsOptional()
-  @IsInt()
-  @Transform(({ value }) => (value ? Number(value) : null))
-  parentCategoryId?: number | null;
 
   @IsOptional()
   @IsInt()

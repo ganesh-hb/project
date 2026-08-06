@@ -33,6 +33,11 @@ const MODULES = [
         key: "itemCategory",
         permissions: ["itemCategoryList", "itemCategoryView", "itemCategoryAdd", "itemCategoryUpdate"],
     },
+    {
+        label: "Manufacturer",
+        key: "manufacturer",
+        permissions: ["manufacturerList", "manufacturerView", "manufacturerAdd", "manufacturerUpdate"],
+    },
 ];
 
 const COL_HEADERS = ["List", "View", "Add", "Update"];

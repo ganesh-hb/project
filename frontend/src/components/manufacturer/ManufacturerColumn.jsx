@@ -20,54 +20,26 @@ function StatusBadge({ status }) {
     );
 }
 
-function CategoryNameCell({ row, onPreview }) {
+function ManufacturerNameCell({ row, onPreview }) {
     const { can } = useContext(loginContext);
-    const category = row.original;
+    const manufacturer = row.original;
     return (
         <div className="flex items-center gap-2">
             <span
                 className={`font-semibold text-base ${
-                    can("itemCategoryView")
+                    can("manufacturerView")
                         ? "text-blue-600 cursor-pointer hover:underline"
                         : "text-gray-800"
                 }`}
                 onClick={(e) => {
-                    if (!can("itemCategoryView")) return;
+                    if (!can("manufacturerView")) return;
                     e.stopPropagation();
-                    if (onPreview) onPreview(category.itemCategoryId);
+                    if (onPreview) onPreview(manufacturer.manufacturerId);
                 }}
             >
-                {category.itemCategoryName || category.itemCategoryCode || "—"}
+                {manufacturer.manufacturerName || manufacturer.manufacturerCode || "—"}
             </span>
         </div>
-    );
-}
-
-function ParentCategoryCell({ row, onPreview }) {
-    const { can } = useContext(loginContext);
-    const category = row.original;
-    const parentName = category.parentCategoryName;
-    const parentId = category.parentCategoryId;
-
-    if (!parentName || !parentId) {
-        return <span className="text-gray-400 text-sm">-</span>;
-    }
-
-    return (
-        <span
-            className={`text-sm font-medium ${
-                can("itemCategoryView")
-                    ? "text-blue-600 cursor-pointer hover:underline"
-                    : "text-gray-700"
-            }`}
-            onClick={(e) => {
-                if (!can("itemCategoryView")) return;
-                e.stopPropagation();
-                if (onPreview) onPreview(parentId);
-            }}
-        >
-            {parentName}
-        </span>
     );
 }
 
@@ -86,34 +58,20 @@ function sortableHeader(label) {
     return SortableHeaderComponent;
 }
 
-export const getItemCategoryColumns = (onPreview, onEdit) => [
+export const getManufacturerColumns = (onPreview, onEdit) => [
     {
-        accessorKey: "itemCategoryName",
-        header: sortableHeader("Category Name"),
-        cell: ({ row }) => <CategoryNameCell row={row} onPreview={onPreview} />,
+        accessorKey: "manufacturerName",
+        header: sortableHeader("Manufacturer Name"),
+        cell: ({ row }) => <ManufacturerNameCell row={row} onPreview={onPreview} />,
         filterFn: "includesString",
     },
     {
-        accessorKey: "itemCategoryCode",
+        accessorKey: "manufacturerCode",
         header: sortableHeader("Code"),
         cell: ({ row }) => (
             <span className="text-gray-700 text-sm font-mono font-medium">
-                {row.getValue("itemCategoryCode") || "-"}
+                {row.getValue("manufacturerCode") || "-"}
             </span>
-        ),
-        filterFn: "includesString",
-    },
-    {
-        accessorKey: "parentCategoryName",
-        header: sortableHeader("Parent Category"),
-        cell: ({ row }) => <ParentCategoryCell row={row} onPreview={onPreview} />,
-        filterFn: "includesString",
-    },
-    {
-        accessorKey: "type",
-        header: () => <span className="font-semibold text-gray-600 text-sm">Type</span>,
-        cell: ({ row }) => (
-            <span className="text-gray-700 text-sm">{row.getValue("type") || "-"}</span>
         ),
         filterFn: "includesString",
     },
@@ -128,23 +86,23 @@ export const getItemCategoryColumns = (onPreview, onEdit) => [
         header: () => <span className="font-semibold text-gray-600 text-sm">Actions</span>,
         cell: ({ row }) => {
             const { can } = useContext(loginContext);
-            const category = row.original;
+            const manufacturer = row.original;
             return (
                 <div className="flex items-center gap-2">
-                    {can("itemCategoryView") && (
+                    {can("manufacturerView") && (
                         <button
                             title="View Details"
-                            onClick={(e) => { e.stopPropagation(); if (onPreview) onPreview(category.itemCategoryId); }}
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition"
+                            onClick={(e) => { e.stopPropagation(); if (onPreview) onPreview(manufacturer.manufacturerId); }}
+                            className="rounded-lg p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer"
                         >
                             <Eye className="h-4 w-4" />
                         </button>
                     )}
-                    {can("itemCategoryUpdate") && (
+                    {can("manufacturerUpdate") && (
                         <button
                             title="Edit"
-                            onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(category.itemCategoryId); }}
-                            className="rounded-lg p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition"
+                            onClick={(e) => { e.stopPropagation(); if (onEdit) onEdit(manufacturer.manufacturerId); }}
+                            className="rounded-lg p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 transition cursor-pointer"
                         >
                             <Pencil className="h-4 w-4" />
                         </button>

@@ -15,13 +15,6 @@ const MySwal = withReactContent(Swal);
 
 /**
  * Slide-over Add / Update form panel for Item Categories.
- *
- * Props:
- *  isOpen        – controls visibility
- *  onClose       – called when panel should close
- *  context       – "item-category-add" | "item-category-update"
- *  id            – itemCategoryId (update mode only)
- *  onSuccess     – callback after successful submit (e.g. refresh list)
  */
 export default function ItemCategoryFormSidePanel({
     isOpen,
@@ -51,6 +44,11 @@ export default function ItemCategoryFormSidePanel({
     const [fetching, setFetching] = useState(false);
     const [companies, setCompanies] = useState([]);
     const [companiesLoading, setCompaniesLoading] = useState(false);
+
+    // Parent category dropdown state
+    const [parentCategories, setParentCategories] = useState([]);
+    const [parentsLoading, setParentsLoading] = useState(false);
+
     const [visible, setVisible] = useState(false);
     const [mounted, setMounted] = useState(false);
     const timerRef = useRef(null);
@@ -89,6 +87,15 @@ export default function ItemCategoryFormSidePanel({
         }
     }, [isOpen, context, id]);
 
+    useEffect(() => {
+        if (!isOpen) return;
+        if (formData.companyId) {
+            fetchParentCategories(formData.companyId);
+        } else {
+            setParentCategories([]);
+        }
+    }, [formData.companyId, isOpen]);
+
     const fetchDetails = async () => {
         setFetching(true);
         try {
@@ -106,8 +113,9 @@ export default function ItemCategoryFormSidePanel({
             if (data?.itemCategoryId) {
                 setFormData({
                     itemCategoryName: data.itemCategoryName || "",
-                    type: data.type || "",
+                    type: data.type || "Goods",
                     companyId: String(data.companyId || ""),
+                    parentCategoryId: data.parentCategoryId ? String(data.parentCategoryId) : "",
                     status: data.status || "Active",
                 });
             }
@@ -141,10 +149,54 @@ export default function ItemCategoryFormSidePanel({
         }
     };
 
+    const fetchParentCategories = async (companyId) => {
+        setParentsLoading(true);
+        try {
+            const res = await fetch("/relayapi", {
+                method: "POST",
+                headers: {
+                    ...authHeaders(),
+                    endpoint: "item-category-list",
+                    module: "item-category",
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    page: 1,
+                    limit: 500,
+                    filters: [
+                        { key: "status", value: "Active", operator: "=" },
+                        { key: "companyId", value: Number(companyId), operator: "=" },
+                    ],
+                    condition: "All",
+                }),
+            });
+            const payload = await res.json();
+            const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
+            let list = data?.data ?? [];
+
+            const currentIdNum = Number(Array.isArray(id) ? id[0] : id);
+            if (config.mode === "update" && currentIdNum) {
+                list = list.filter((item) => Number(item.itemCategoryId) !== currentIdNum);
+            }
+            setParentCategories(list);
+        } catch {
+            toast.error("Failed to load parent categories.", { position: "top-right" });
+            setParentCategories([]);
+        } finally {
+            setParentsLoading(false);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setErrors((prev) => ({ ...prev, [name]: "" }));
-        setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // If Super Admin changes Company, reset parentCategoryId selection
+        if (name === "companyId") {
+            setFormData((prev) => ({ ...prev, [name]: value, parentCategoryId: "" }));
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleClose = async () => {
@@ -167,8 +219,17 @@ export default function ItemCategoryFormSidePanel({
         const numericId = Number(Array.isArray(id) ? id[0] : id);
         const validationInput =
             config.mode === "update"
-                ? { ...formData, itemCategoryId: numericId, companyId: Number(formData.companyId) }
-                : { ...formData, companyId: Number(formData.companyId) };
+                ? {
+                    ...formData,
+                    itemCategoryId: numericId,
+                    companyId: Number(formData.companyId),
+                    parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
+                }
+                : {
+                    ...formData,
+                    companyId: Number(formData.companyId),
+                    parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
+                };
 
         const result = config.schema.safeParse(validationInput);
         if (!result.success) {
@@ -204,12 +265,14 @@ export default function ItemCategoryFormSidePanel({
                     itemCategoryName: formData.itemCategoryName,
                     type: formData.type || undefined,
                     companyId: Number(formData.companyId),
+                    parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
                     status: formData.status,
                 }
                 : {
                     itemCategoryName: formData.itemCategoryName,
                     type: formData.type || undefined,
                     companyId: Number(formData.companyId),
+                    parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
                     status: formData.status,
                     ...(displayUser?.userId ? { addedBy: displayUser.userId } : {}),
                 };
@@ -281,6 +344,47 @@ export default function ItemCategoryFormSidePanel({
             );
         }
 
+        if (field.type === "parent-category-select") {
+            const noCompanySelected = !formData.companyId;
+            return (
+                <div key={field.name}>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        {field.label}{field.required && <span className="ml-0.5 text-red-500">*</span>}
+                    </label>
+                    <select
+                        name={field.name}
+                        value={formData[field.name]}
+                        onChange={handleChange}
+                        disabled={field.readOnly || noCompanySelected || parentsLoading}
+                        className={
+                            inputCls +
+                            (noCompanySelected || field.readOnly
+                                ? " bg-gray-50 text-gray-400 cursor-not-allowed"
+                                : " bg-white cursor-pointer")
+                        }
+                    >
+                        {noCompanySelected ? (
+                            <option value="">Select a company first</option>
+                        ) : (
+                            <>
+                                <option value="">
+                                    {parentsLoading ? "Loading parent categories..." : "None"}
+                                </option>
+                                {parentCategories.map((c) => (
+                                    <option key={c.itemCategoryId} value={String(c.itemCategoryId)}>
+                                        {c.itemCategoryName} ({c.itemCategoryCode})
+                                    </option>
+                                ))}
+                            </>
+                        )}
+                    </select>
+                    {errors[field.name] && (
+                        <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                    )}
+                </div>
+            );
+        }
+
         if (field.type === "company-select") {
             // Super Admin: dropdown of all active companies
             if (isSuperAdmin) {
@@ -294,7 +398,7 @@ export default function ItemCategoryFormSidePanel({
                             value={formData[field.name]}
                             onChange={handleChange}
                             disabled={field.readOnly || companiesLoading}
-                            className={inputCls + " bg-white cursor-pointer"}
+                            className={inputCls + (field.readOnly ? " bg-gray-50 text-gray-500 cursor-not-allowed" : " bg-white cursor-pointer")}
                         >
                             <option value="">
                                 {companiesLoading ? "Loading companies..." : "Select a company"}
@@ -360,17 +464,15 @@ export default function ItemCategoryFormSidePanel({
         <>
             {/* Backdrop */}
             <div
-                className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
-                    isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                }`}
+                className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                    }`}
                 onClick={handleClose}
             />
 
             {/* Slide-over panel */}
             <div
-                className={`fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
-                    isOpen ? "translate-x-0" : "translate-x-full"
-                }`}
+                className={`fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                    }`}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b px-6 py-4 bg-white sticky top-0 z-10">

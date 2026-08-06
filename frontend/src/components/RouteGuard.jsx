@@ -16,7 +16,6 @@ export default function RouteGuard({ permission, isSuperAdminOnly = false, child
     function checkAccess() {
         if (!authReady && !isLogin) return;
 
-        // No session at all → redirect to login
         if (authReady && !isLogin) {
             router.replace("/login");
             setAuthState("denied");

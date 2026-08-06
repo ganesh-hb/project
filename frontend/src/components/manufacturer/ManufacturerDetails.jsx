@@ -8,7 +8,7 @@ import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
-import ItemCategoryFormSidePanel from "./ItemCategoryFormSidePanel";
+import ManufacturerFormSidePanel from "./ManufacturerFormSidePanel";
 import UserSidePanel from "../user/UserSidePanel";
 
 function formatDate(dateString) {
@@ -32,41 +32,41 @@ function statusBadge(status) {
     return "inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700";
 }
 
-export default function ItemCategoryDetails({ id }) {
+export default function ManufacturerDetails({ id }) {
     const router = useRouter();
     const { can } = useContext(loginContext);
-    const [category, setCategory] = useState(null);
+    const [manufacturer, setManufacturer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showEditPanel, setShowEditPanel] = useState(false);
     const [selectedUserPanelId, setSelectedUserPanelId] = useState(null);
 
     useEffect(() => {
-        fetchCategory();
+        fetchManufacturer();
     }, [id]);
 
     // Refetch after edit panel closes so data stays fresh
     const handleEditClose = () => {
         setShowEditPanel(false);
-        fetchCategory();
+        fetchManufacturer();
     };
 
-    const fetchCategory = async () => {
+    const fetchManufacturer = async () => {
         setLoading(true);
         try {
             const res = await fetch("/relayapi", {
                 method: "GET",
                 headers: {
                     ...authHeaders(),
-                    endpoint: `item-category-details/${id}`,
-                    module: "item-category",
+                    endpoint: `manufacturer-details/${id}`,
+                    module: "manufacturer",
                 },
             });
             const payload = await res.json();
             const data = payload.encrypted ? decryptResponse(payload.encrypted) : payload;
-            setCategory(data?.itemCategoryId ? data : null);
+            setManufacturer(data?.manufacturerId ? data : null);
         } catch (err) {
             console.error(err);
-            setCategory(null);
+            setManufacturer(null);
         } finally {
             setLoading(false);
         }
@@ -81,20 +81,20 @@ export default function ItemCategoryDetails({ id }) {
     if (loading) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
-                <Header page="item-category-details" />
+                <Header page="manufacturer-details" />
                 <div className="flex items-center justify-center py-20">
-                    <Loader label="Loading item category details..." />
+                    <Loader label="Loading manufacturer details..." />
                 </div>
             </div>
         );
     }
 
-    if (!category) {
+    if (!manufacturer) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
-                <Header page="item-category-details" />
+                <Header page="manufacturer-details" />
                 <div className="p-8 text-red-500 text-lg font-semibold">
-                    Item category not found.
+                    Manufacturer not found.
                 </div>
             </div>
         );
@@ -102,7 +102,7 @@ export default function ItemCategoryDetails({ id }) {
 
     return (
         <div className="min-h-screen bg-[#f5f6f8] text-gray-800">
-            <Header page="item-category-details" />
+            <Header page="manufacturer-details" />
 
             <div className="w-full px-4 sm:px-6 lg:px-8 py-4 pb-20">
                 {/* Breadcrumbs */}
@@ -116,12 +116,12 @@ export default function ItemCategoryDetails({ id }) {
                     <span className="text-gray-400">{">>"}</span>
                     <span
                         className="cursor-pointer hover:text-blue-600 hover:underline"
-                        onClick={(e) => gotoPages(e, "/item-category-list")}
+                        onClick={(e) => gotoPages(e, "/manufacturer-list")}
                     >
-                        Item Categories
+                        Manufacturers
                     </span>
                     <span className="text-gray-400">{">>"}</span>
-                    <span className="text-gray-800">Item Category</span>
+                    <span className="text-gray-800">Manufacturer</span>
                 </nav>
 
                 {/* Title + action buttons */}
@@ -130,9 +130,9 @@ export default function ItemCategoryDetails({ id }) {
                         Details
                     </h1>
                     <div className="flex items-center gap-4">
-                        {can("itemCategoryUpdate") && (
+                        {can("manufacturerUpdate") && (
                             <button
-                                id="edit-item-category-btn"
+                                id="edit-manufacturer-btn"
                                 className="inline-flex h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-blue-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/40 active:scale-[0.98] cursor-pointer"
                                 onClick={() => setShowEditPanel(true)}
                             >
@@ -154,10 +154,10 @@ export default function ItemCategoryDetails({ id }) {
                         <div className="rounded-2xl bg-white p-5 shadow-sm">
                             <div className="border-b pb-5">
                                 <h2 className="text-xl font-semibold text-gray-800">
-                                    {category.itemCategoryName || "N/A"}
+                                    {manufacturer.manufacturerName || "N/A"}
                                 </h2>
                                 <p className="text-sm text-gray-400 mt-1">
-                                    {category.itemCategoryCode || "N/A"}
+                                    {manufacturer.manufacturerCode || "N/A"}
                                 </p>
                             </div>
                             <div className="mt-6 space-y-3">
@@ -176,108 +176,83 @@ export default function ItemCategoryDetails({ id }) {
                                 <div className="flex items-center gap-4 border-b pb-5">
                                     <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-50 shadow-md">
                                         <span className="text-2xl font-bold text-blue-600 uppercase">
-                                            {category.itemCategoryCode?.substring(0, 2) || "IC"}
+                                            {manufacturer.manufacturerCode?.substring(0, 2) || "MF"}
                                         </span>
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-semibold text-gray-800">
-                                            {category.itemCategoryName || "-"}
-                                        </h2>
-                                        <span className={statusBadge(category.status)}>
-                                            {category.status}
-                                        </span>
+                                        <div className="text-[#888888] font-bold text-base">
+                                            Manufacturer Info
+                                        </div>
+                                        <div className="mt-2 text-2xl font-extrabold text-blue-600">
+                                            {manufacturer.manufacturerName || "N/A"}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="mt-6 space-y-4">
-                                    <div className="grid grid-cols-2">
-                                        <p className="text-gray-500">Category Code</p>
-                                        <p className="font-medium text-gray-800">
-                                            {category.itemCategoryCode || "-"}
-                                        </p>
+                                <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                                    <div>
+                                        <div className="text-sm text-gray-500">Manufacturer Code</div>
+                                        <div className="text-[#101010] font-bold text-[#374151] mt-1 font-mono">
+                                            {manufacturer.manufacturerCode || "-"}
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-2">
-                                        <p className="text-gray-500">Parent Category</p>
-                                        {category.parentCategoryName && category.parentCategoryId ? (
-                                            <p
-                                                className={`font-medium ${can("itemCategoryView")
-                                                    ? "text-blue-600 cursor-pointer hover:underline"
-                                                    : "text-gray-800"
-                                                    }`}
-                                                onClick={() =>
-                                                    can("itemCategoryView") &&
-                                                    router.push(`/item-category/${category.parentCategoryId}`)
-                                                }
-                                            >
-                                                {category.parentCategoryName}
-                                            </p>
-                                        ) : (
-                                            <p className="font-medium text-gray-800">-</p>
-                                        )}
-                                    </div>
-                                    <div className="grid grid-cols-2">
-                                        <p className="text-gray-500">Type</p>
-                                        <p className="font-medium text-gray-800">
-                                            {category.type || "-"}
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-2">
-                                        <p className="text-gray-500">Company ID</p>
-                                        <p className="font-medium text-gray-800">
-                                            {category.companyId || "-"}
-                                        </p>
+                                    <div>
+                                        <div className="text-sm text-gray-500">Status</div>
+                                        <div className="mt-1">
+                                            <span className={statusBadge(manufacturer.status)}>
+                                                {manufacturer.status}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Audit card */}
+                            {/* Audit Card */}
                             <div className="rounded-2xl bg-white p-6 shadow-sm">
-                                <h3 className="mb-5 text-lg font-semibold text-gray-800">
-                                    Audit Information
-                                </h3>
-                                <div className="space-y-4">
+                                <div className="flex items-center gap-4 border-b pb-5">
+                                    <div className="text-[#888888] font-bold text-base">Audit Logs</div>
+                                </div>
+                                <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
                                     <div>
-                                        <p className="text-sm text-gray-500">Added By</p>
-                                        <p
-                                            className={`font-medium ${category.addedBy && can("userView")
-                                                ? "text-blue-600 cursor-pointer hover:underline"
-                                                : "text-gray-800"
-                                                }`}
-                                            onClick={() =>
-                                                category.addedBy &&
-                                                can("userView") &&
-                                                setSelectedUserPanelId(category.addedBy)
-                                            }
-                                        >
-                                            {category.addedByName || "-"}
-                                        </p>
+                                        <div className="text-sm text-gray-500">Added By</div>
+                                        <div className="mt-1 text-sm font-semibold text-gray-800">
+                                            {manufacturer.addedByName ? (
+                                                <span
+                                                    className="text-blue-600 cursor-pointer hover:underline"
+                                                    onClick={() => setSelectedUserPanelId(manufacturer.addedBy)}
+                                                >
+                                                    {manufacturer.addedByName}
+                                                </span>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </div>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-500">Added Date</p>
-                                        <p className="font-medium text-gray-800">
-                                            {formatDate(category.addedDate)}
-                                        </p>
-                                    </div>
-                                    <div className="border-t border-gray-100 pt-4">
-                                        <p className="text-sm text-gray-500">Updated By</p>
-                                        <p
-                                            className={`font-medium ${category.updatedBy && can("userView")
-                                                ? "text-blue-600 cursor-pointer hover:underline"
-                                                : "text-gray-800"
-                                                }`}
-                                            onClick={() =>
-                                                category.updatedBy &&
-                                                can("userView") &&
-                                                setSelectedUserPanelId(category.updatedBy)
-                                            }
-                                        >
-                                            {category.updatedByName || "-"}
-                                        </p>
+                                        <div className="text-sm text-gray-500">Added Date</div>
+                                        <div className="mt-1 text-sm font-semibold text-gray-800">
+                                            {formatDate(manufacturer.addedDate)}
+                                        </div>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-gray-500">Updated Date</p>
-                                        <p className="font-medium text-gray-800">
-                                            {formatDate(category.updatedDate)}
-                                        </p>
+                                        <div className="text-sm text-gray-500">Updated By</div>
+                                        <div className="mt-1 text-sm font-semibold text-gray-800">
+                                            {manufacturer.updatedByName ? (
+                                                <span
+                                                    className="text-blue-600 cursor-pointer hover:underline"
+                                                    onClick={() => setSelectedUserPanelId(manufacturer.updatedBy)}
+                                                >
+                                                    {manufacturer.updatedByName}
+                                                </span>
+                                            ) : (
+                                                "-"
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-gray-500">Updated Date</div>
+                                        <div className="mt-1 text-sm font-semibold text-gray-800">
+                                            {formatDate(manufacturer.updatedDate)}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -286,20 +261,20 @@ export default function ItemCategoryDetails({ id }) {
                 </div>
             </div>
 
-            {/* Edit slide-over panel (portalled) */}
+            {/* Edit form side panel */}
             {typeof document !== "undefined" &&
                 createPortal(
-                    <ItemCategoryFormSidePanel
+                    <ManufacturerFormSidePanel
                         isOpen={showEditPanel}
                         onClose={handleEditClose}
-                        context="item-category-update"
+                        context="manufacturer-update"
                         id={id}
-                        onSuccess={fetchCategory}
+                        onSuccess={handleEditClose}
                     />,
                     document.body
                 )}
 
-            {/* User detail panel (portalled) */}
+            {/* User detail side panel */}
             {selectedUserPanelId &&
                 typeof document !== "undefined" &&
                 createPortal(

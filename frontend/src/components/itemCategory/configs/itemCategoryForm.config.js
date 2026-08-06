@@ -48,6 +48,15 @@ export const itemCategoryFormConfig = {
                     hidden: false,
                 },
                 {
+                    name: "parentCategoryId",
+                    label: "Parent Category",
+                    type: "parent-category-select",
+                    required: false,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
                     name: "status",
                     label: "Status",
                     type: "select",
@@ -107,6 +116,15 @@ export const itemCategoryFormConfig = {
                     defaultValue: "",
                     // In update mode, company cannot change
                     readOnly: true,
+                    hidden: false,
+                },
+                {
+                    name: "parentCategoryId",
+                    label: "Parent Category",
+                    type: "parent-category-select",
+                    required: false,
+                    defaultValue: "",
+                    readOnly: false,
                     hidden: false,
                 },
                 {

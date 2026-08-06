@@ -81,7 +81,7 @@ export default function AddUserPage() {
     const [groups, setGroups] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
-    const { isLogin } = useContext(loginContext);
+    const { isLogin, displayUser } = useContext(loginContext);
     const [errors, setErrors] = useState({
         email: "",
         name: "",
@@ -259,8 +259,8 @@ export default function AddUserPage() {
                     payload.append("password", formData.password);
                     payload.append("companyId", formData.companyId);
                     payload.append("groupId", formData.groupId);
-                    payload.append("createdBy", isLogin?.userId || null)
-                    payload.append("is_parent", "0"); // always primary on add
+                    payload.append("createdBy", displayUser?.userId || null)
+                    payload.append("is_parent", "0");
 
 
 

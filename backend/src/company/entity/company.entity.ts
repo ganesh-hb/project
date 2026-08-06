@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { ItemCategoryEntity } from '../../item_category/entity/item-category.entity';
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
+import { ManufacturerEntity } from 'src/manufacturer/entity/manufacturer.entity';
+import { BrandEntity } from 'src/brand_master/entity/brand.entity';
 
 @Entity('company')
 export class CompanyEntity {
@@ -100,5 +102,11 @@ export class CompanyEntity {
 
   @OneToMany(() => ItemCategoryEntity, (itemCategory) => itemCategory.company)
   itemCategories!: ItemCategoryEntity[];
+
+  @OneToMany(()=>ManufacturerEntity,(manufacturer)=>manufacturer.company)
+  manufacturers!:ManufacturerEntity[];
+
+  @OneToMany(()=>BrandEntity,(brand)=>brand.company)
+  brands!:BrandEntity[];
 }
 

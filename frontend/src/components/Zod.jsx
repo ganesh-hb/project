@@ -294,6 +294,7 @@ export const ItemCategoryFormSchema = z.object({
     }),
     companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
         .min(1, "Please select a Company."),
+    parentCategoryId: z.coerce.number().nullable().optional().or(z.literal("")),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
     }),
@@ -306,6 +307,27 @@ export const ItemCategoryUpdateSchema = z.object({
     type: z.enum(["Goods", "Service"], {
         errorMap: () => ({ message: "Please select a valid Type." }),
     }),
+    companyId: z.coerce.number().min(1, "Please select a Company."),
+    parentCategoryId: z.coerce.number().nullable().optional().or(z.literal("")),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const ManufacturerFormSchema = z.object({
+    manufacturerName: z.string()
+        .min(1, "Please enter Manufacturer Name."),
+    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+        .min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const ManufacturerUpdateSchema = z.object({
+    manufacturerId: z.coerce.number(),
+    manufacturerName: z.string()
+        .min(1, "Please enter Manufacturer Name."),
     companyId: z.coerce.number().min(1, "Please select a Company."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),

@@ -49,7 +49,7 @@ function formatCompanies(assignments, onCompanyClick) {
 export default function UsersPage() {
     const router = useRouter();
     const { users, setUsers, savedPage, setSavedPage, savedTotalPages, setSavedTotalPages } = useContext(userListContext);
-    const { isLogin } = useContext(loginContext);
+    const { isLogin, displayUser } = useContext(loginContext);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -67,9 +67,9 @@ export default function UsersPage() {
     const [companyAdmin, setCompanyAdmin] = useState(false);
 
     useEffect(() => {
-        setSuperAdmin(isSuperAdmin(isLogin));
-        setCompanyAdmin(isCompanyAdmin(isLogin));
-    }, [isLogin]);
+        setSuperAdmin(isSuperAdmin(displayUser));
+        setCompanyAdmin(isCompanyAdmin(displayUser));
+    }, [displayUser]);
 
     const [expandedRows, setExpandedRows] = useState({});
     const [previewUser, setPreviewUser] = useState(null);
@@ -94,7 +94,7 @@ export default function UsersPage() {
     }, []);
 
     async function fetchData(page = currentPage, searchParams = {}, limitOverride = limit) {
-        setLoading(true);
+        // setLoading(true);
         setError("");
         try {
             let body = { page, limit: limitOverride };
@@ -341,7 +341,7 @@ export default function UsersPage() {
                                             >
                                                 {user.user_status}
                                             </div>
-                                            {superAdmin && !impersonating && user.user_userId !== isLogin?.userId && (
+                                            {superAdmin && !impersonating && user.user_userId !== displayUser?.userId && (
                                                 <div className="user-action-menu relative mt-2 float-right" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         onClick={(e) => {
@@ -567,7 +567,7 @@ export default function UsersPage() {
                     {!error && viewMode === "table" && (
                         <DataTable
                             title={superAdmin ? "All Users" : companyAdmin ? "Company Users" : "Users"}
-                            columns={getColumns((userId) => setSelectedUserId(userId))}
+                            columns={getColumns((userId) => setSelectedUserId(userId), superAdmin)}
                             data={users}
                             filterableColumns={[
                                 { id: "user_name", label: "Name", filterKey: "name" },
@@ -579,7 +579,7 @@ export default function UsersPage() {
                                 { id: "user_status", label: "Status", filterKey: "status" },
                             ]}
                             onColumnFilterChange={handleSearch}
-                            loading={loading}
+                            // loading={loading}
                             containerClassName="flex-1 overflow-y-auto"
                         />
                     )}

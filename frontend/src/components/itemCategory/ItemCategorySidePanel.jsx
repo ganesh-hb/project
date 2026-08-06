@@ -1,23 +1,32 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import SidePanel from "../common/SidePanel";
 import { formatDate } from "@/lib/utils";
+import { loginContext } from "../hooks/LoginContext";
 
-export default function ItemCategorySidePanel({ itemCategoryId, onClose }) {
+export default function ItemCategorySidePanel({ itemCategoryId, onClose, onSelectParent }) {
     const router = useRouter();
+    const { can } = useContext(loginContext);
+    const [currentId, setCurrentId] = useState(itemCategoryId);
     const [category, setCategory] = useState(null);
     const [loading, setLoading] = useState(true);
     const [errorType, setErrorType] = useState(null);
 
     useEffect(() => {
-        if (!itemCategoryId) return;
-        fetchCategory();
+        if (itemCategoryId) {
+            setCurrentId(itemCategoryId);
+        }
     }, [itemCategoryId]);
 
-    const fetchCategory = async () => {
+    useEffect(() => {
+        if (!currentId) return;
+        fetchCategory(currentId);
+    }, [currentId]);
+
+    const fetchCategory = async (idToFetch) => {
         setLoading(true);
         setErrorType(null);
         try {
@@ -25,7 +34,7 @@ export default function ItemCategorySidePanel({ itemCategoryId, onClose }) {
                 method: "GET",
                 headers: {
                     ...authHeaders(),
-                    endpoint: `item-category-details/${itemCategoryId}`,
+                    endpoint: `item-category-details/${idToFetch}`,
                     module: "item-category",
                 },
             });
@@ -48,6 +57,30 @@ export default function ItemCategorySidePanel({ itemCategoryId, onClose }) {
         }
     };
 
+    const handleParentClick = (parentId) => {
+        if (!parentId) return;
+        if (onSelectParent) {
+            onSelectParent(parentId);
+        } else {
+            setCurrentId(parentId);
+        }
+    };
+
+    const parentDisplayValue = category?.parentCategoryName ? (
+        <span
+            className={`font-medium ${
+                can("itemCategoryView")
+                    ? "text-blue-600 cursor-pointer hover:underline"
+                    : "text-gray-800"
+            }`}
+            onClick={() => can("itemCategoryView") && handleParentClick(category.parentCategoryId)}
+        >
+            {category.parentCategoryName}
+        </span>
+    ) : (
+        "-"
+    );
+
     const sections = category
         ? [
               {
@@ -55,6 +88,7 @@ export default function ItemCategorySidePanel({ itemCategoryId, onClose }) {
                   rows: [
                       { label: "Category Code", value: category.itemCategoryCode || "-" },
                       { label: "Category Name", value: category.itemCategoryName || "-" },
+                      { label: "Parent Category", value: parentDisplayValue },
                       { label: "Type", value: category.type || "-" },
                   ],
               },
@@ -83,9 +117,9 @@ export default function ItemCategorySidePanel({ itemCategoryId, onClose }) {
             status={category?.status || ""}
             onMoreDetails={() => {
                 onClose();
-                router.push(`/item-category/${itemCategoryId}`);
+                router.push(`/item-category/${currentId}`);
             }}
-            moreDetailsId={itemCategoryId}
+            moreDetailsId={currentId}
             sections={sections}
         />
     );

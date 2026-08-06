@@ -9,7 +9,7 @@ import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
 import CurrencyFormRenderer from "./CurrencyFormRenderer";
-import UserSidePanel from "../UserSidePanel";
+import UserSidePanel from "../user/UserSidePanel";
 
 export default function CurrencyDetails({ id }) {
     const router = useRouter();

@@ -13,6 +13,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserModule } from './user/user.module';
 import { CurrencyModule } from './currency/currency.module';
 import { ItemCategoryModule } from './item_category/item.module';
+import { ManufacturerModule } from './manufacturer/manufacturer.module';
 import { PermissionEntity } from './group/entity/capability.entity';
 import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
 
@@ -32,6 +33,7 @@ import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
     ActivityModule,
     CurrencyModule,
     ItemCategoryModule,
+    ManufacturerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

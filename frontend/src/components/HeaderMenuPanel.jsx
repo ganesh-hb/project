@@ -7,7 +7,7 @@ import { isSuperAdmin } from "@/app/lib/auth";
 
 export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
     const router = useRouter();
-    const { isLogin, impersonating, permissions } = useContext(loginContext);
+    const { isLogin, impersonating, permissions, displayUser } = useContext(loginContext);
 
     const [activeCategory, setActiveCategory] = useState("dashboard");
     const [superAdmin, setSuperAdmin] = useState(false);
@@ -15,7 +15,7 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
     useEffect(() => {
         const activeUser = impersonating || isLogin;
         setSuperAdmin(isSuperAdmin(activeUser));
-    }, [isLogin, impersonating, permissions]);
+    }, [displayUser, impersonating, permissions]);
 
     const activePermissions = hasMounted ? (permissions || []) : [];
     const isSuper = hasMounted ? superAdmin : false;
@@ -46,6 +46,7 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                     groupLabel: "Item Management",
                     children: [
                         { label: "Item Category", redirectTo: "/item-category-list", show: activePermissions.includes("itemCategoryList") },
+                        { label: "Manufacturer", redirectTo: "/manufacturer-list", show: activePermissions.includes("manufacturerList") },
                     ]
                 },
             ]
@@ -111,8 +112,8 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
                                 className={`flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors cursor-pointer text-left ${isActive
-                                        ? "bg-blue-50 text-blue-700 font-semibold"
-                                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                    ? "bg-blue-50 text-blue-700 font-semibold"
+                                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                                     }`}
                             >
                                 <span>{cat.title}</span>

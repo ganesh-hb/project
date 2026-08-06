@@ -1,0 +1,101 @@
+import { ManufacturerFormSchema, ManufacturerUpdateSchema } from "../../Zod";
+
+export const manufacturerFormConfig = {
+    contexts: {
+        "manufacturer-add": {
+            mode: "add",
+            title: "Add Manufacturer",
+            api: {
+                method: "POST",
+                endpoint: "manufacturer-add",
+                module: "manufacturer",
+            },
+            schema: ManufacturerFormSchema,
+            submitButtonText: "Add Manufacturer",
+            loadingButtonText: "Creating...",
+            successMessage: "Manufacturer created successfully",
+            fields: [
+                {
+                    name: "manufacturerName",
+                    label: "Manufacturer Name",
+                    type: "text",
+                    placeholder: "e.g. Sony, Dell, Samsung",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
+                    name: "companyId",
+                    label: "Company",
+                    type: "company-select",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
+                    name: "status",
+                    label: "Status",
+                    type: "select",
+                    required: true,
+                    defaultValue: "Active",
+                    readOnly: false,
+                    hidden: false,
+                    options: [
+                        { label: "Active", value: "Active" },
+                        { label: "Inactive", value: "Inactive" },
+                    ],
+                },
+            ],
+        },
+        "manufacturer-update": {
+            mode: "update",
+            title: "Edit Manufacturer",
+            api: {
+                fetchEndpoint: "manufacturer-details",
+                method: "PUT",
+                endpoint: "manufacturer-update",
+                module: "manufacturer",
+            },
+            schema: ManufacturerUpdateSchema,
+            submitButtonText: "Update Manufacturer",
+            loadingButtonText: "Updating...",
+            successMessage: "Manufacturer updated successfully",
+            fields: [
+                {
+                    name: "manufacturerName",
+                    label: "Manufacturer Name",
+                    type: "text",
+                    placeholder: "e.g. Sony, Dell, Samsung",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: false,
+                    hidden: false,
+                },
+                {
+                    name: "companyId",
+                    label: "Company",
+                    type: "company-select",
+                    required: true,
+                    defaultValue: "",
+                    readOnly: true,
+                    hidden: false,
+                },
+                {
+                    name: "status",
+                    label: "Status",
+                    type: "select",
+                    required: true,
+                    defaultValue: "Active",
+                    readOnly: false,
+                    hidden: false,
+                    options: [
+                        { label: "Active", value: "Active" },
+                        { label: "Inactive", value: "Inactive" },
+                    ],
+                },
+            ],
+        },
+    },
+};

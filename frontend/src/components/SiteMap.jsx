@@ -38,6 +38,7 @@ export default function SiteMap() {
             title: "Item Management",
             items: [
                 { label: "Item Category", redirectTo: "/item-category-list", show: permissions.includes("itemCategoryList") },
+                { label: "Manufacturer", redirectTo: "/manufacturer-list", show: permissions.includes("manufacturerList") },
             ],
         },
         {
