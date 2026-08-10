@@ -228,12 +228,12 @@ export const ChangePasswordSchema = z.object({
 export const GroupFormSchema = z.object({
     groupName: z.string()
         .trim()
-        .min(2, "Group name must be at least 2 characters.")
-        .max(50, "Group name must be at most 50 characters."),
+        .min(1, "Please enter Group Name.")
+        .max(20, "Group name must be at most 50 characters."),
 
     groupCode: z.string()
         .trim()
-        .min(2, "Group code must be at least 2 characters.")
+        .min(1, "Please enter Group Code.")
         .max(20, "Group code must be at most 20 characters."),
 
     status: z.enum(["active", "inactive"], {
@@ -328,6 +328,80 @@ export const ManufacturerUpdateSchema = z.object({
     manufacturerId: z.coerce.number(),
     manufacturerName: z.string()
         .min(1, "Please enter Manufacturer Name."),
+    companyId: z.coerce.number().min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const BrandFormSchema = z.object({
+    brandName: z.string()
+        .min(1, "Please enter Brand Name."),
+    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+        .min(1, "Please select a Company."),
+    manufacturerId: z.coerce.number({ invalid_type_error: "Please select a Manufacturer." })
+        .min(1, "Please select a Manufacturer."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const BrandUpdateSchema = z.object({
+    brandId: z.coerce.number(),
+    brandName: z.string()
+        .min(1, "Please enter Brand Name."),
+    companyId: z.coerce.number().min(1, "Please select a Company."),
+    manufacturerId: z.coerce.number({ invalid_type_error: "Please select a Manufacturer." })
+        .min(1, "Please select a Manufacturer."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const UomFormSchema = z.object({
+    uomName: z.string()
+        .min(1, "Please enter UOM Name."),
+    abbreviation: z.string()
+        .min(1, "Please enter Abbreviation."),
+    isoCode: z.string()
+        .min(1, "Please enter ISO Code."),
+    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+        .min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const UomUpdateSchema = z.object({
+    uomId: z.coerce.number(),
+    uomName: z.string()
+        .min(1, "Please enter UOM Name."),
+    abbreviation: z.string()
+        .min(1, "Please enter Abbreviation."),
+    isoCode: z.string()
+        .min(1, "Please enter ISO Code."),
+    companyId: z.coerce.number().min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const PackageFormSchema = z.object({
+    packageName: z.string()
+        .min(1, "Please enter Package Name."),
+    description: z.string().optional(),
+    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+        .min(1, "Please select a Company."),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+});
+
+export const PackageUpdateSchema = z.object({
+    packageId: z.coerce.number(),
+    packageName: z.string()
+        .min(1, "Please enter Package Name."),
+    description: z.string().optional(),
     companyId: z.coerce.number().min(1, "Please select a Company."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),

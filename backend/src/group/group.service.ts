@@ -255,6 +255,8 @@ export class GroupService {
         );
       }
 
+      queryBuilder.orderBy('group.groupName', 'ASC');
+
       const [data, total] = await queryBuilder.getManyAndCount();
 
       return_data = {

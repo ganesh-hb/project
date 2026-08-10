@@ -31,7 +31,7 @@ import { GroupEntity } from 'src/group/entity/group.entity';
     PassportModule.register({ defaultStrategy: 'jwt' }),
 
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'hiddenbrains',
+      secret: process.env.JWT_SECRET || 'hiddenbrainsinfotechpune',
       signOptions: {
         expiresIn: '1d',
       },

@@ -13,9 +13,6 @@ import Loader from "../ui/Loader";
 
 const MySwal = withReactContent(Swal);
 
-/**
- * Slide-over Add / Update form panel for Manufacturers.
- */
 export default function ManufacturerFormSidePanel({
     isOpen,
     onClose,
@@ -31,7 +28,6 @@ export default function ManufacturerFormSidePanel({
         (a) => a.is_parent === 1
     ) ?? false;
 
-    // Build initial empty form state from config fields
     const buildInitial = () =>
         config.fields.reduce((acc, f) => {
             acc[f.name] = f.defaultValue ?? "";
@@ -49,10 +45,8 @@ export default function ManufacturerFormSidePanel({
     const [mounted, setMounted] = useState(false);
     const timerRef = useRef(null);
 
-    // Mount guard for portal
     useEffect(() => { setMounted(true); }, []);
 
-    // Animate open/close
     useEffect(() => {
         if (isOpen) {
             setVisible(true);
@@ -62,7 +56,6 @@ export default function ManufacturerFormSidePanel({
         return () => clearTimeout(timerRef.current);
     }, [isOpen]);
 
-    // Reset + fetch data when panel opens/context changes
     useEffect(() => {
         if (!isOpen) return;
         setErrors({});
@@ -70,7 +63,6 @@ export default function ManufacturerFormSidePanel({
         if (config.mode === "update" && id) {
             fetchDetails();
         } else {
-            // Seed company for non-superAdmin on add
             const initial = buildInitial();
             if (!isSuperAdmin && activeAssignment?.companyId) {
                 initial.companyId = String(activeAssignment.companyId);
@@ -144,7 +136,6 @@ export default function ManufacturerFormSidePanel({
         e.preventDefault();
         setErrors({});
 
-        // Validate payload using Zod schema
         const payloadToValidate = {
             ...formData,
             companyId: formData.companyId ? Number(formData.companyId) : undefined,
@@ -156,10 +147,10 @@ export default function ManufacturerFormSidePanel({
         const parseRes = config.schema.safeParse(payloadToValidate);
         if (!parseRes.success) {
             const fieldErrors = {};
-            parseRes.error.errors.forEach((err) => {
-                const path = err.path[0];
-                if (path && !fieldErrors[path]) {
-                    fieldErrors[path] = err.message;
+            parseRes.error.issues.forEach((err) => {
+                const field = err.path[0];
+                if (field && !fieldErrors[field]) {
+                    fieldErrors[field] = err.message;
                 }
             });
             setErrors(fieldErrors);
@@ -212,19 +203,16 @@ export default function ManufacturerFormSidePanel({
 
     return createPortal(
         <div className="fixed inset-0 z-50 overflow-hidden">
-            {/* Backdrop */}
             <div
-                className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
-                    isOpen ? "opacity-100" : "opacity-0"
-                }`}
+                className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"
+                    }`}
                 onClick={onClose}
             />
 
             <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
                 <div
-                    className={`w-screen max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${
-                        isOpen ? "translate-x-0" : "translate-x-full"
-                    }`}
+                    className={`w-screen max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+                        }`}
                 >
                     {/* Header */}
                     <div className="px-6 py-5 bg-[#1f2937] text-white flex items-center justify-between">
@@ -264,9 +252,8 @@ export default function ManufacturerFormSidePanel({
                                                         value={formData[field.name]}
                                                         onChange={handleChange}
                                                         disabled={field.readOnly || companiesLoading}
-                                                        className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${
-                                                            errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                        } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                        className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                            } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                                     >
                                                         <option value="">Select Company</option>
                                                         {companies.map((c) => (
@@ -284,7 +271,7 @@ export default function ManufacturerFormSidePanel({
                                                     />
                                                 )}
                                                 {errors[field.name] && (
-                                                    <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                                                    <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                                                 )}
                                             </div>
                                         );
@@ -301,9 +288,8 @@ export default function ManufacturerFormSidePanel({
                                                     value={formData[field.name]}
                                                     onChange={handleChange}
                                                     disabled={field.readOnly}
-                                                    className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${
-                                                        errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                    } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                    className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                        } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                                 >
                                                     {field.options.map((opt) => (
                                                         <option key={opt.value} value={opt.value}>
@@ -312,7 +298,7 @@ export default function ManufacturerFormSidePanel({
                                                     ))}
                                                 </select>
                                                 {errors[field.name] && (
-                                                    <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                                                    <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                                                 )}
                                             </div>
                                         );
@@ -330,12 +316,11 @@ export default function ManufacturerFormSidePanel({
                                                 onChange={handleChange}
                                                 placeholder={field.placeholder}
                                                 readOnly={field.readOnly}
-                                                className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${
-                                                    errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                    } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                             />
                                             {errors[field.name] && (
-                                                <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                                                <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                                             )}
                                         </div>
                                     );

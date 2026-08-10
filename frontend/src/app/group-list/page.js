@@ -1,10 +1,9 @@
-import GroupList from "@/components/group/groupList";
-import RouteGuard from "@/components/RouteGuard";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Groups() {
-    return (
-        <RouteGuard permission="groupList" isSuperAdminOnly>
-            <GroupList />
-        </RouteGuard>
-    );
+export default function GroupListRedirect() {
+    const router = useRouter();
+    useEffect(() => { router.replace("/roles"); }, [router]);
+    return null;
 }

@@ -12,6 +12,8 @@ import { ItemCategoryEntity } from '../../item_category/entity/item-category.ent
 import { UserCompanyGroupEntity } from 'src/packages/entity/user.company.group.entity';
 import { ManufacturerEntity } from 'src/manufacturer/entity/manufacturer.entity';
 import { BrandEntity } from 'src/brand_master/entity/brand.entity';
+import { UomEntity } from 'src/item_uom/entity/uom.entity';
+import { PackageEntity } from 'src/package_master/entity/package.entity';
 
 @Entity('company')
 export class CompanyEntity {
@@ -108,5 +110,11 @@ export class CompanyEntity {
 
   @OneToMany(()=>BrandEntity,(brand)=>brand.company)
   brands!:BrandEntity[];
+
+  @OneToMany(()=>UomEntity,(uom)=>uom.company)
+  uoms!:UomEntity[];
+
+  @OneToMany(()=>PackageEntity,(pack)=>pack.company)
+  packages!:PackageEntity[];
 }
 

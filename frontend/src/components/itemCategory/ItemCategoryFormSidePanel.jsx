@@ -217,19 +217,14 @@ export default function ItemCategoryFormSidePanel({
         e.preventDefault();
 
         const numericId = Number(Array.isArray(id) ? id[0] : id);
-        const validationInput =
-            config.mode === "update"
-                ? {
-                    ...formData,
-                    itemCategoryId: numericId,
-                    companyId: Number(formData.companyId),
-                    parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
-                }
-                : {
-                    ...formData,
-                    companyId: Number(formData.companyId),
-                    parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
-                };
+        const validationInput = {
+            ...formData,
+            companyId: formData.companyId ? Number(formData.companyId) : undefined,
+            parentCategoryId: formData.parentCategoryId ? Number(formData.parentCategoryId) : null,
+        };
+        if (config.mode === "update") {
+            validationInput.itemCategoryId = numericId;
+        }
 
         const result = config.schema.safeParse(validationInput);
         if (!result.success) {
@@ -338,7 +333,7 @@ export default function ItemCategoryFormSidePanel({
                         ))}
                     </select>
                     {errors[field.name] && (
-                        <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                        <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                     )}
                 </div>
             );
@@ -379,7 +374,7 @@ export default function ItemCategoryFormSidePanel({
                         )}
                     </select>
                     {errors[field.name] && (
-                        <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                        <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                     )}
                 </div>
             );
@@ -410,7 +405,7 @@ export default function ItemCategoryFormSidePanel({
                             ))}
                         </select>
                         {errors[field.name] && (
-                            <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                            <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                         )}
                     </div>
                 );
@@ -430,7 +425,7 @@ export default function ItemCategoryFormSidePanel({
                         className={inputCls + " bg-gray-50 text-gray-500 cursor-not-allowed"}
                     />
                     {errors[field.name] && (
-                        <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                        <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                     )}
                 </div>
             );
@@ -452,7 +447,7 @@ export default function ItemCategoryFormSidePanel({
                     className={inputCls + (field.readOnly ? " bg-gray-50 text-gray-500 cursor-not-allowed" : " bg-white")}
                 />
                 {errors[field.name] && (
-                    <p className="mt-1 text-xs text-red-500">{errors[field.name]}</p>
+                    <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
                 )}
             </div>
         );

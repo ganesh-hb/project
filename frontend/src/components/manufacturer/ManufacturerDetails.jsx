@@ -196,6 +196,12 @@ export default function ManufacturerDetails({ id }) {
                                         </div>
                                     </div>
                                     <div>
+                                        <div className="text-sm text-gray-500">Company</div>
+                                        <div className="text-[#101010] font-bold text-[#374151] mt-1">
+                                            {manufacturer.companyName || manufacturer.company?.companyName || "-"}
+                                        </div>
+                                    </div>
+                                    <div>
                                         <div className="text-sm text-gray-500">Status</div>
                                         <div className="mt-1">
                                             <span className={statusBadge(manufacturer.status)}>

@@ -39,14 +39,17 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
             id: "master",
             title: "Master",
             items: [
-                { label: "Companies", redirectTo: "/company-list", show: activePermissions.includes("companyList") },
-                { label: "Groups", redirectTo: "/group-list", show: activePermissions.includes("groupList") },
+                { label: "Companies", redirectTo: "/company-list", show: activePermissions.includes("companyList") || isSuper },
+                { label: "Roles", redirectTo: "/roles", show: activePermissions.includes("groupList") || isSuper },
                 { label: "Currencies", redirectTo: "/currency-list", show: activePermissions.includes("currencyList") || isSuper },
                 {
                     groupLabel: "Item Management",
                     children: [
                         { label: "Item Category", redirectTo: "/item-category-list", show: activePermissions.includes("itemCategoryList") },
                         { label: "Manufacturer", redirectTo: "/manufacturer-list", show: activePermissions.includes("manufacturerList") },
+                        { label: "Brand", redirectTo: "/brand-list", show: activePermissions.includes("brandList") },
+                        // { label: "UOM", redirectTo: "/uom-list", show: activePermissions.includes("uomList") },
+                        // { label: "Package", redirectTo: "/package-list", show: activePermissions.includes("packageList") },
                     ]
                 },
             ]
@@ -168,7 +171,7 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                                         <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                                             {group.groupLabel}
                                         </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <div className="flex flex-col gap-3">
                                             {group.children.map((child, cIdx) => (
                                                 <button
                                                     key={cIdx}

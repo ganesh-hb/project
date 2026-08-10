@@ -6,6 +6,7 @@ import { authHeaders, isSuperAdmin } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import Header from "../Header";
 import { loginContext } from "../hooks/LoginContext";
+import { GroupFormSchema } from "@/components/Zod";
 
 const MODULES = [
     {
@@ -37,6 +38,21 @@ const MODULES = [
         label: "Manufacturer",
         key: "manufacturer",
         permissions: ["manufacturerList", "manufacturerView", "manufacturerAdd", "manufacturerUpdate"],
+    },
+    {
+        label: "Brand",
+        key: "brand",
+        permissions: ["brandList", "brandView", "brandAdd", "brandUpdate"],
+    },
+    {
+        label: "UOM",
+        key: "uom",
+        permissions: ["uomList", "uomView", "uomAdd", "uomUpdate"],
+    },
+    {
+        label: "Package",
+        key: "package",
+        permissions: ["packageList", "packageView", "packageAdd", "packageUpdate"],
     },
 ];
 
@@ -153,23 +169,26 @@ export default function GroupCapabilities({ id }) {
         });
     };
 
-    const validate = () => {
-        const errs = {};
-        if (!formData.groupName || formData.groupName.length < 2) errs.groupName = "Min 2 characters.";
-        if (!formData.groupCode || formData.groupCode.length < 2) errs.groupCode = "Min 2 characters.";
-        return errs;
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const errs = validate();
-        if (Object.keys(errs).length) { setErrors(errs); return; }
+        const result = GroupFormSchema.safeParse(formData);
+        if (!result.success) {
+            const fieldErrors = {};
+            result.error.issues.forEach((err) => {
+                const field = err.path[0];
+                if (field && !fieldErrors[field]) fieldErrors[field] = err.message;
+            });
+            setErrors(fieldErrors);
+            return;
+        }
 
         setLoading(true);
         try {
-            await fetch("/relayapi", {
+            const updateRes = await fetch("/relayapi", {
                 method: "PUT",
                 headers: {
+                    ...authHeaders(),
                     "Content-Type": "application/json",
                     endpoint: "group-update",
                     module: "group",
@@ -177,9 +196,17 @@ export default function GroupCapabilities({ id }) {
                 body: JSON.stringify({ groupId, ...formData }),
             });
 
+            const updatePayload = await updateRes.json();
+            const updateData = updatePayload?.encrypted ? decryptResponse(updatePayload.encrypted) : updatePayload;
+            if (updateData?.settings?.success !== 1 && updateData?.status?.success !== 1 && !updateRes.ok) {
+                toast.error(updateData?.message || updateData?.settings?.message || "Failed to update role.", { position: "top-right" });
+                return;
+            }
+
             const permRes = await fetch("/relayapi", {
                 method: "POST",
                 headers: {
+                    ...authHeaders(),
                     "Content-Type": "application/json",
                     endpoint: "group-permissions-save",
                     module: "group",
@@ -193,8 +220,8 @@ export default function GroupCapabilities({ id }) {
             const permPayload = await permRes.json();
             const permData = permPayload?.encrypted ? decryptResponse(permPayload.encrypted) : permPayload;
             if (permData?.success === 1) {
-                toast.success("Capabilities saved successfully", { position: "top-right" });
-                setTimeout(() => router.push("/capabilities"), 1000);
+                toast.success("Role saved successfully", { position: "top-right" });
+                setTimeout(() => router.push("/roles"), 1000);
             } else {
                 toast.error(permData?.message || "Failed to save permissions.", { position: "top-right" });
             }
@@ -228,14 +255,13 @@ export default function GroupCapabilities({ id }) {
         return validPerms.length > 0 && validPerms.every((p) => checked[p]);
     };
 
-    if (!isLogin || superAdmin !== true) {
-        return null;
-    }
+
+    if (!isLogin) return null;
 
     if (fetching) {
         return (
             <div className="min-h-screen bg-[#f5f6f8]">
-                <Header page="capabilities" />
+                <Header page="roles" />
                 <div className="p-8 text-gray-400 text-sm">Loading...</div>
             </div>
         );
@@ -243,13 +269,13 @@ export default function GroupCapabilities({ id }) {
 
     return (
         <div className="min-h-screen bg-[#f5f6f8]">
-            <Header page="capabilities" />
+            <Header page="roles" />
 
             <div className="px-6 py-6">
                 <nav className="mb-4 flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={() => router.push("/")}>Home</span>
                     <span className="text-gray-400">{">>"}</span>
-                    <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={() => router.push("/capabilities")}>Capabilities</span>
+                    <span className="cursor-pointer hover:text-blue-600 hover:underline" onClick={() => router.push("/roles")}>Roles</span>
                     <span className="text-gray-400">{">>"}</span>
                     <span className="text-gray-800">{group?.groupName}</span>
                 </nav>
@@ -257,7 +283,7 @@ export default function GroupCapabilities({ id }) {
                 <div className="mb-6 flex items-center justify-end">
 
                     <button
-                        onClick={() => router.push("/capabilities")}
+                        onClick={() => router.push("/roles")}
                         className="rounded-lg bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 cursor-pointer"
                     >
                         ← Back
@@ -277,7 +303,7 @@ export default function GroupCapabilities({ id }) {
                         <div className="flex items-start gap-6">
                             <label className={labelClass}>Group Code <span className="text-red-500">*</span></label>
                             <div className="flex-1">
-                                <input type="text" name="groupCode" value={formData.groupCode} onChange={handleChange} placeholder="e.g. GRP01" className={inputClass} />
+                                <input type="text" name="groupCode" value={formData.groupCode} readOnly onChange={handleChange} placeholder="e.g. GRP01" className={`${inputClass} bg-gray-50 cursor-not-allowed`} />
                                 {errors.groupCode && <p className={errorClass}>{errors.groupCode}</p>}
                             </div>
                         </div>
@@ -358,11 +384,11 @@ export default function GroupCapabilities({ id }) {
                     </div>
 
                     <div className="mt-6 flex justify-end gap-4">
-                        <button type="button" onClick={() => router.push("/capabilities")} className="rounded-lg bg-gray-200 px-8 py-2.5 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer">
+                        <button type="button" onClick={() => router.push("/roles")} className="rounded-lg bg-gray-200 px-8 py-2.5 font-medium text-gray-700 hover:bg-gray-300 transition cursor-pointer">
                             Cancel
                         </button>
                         <button type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-8 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition cursor-pointer">
-                            {loading ? "Saving..." : "Save Capabilities"}
+                            {loading ? "Saving..." : "Save Role"}
                         </button>
                     </div>
                 </form>

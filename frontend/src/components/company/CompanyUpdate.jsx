@@ -98,15 +98,22 @@ export default function CompanyUpdate({ id, onBack }) {
                 ...authHeaders(),
                 endpoint: "company-list",
                 module: "company",
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ page: 1, limit: 100 }),
+            body: JSON.stringify({
+                page: 1,
+                limit: 500,
+            }),
         })
             .then((r) => r.json())
             .then((resJson) => {
                 const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
-                setParentCompanies(Array.isArray(data?.data) ? data.data : []);
+                const companyArray = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+                setParentCompanies(companyArray);
             })
-            .catch(() => { });
+            .catch((err) => {
+                console.error("Failed to load parent companies", err);
+            });
     }, []);
 
     const fetchCompany = async () => {
@@ -455,6 +462,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                         return (
                                             <Select
                                                 name="parentCompanyId"
+                                                instanceId="update-company-parent-company-select"
                                                 options={options}
                                                 value={
                                                     formData.parentCompanyId
@@ -506,6 +514,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
                                     <Select
                                         name="curIds"
+                                        instanceId="update-company-currency-select"
                                         isMulti
                                         options={currencies.map((c) => ({
                                             value: c.curId,
@@ -583,6 +592,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <label className={labelClass}>Country <span className="text-red-500">*</span></label>
                                     <Select
                                         name="country"
+                                        instanceId="update-company-country-select"
                                         options={countries.map((c) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }))}
                                         value={countries
                                             .filter((c) => c.isoCode === formData.country)
@@ -603,6 +613,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <label className={labelClass}>State <span className="text-red-500">*</span></label>
                                     <Select
                                         name="state"
+                                        instanceId="update-company-state-select"
                                         options={states.map((s) => ({ value: s.isoCode, label: s.name }))}
                                         value={states
                                             .filter((s) => s.isoCode === formData.state)
@@ -624,6 +635,7 @@ export default function CompanyUpdate({ id, onBack }) {
                                     <label className={labelClass}>City <span className="text-red-500">*</span></label>
                                     <CreatableSelect
                                         name="city"
+                                        instanceId="update-company-city-select"
                                         options={cities.map((city) => ({ value: city.name, label: city.name }))}
                                         value={formData.city ? { value: formData.city, label: formData.city } : null}
                                         onChange={(selected) => {

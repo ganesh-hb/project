@@ -29,10 +29,8 @@ export default function ManufacturerList() {
     const [totalRecords, setTotalRecords] = useState(0);
     const [currentFilters, setCurrentFilters] = useState({});
 
-    // View (read-only) side panel
     const [viewId, setViewId] = useState(null);
 
-    // Add/Edit form side panel
     const [formPanelOpen, setFormPanelOpen] = useState(false);
     const [formContext, setFormContext] = useState("manufacturer-add");
     const [editId, setEditId] = useState(null);
@@ -195,9 +193,9 @@ export default function ManufacturerList() {
                 <div className="text-sm font-medium text-gray-800">
                     {totalRecords > 0
                         ? `View ${(currentPage - 1) * limit + 1} - ${Math.min(
-                              currentPage * limit,
-                              totalRecords
-                          )} of ${totalRecords}`
+                            currentPage * limit,
+                            totalRecords
+                        )} of ${totalRecords}`
                         : "View 0 of 0"}
                 </div>
                 <div className="flex items-center gap-3">

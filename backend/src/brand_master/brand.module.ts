@@ -5,7 +5,7 @@ import { GroupPermissionEntity } from "src/group/entity/capability.entity";
 import { UserCompanyGroupEntity } from "src/packages/entity/user.company.group.entity";
 import { UserEntity } from "src/user/entity/user.entity";
 import { Filter } from "src/utilities/filter";
-import { BrandContorller } from "./brand.controller";
+import { BrandController } from "./brand.controller";
 import { BrandService } from "./brand.service";
 import { BrandEntity } from "./entity/brand.entity";
 
@@ -19,8 +19,8 @@ import { BrandEntity } from "./entity/brand.entity";
       GroupPermissionEntity,
     ]),
   ],
-  controllers: [BrandContorller],
-  providers: [BrandService,Filter],
-  exports: [TypeOrmModule],
+  controllers: [BrandController],
+  providers: [BrandService, Filter],
+  exports: [TypeOrmModule, BrandService],
 })
 export class BrandModule {}

@@ -589,6 +589,7 @@ export default function AddUserPage() {
                                             Role <span className="text-red-500 text-[16px]">*</span>
                                         </label>
                                         <Select
+                                            instanceId="add-user-role-select"
                                             options={groups.map((g) => ({ value: String(g.groupId), label: g.groupName }))}
                                             value={formData.groupId ? { value: formData.groupId, label: groups.find(g => String(g.groupId) === formData.groupId)?.groupName } : null}
                                             onChange={(selected) => {
@@ -619,6 +620,7 @@ export default function AddUserPage() {
                                             Company <span className="text-red-500 text-[16px]">*</span>
                                         </label>
                                         <Select
+                                            instanceId="add-user-company-select"
                                             options={companies.map((c) => ({ value: String(c.companyId), label: c.companyName }))}
                                             value={formData.companyId ? { value: formData.companyId, label: companies.find(c => String(c.companyId) === formData.companyId)?.companyName } : null}
                                             onChange={(selected) => {

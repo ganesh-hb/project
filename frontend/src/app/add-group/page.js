@@ -1,10 +1,9 @@
-import GroupFormRenderer from "@/components/group/GroupFormRenderer";
-import RouteGuard from "@/components/RouteGuard";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function addGroupPage() {
-    return (
-        <RouteGuard permission="groupAdd" isSuperAdminOnly>
-            <GroupFormRenderer context="group-add" />
-        </RouteGuard>
-    );
+export default function AddGroupRedirect() {
+    const router = useRouter();
+    useEffect(() => { router.replace("/roles"); }, [router]);
+    return null;
 }

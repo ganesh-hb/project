@@ -13,6 +13,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import Select from "react-select";
 import CreatableSelect from "react-select/creatable";
+import { decryptResponse } from "@/app/lib/crypto";
 const MySwal = withReactContent(Swal);
 
 
@@ -133,15 +134,22 @@ export default function AddCompany() {
                 ...authHeaders(),
                 endpoint: "company-list",
                 module: "company",
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ page: 1, limit: 100 }),
+            body: JSON.stringify({
+                page: 1,
+                limit: 500,
+            }),
         })
             .then((r) => r.json())
             .then((resJson) => {
                 const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
-                setParentCompanies(Array.isArray(data?.data) ? data.data : []);
+                const companyArray = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+                setParentCompanies(companyArray);
             })
-            .catch(() => { });
+            .catch((err) => {
+                console.error("Failed to load parent companies", err);
+            });
     }, []);
 
     const handleImage = (e) => {
@@ -204,7 +212,7 @@ export default function AddCompany() {
             text: "Are you sure you want to add this company to the system?",
             icon: 'info',
             showCancelButton: true,
-            confirmButtonColor: '#2563eb', // blue-600
+            confirmButtonColor: '#2563eb',
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Yes, register it!',
             cancelButtonText: 'Cancel'
@@ -325,8 +333,9 @@ export default function AddCompany() {
                                     <label className={labelClass}>Parent Company</label>
                                     <Select
                                         name="parentCompanyId"
+                                        instanceId="add-company-parent-company-select"
                                         options={[
-                                            { value: "", label: "None (Root Company)" },
+                                            { value: "", label: "Please select Parent Comapany" },
                                             ...parentCompanies.map((c) => ({
                                                 value: c.companyId,
                                                 label: c.companyName,
@@ -335,13 +344,13 @@ export default function AddCompany() {
                                         value={
                                             formData.parentCompanyId
                                                 ? {
-                                                      value: formData.parentCompanyId,
-                                                      label:
-                                                          parentCompanies.find(
-                                                              (c) => c.companyId === formData.parentCompanyId
-                                                          )?.companyName || "Selected",
-                                                  }
-                                                : { value: "", label: "None (Root Company)" }
+                                                    value: formData.parentCompanyId,
+                                                    label:
+                                                        parentCompanies.find(
+                                                            (c) => c.companyId === formData.parentCompanyId
+                                                        )?.companyName || "Selected",
+                                                }
+                                                : { value: "", label: "Please select Parent Company" }
                                         }
                                         onChange={(selected) => {
                                             setFormData((prev) => ({
@@ -381,6 +390,7 @@ export default function AddCompany() {
                                     <label className={labelClass}>Currency <span className="text-red-500">*</span></label>
                                     <Select
                                         name="curIds"
+                                        instanceId="add-company-currency-select"
                                         isMulti
                                         options={currencies.map((c) => ({
                                             value: c.curId,
@@ -457,6 +467,7 @@ export default function AddCompany() {
                                     <label className={labelClass}>Country <span className="text-red-500">*</span></label>
                                     <Select
                                         name="country"
+                                        instanceId="add-company-country-select"
                                         options={countries.map((c) => ({ value: c.isoCode, label: `${c.flag} ${c.name}` }))}
                                         value={countries
                                             .filter((c) => c.isoCode === formData.country)
@@ -477,6 +488,7 @@ export default function AddCompany() {
                                     <label className={labelClass}>State <span className="text-red-500">*</span></label>
                                     <Select
                                         name="state"
+                                        instanceId="add-company-state-select"
                                         options={states.map((s) => ({ value: s.isoCode, label: s.name }))}
                                         value={states
                                             .filter((s) => s.isoCode === formData.state)
@@ -498,6 +510,7 @@ export default function AddCompany() {
                                     <label className={labelClass}>City <span className="text-red-500">*</span></label>
                                     <CreatableSelect
                                         name="city"
+                                        instanceId="add-company-city-select"
                                         options={cities.map((city) => ({ value: city.name, label: city.name }))}
                                         value={formData.city ? { value: formData.city, label: formData.city } : null}
                                         onChange={(selected) => {

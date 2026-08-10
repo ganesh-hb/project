@@ -14,6 +14,9 @@ import { UserModule } from './user/user.module';
 import { CurrencyModule } from './currency/currency.module';
 import { ItemCategoryModule } from './item_category/item.module';
 import { ManufacturerModule } from './manufacturer/manufacturer.module';
+import { BrandModule } from './brand_master/brand.module';
+import { UomModule } from './item_uom/uom.module';
+import { PackageModule } from './package_master/package.module';
 import { PermissionEntity } from './group/entity/capability.entity';
 import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
 
@@ -34,6 +37,9 @@ import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
     CurrencyModule,
     ItemCategoryModule,
     ManufacturerModule,
+    BrandModule,
+    UomModule,
+    PackageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

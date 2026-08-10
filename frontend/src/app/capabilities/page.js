@@ -1,10 +1,9 @@
-import CapabilitiesList from "@/components/capabilities/Capabilities";
-import RouteGuard from "@/components/RouteGuard";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function CapabilitiesPage() {
-    return (
-        <RouteGuard isSuperAdminOnly>
-            <CapabilitiesList />
-        </RouteGuard>
-    );
+export default function CapabilitiesRedirect() {
+    const router = useRouter();
+    useEffect(() => { router.replace("/roles"); }, [router]);
+    return null;
 }

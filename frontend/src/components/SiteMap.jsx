@@ -39,24 +39,22 @@ export default function SiteMap() {
             items: [
                 { label: "Item Category", redirectTo: "/item-category-list", show: permissions.includes("itemCategoryList") },
                 { label: "Manufacturer", redirectTo: "/manufacturer-list", show: permissions.includes("manufacturerList") },
+                { label: "Brand", redirectTo: "/brand-list", show: permissions.includes("brandList") },
+                // { label: "UOM", redirectTo: "/uom-list", show: permissions.includes("uomList") },
+                // { label: "Package", redirectTo: "/package-list", show: permissions.includes("packageList") },
             ],
         },
         {
             title: "Users",
             items: [
-                { label: "Users", redirectTo: "/users", show: permissions.includes("userList") },
+                { label: "Users", redirectTo: "/users", show: permissions.includes("userList") || superAdmin },
+                { label: "Roles", redirectTo: "/roles", show: permissions.includes("groupList") || superAdmin },
             ],
         },
         {
             title: "Companies",
             items: [
-                { label: "Companies", redirectTo: "/company-list", show: permissions.includes("companyList") },
-            ],
-        },
-        {
-            title: "Groups",
-            items: [
-                { label: "Groups", redirectTo: "/group-list", show: permissions.includes("groupList") },
+                { label: "Companies", redirectTo: "/company-list", show: permissions.includes("companyList") || superAdmin },
             ],
         },
         {
@@ -65,15 +63,25 @@ export default function SiteMap() {
                 { label: "Currencies", redirectTo: "/currency-list", show: permissions.includes("currencyList") || superAdmin },
             ],
         },
-        {
-            title: "Settings",
-            items: [
-                { label: "Capabilities", redirectTo: "/capabilities", show: superAdmin },
-            ],
-        },
     ];
 
     const dashboardSections = rawSections.filter((s) => s.items.some((i) => i.show));
+
+    const NUM_COLS = 4;
+    const columns = Array.from({ length: NUM_COLS }, () => []);
+    const colHeights = Array(NUM_COLS).fill(0);
+
+    dashboardSections.forEach((section) => {
+        const itemWeight = section.items.filter((i) => i.show).length + 2;
+        let minColIdx = 0;
+        for (let i = 1; i < NUM_COLS; i++) {
+            if (colHeights[i] < colHeights[minColIdx]) {
+                minColIdx = i;
+            }
+        }
+        columns[minColIdx].push(section);
+        colHeights[minColIdx] += itemWeight;
+    });
 
     const gotoPage = (e, item) => {
         router.push(item);
@@ -102,30 +110,34 @@ export default function SiteMap() {
 
                 <img src="https://loading.io/asset/814523" alt="" />
 
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-                    {dashboardSections.map((section, index) => (
-                        <div
-                            key={index}
-                            className="rounded-xl border border-gray-200 bg-white shadow-sm"
-                        >
-                            <div className="border-b px-6 py-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
-                                    {section.title}
-                                </h3>
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+                    {columns.map((colSections, colIdx) => (
+                        <div key={colIdx} className="flex flex-col gap-6">
+                            {colSections.map((section, sectionIdx) => (
+                                <div
+                                    key={sectionIdx}
+                                    className="rounded-xl border border-gray-200 bg-white shadow-sm"
+                                >
+                                    <div className="border-b px-6 py-4">
+                                        <h3 className="text-lg font-semibold text-gray-800">
+                                            {section.title}
+                                        </h3>
+                                    </div>
 
-                            <ul className="space-y-3 px-6 py-5">
-                                {section.items.filter((i) => i.show).map((item, itemIndex) => (
-                                    <li
-                                        key={itemIndex}
-                                        className="flex items-center text-gray-600 hover:text-black cursor-pointer transition"
-                                        onClick={(e) => { gotoPage(e, item.redirectTo) }}
-                                    >
-                                        <span className="mr-3 text-xs">•</span>
-                                        {item.label}
-                                    </li>
-                                ))}
-                            </ul>
+                                    <ul className="space-y-3 px-6 py-5">
+                                        {section.items.filter((i) => i.show).map((item, itemIndex) => (
+                                            <li
+                                                key={itemIndex}
+                                                className="flex items-center text-gray-600 hover:text-black cursor-pointer transition"
+                                                onClick={(e) => { gotoPage(e, item.redirectTo) }}
+                                            >
+                                                <span className="mr-3 text-xs">•</span>
+                                                {item.label}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
                         </div>
                     ))}
                 </div>

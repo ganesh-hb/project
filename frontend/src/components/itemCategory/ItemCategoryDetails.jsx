@@ -221,9 +221,9 @@ export default function ItemCategoryDetails({ id }) {
                                         </p>
                                     </div>
                                     <div className="grid grid-cols-2">
-                                        <p className="text-gray-500">Company ID</p>
+                                        <p className="text-gray-500">Company</p>
                                         <p className="font-medium text-gray-800">
-                                            {category.companyId || "-"}
+                                            {category.companyName || category.company?.companyName || "-"}
                                         </p>
                                     </div>
                                 </div>

@@ -472,6 +472,7 @@ export class CompanyService {
       )) as [number, number];
 
       queryBuilder.skip(skip).take(limit);
+      queryBuilder.orderBy(`${alias}.companyName`, 'ASC');
       const [data, total] = await queryBuilder.getManyAndCount();
 
       return_data = {

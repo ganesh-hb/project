@@ -1,0 +1,169 @@
+"use client";
+import { Button } from "@/components/ui/button";
+import { useContext } from "react";
+import { loginContext } from "@/components/hooks/LoginContext";
+import { ArrowUpDown, Eye, Pencil, ExternalLink, MoreVertical } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+function StatusBadge({ status }) {
+    if (!status) return <span className="text-gray-400 text-sm">-</span>;
+    const formatted = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    const cls =
+        formatted === "Active"
+            ? "bg-green-100 text-green-700"
+            : formatted === "Inactive"
+                ? "bg-red-100 text-red-700"
+                : "bg-sky-100 text-sky-700";
+    return (
+        <span className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${cls}`}>
+            {formatted}
+        </span>
+    );
+}
+
+function BrandNameCell({ row, onPreview }) {
+    const { can } = useContext(loginContext);
+    const brand = row.original;
+    return (
+        <div className="flex items-center gap-2">
+            <span
+                className={`font-semibold text-base ${
+                    can("brandView")
+                        ? "text-blue-600 cursor-pointer hover:underline"
+                        : "text-gray-800"
+                }`}
+                onClick={(e) => {
+                    if (!can("brandView")) return;
+                    e.stopPropagation();
+                    if (onPreview) onPreview(brand.brandId);
+                }}
+            >
+                {brand.brandName || brand.brandCode || "—"}
+            </span>
+        </div>
+    );
+}
+
+function sortableHeader(label) {
+    const SortableHeaderComponent = ({ column }) => (
+        <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="font-semibold text-[#4b5563] text-sm px-0 hover:bg-transparent"
+        >
+            {label}
+            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+        </Button>
+    );
+    SortableHeaderComponent.displayName = `SortableHeader_${label.replace(/\s+/g, "")}`;
+    return SortableHeaderComponent;
+}
+
+export const getBrandColumns = (onPreview, onEdit, router) => [
+    {
+        accessorKey: "brandName",
+        header: sortableHeader("Brand Name"),
+        cell: ({ row }) => <BrandNameCell row={row} onPreview={onPreview} />,
+        filterFn: "includesString",
+    },
+    {
+        accessorKey: "brandCode",
+        header: sortableHeader("Code"),
+        cell: ({ row }) => (
+            <span className="text-gray-700 text-sm font-mono font-medium">
+                {row.getValue("brandCode") || "-"}
+            </span>
+        ),
+        filterFn: "includesString",
+    },
+    {
+        accessorKey: "companyName",
+        header: sortableHeader("Company"),
+        cell: ({ row }) => (
+            <span className="text-gray-700 text-sm font-medium">
+                {row.original.companyName || row.original.company?.companyName || "-"}
+            </span>
+        ),
+        filterFn: "includesString",
+    },
+    {
+        accessorKey: "manufacturerName",
+        header: sortableHeader("Manufacturer"),
+        cell: ({ row }) => (
+            <span className="text-gray-700 text-sm font-medium">
+                {row.original.manufacturerName || row.original.manufacturer?.manufacturerName || "-"}
+            </span>
+        ),
+        filterFn: "includesString",
+    },
+    {
+        accessorKey: "status",
+        header: sortableHeader("Status"),
+        cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+        filterFn: "includesString",
+    },
+    {
+        id: "actions",
+        header: () => <span className="font-semibold text-gray-600 text-sm">Actions</span>,
+        cell: ({ row }) => {
+            const { can } = useContext(loginContext);
+            const brand = row.original;
+            return (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <span
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition cursor-pointer"
+                            title="Actions"
+                        >
+                            <MoreVertical className="h-4 w-4" />
+                        </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44 bg-white border border-gray-200 shadow-lg rounded-xl">
+                        {can("brandView") && (
+                            <DropdownMenuItem
+                                className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onPreview) onPreview(brand.brandId);
+                                }}
+                            >
+                                <Eye className="h-4 w-4 text-blue-600" />
+                                View Details
+                            </DropdownMenuItem>
+                        )}
+                        {can("brandUpdate") && (
+                            <DropdownMenuItem
+                                className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onEdit) onEdit(brand.brandId);
+                                }}
+                            >
+                                <Pencil className="h-4 w-4 text-amber-600" />
+                                Edit
+                            </DropdownMenuItem>
+                        )}
+                        {can("brandView") && router && (
+                            <DropdownMenuItem
+                                className="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/brand/${brand.brandId}`);
+                                }}
+                            >
+                                <ExternalLink className="h-4 w-4 text-gray-600" />
+                                Full Page View
+                            </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            );
+        },
+    },
+];

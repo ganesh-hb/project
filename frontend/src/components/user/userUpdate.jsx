@@ -674,6 +674,7 @@ export default function EditUserPage({ user, onBack }) {
                                         Role <span className="text-red-500 text-[16px]">*</span>
                                     </label>
                                     <Select
+                                        instanceId="user-update-role-select"
                                         options={groups.map((g) => ({ value: String(g.groupId), label: g.groupName }))}
                                         value={groupId && groups.length > 0
                                             ? { value: groupId, label: groups.find(g => String(g.groupId) === String(groupId))?.groupName || "" }
@@ -707,6 +708,7 @@ export default function EditUserPage({ user, onBack }) {
                                         Company <span className="text-red-500 text-[16px]">*</span>
                                     </label>
                                     <Select
+                                        instanceId="user-update-company-select"
                                         options={companies.map((c) => ({ value: String(c.companyId), label: c.companyName }))}
                                         value={companyId && companies.length > 0
                                             ? { value: companyId, label: companies.find(c => String(c.companyId) === String(companyId))?.companyName || "" }

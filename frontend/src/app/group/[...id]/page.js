@@ -1,11 +1,10 @@
-import GroupDetails from "@/components/group/GroupDetails";
-import RouteGuard from "@/components/RouteGuard";
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default async function GroupDetailsPage({ params }) {
-    const { id } = await params;
-    return (
-        <RouteGuard permission="groupView" isSuperAdminOnly>
-            <GroupDetails id={id} />
-        </RouteGuard>
-    );
+// GroupDetails component was retired — redirect to the Roles module
+export default function GroupDetailsRedirect() {
+    const router = useRouter();
+    useEffect(() => { router.replace("/roles"); }, [router]);
+    return null;
 }

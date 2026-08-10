@@ -135,7 +135,7 @@ export default function LoginContext({ children }) {
 
                         setLogin(normalized);
                         sessionStorage.setItem("userInfo", JSON.stringify(normalized));
-                        
+
                         const isCurrentlyImpersonating = !!sessionStorage.getItem("impersonatedUser");
                         if (!isCurrentlyImpersonating) {
                             setActiveAssignment(primary);
@@ -212,7 +212,7 @@ export default function LoginContext({ children }) {
         if (impUserStr) {
             try {
                 targetUserId = JSON.parse(impUserStr).userId;
-            } catch (e) {}
+            } catch (e) { }
         }
         if (!targetUserId && impersonating) {
             targetUserId = impersonating.userId;
@@ -228,9 +228,9 @@ export default function LoginContext({ children }) {
             },
             body: JSON.stringify({ targetUserId }),
         })
-        .then(res => res.json())
-        .then(data => console.log('stop-impersonate response:', data))
-        .catch((err) => console.error('stop-impersonate fetch error:', err));
+            .then(res => res.json())
+            .then(data => console.log('stop-impersonate response:', data))
+            .catch((err) => console.error('stop-impersonate fetch error:', err));
 
         sessionStorage.removeItem("impersonatedUser");
         sessionStorage.removeItem("activeAssignment");
@@ -366,10 +366,12 @@ export default function LoginContext({ children }) {
     }
 
     function can(permission) {
+        if (displayUser?.primaryProfile?.groupName === "superAdmin" || activeAssignment?.groupName === "superAdmin") return true;
         return permissions.includes(permission);
     }
 
     function canAny(...perms) {
+        if (displayUser?.primaryProfile?.groupName === "superAdmin" || activeAssignment?.groupName === "superAdmin") return true;
         return perms.some((p) => permissions.includes(p));
     }
 

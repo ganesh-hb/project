@@ -36,12 +36,11 @@ export class ManufacturerService {
   @Inject(EventEmitter2)
   private readonly eventEmitter!: EventEmitter2;
 
-  // Auto-generate unique manufacturer code scoped per company
   private async generateManufacturerCode(
     manufacturerName: string,
     companyId: number,
   ): Promise<string> {
-    const prefix = manufacturerName.trim().substring(0, 8).toUpperCase();
+    const prefix = manufacturerName.trim().replace(/\s/g, "").substring(0, 8).toUpperCase();
     let counter = 1;
     let code: string;
     do {
@@ -96,16 +95,22 @@ export class ManufacturerService {
         this.manufacturerEntity,
       )) as [number, number];
 
+      queryBuilder.leftJoinAndSelect('manufacturer.company', 'company');
       queryBuilder.skip(skip).take(limit);
-      queryBuilder.orderBy('manufacturer.manufacturerId', 'DESC');
+      queryBuilder.orderBy('manufacturer.manufacturerName', 'ASC');
 
       const [data, total] = await queryBuilder.getManyAndCount();
+
+      const formattedData = data.map((item) => ({
+        ...item,
+        companyName: item.company?.companyName ?? null,
+      }));
 
       return_data = {
         success: 1,
         message: 'Manufacturers fetched successfully',
         total,
-        data,
+        data: formattedData,
       };
     } catch (err: any) {
       return_data = { success: 0, message: err.message };
@@ -117,6 +122,7 @@ export class ManufacturerService {
     const authCtx = await resolveAuthContext(req, this.ucgEntity);
     const manufacturer = await this.manufacturerEntity.findOne({
       where: { manufacturerId: id },
+      relations: ['company'],
     });
     if (!manufacturer) {
       throw new NotFoundException('Manufacturer not found');
@@ -144,6 +150,7 @@ export class ManufacturerService {
 
     return {
       ...manufacturer,
+      companyName: manufacturer.company?.companyName ?? null,
       addedByName: addedByUser?.name ?? null,
       updatedByName: updatedByUser?.name ?? null,
     };
@@ -165,7 +172,6 @@ export class ManufacturerService {
         }
       }
 
-      // Auto-generate unique code scoped per company
       const manufacturerCode = await this.generateManufacturerCode(
         params.manufacturerName,
         Number(params.companyId),

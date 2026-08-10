@@ -494,10 +494,6 @@ export class UserService {
       if (!isMatch) {
         return { success: 0, message: 'Enter valid Email and password' };
       }
-
-      // Filter to assignments where both the linked company AND group are active.
-      // UserCompanyGroupEntity has no per-row status field, so activeness is derived
-      // from the joined company/group rows.
       const activeAssignments = (user.userCompanyGroups ?? [])
         .filter(
           (ucg) =>
@@ -513,7 +509,7 @@ export class UserService {
           is_parent: ucg.is_parent,
         }));
 
-      // Step 1 response: identity + active assignment list — no token issued yet.
+      // response: identity + active assignment list 
       return {
         success: 1,
         message: 'credentials_verified',
@@ -536,8 +532,6 @@ export class UserService {
 
   async selectProfile(body: { userId: number; ucgId: number }) {
     try {
-      // 1. Verify the requested UCG row genuinely belongs to this user.
-      //    WHERE id = ucgId AND userId = body.userId prevents any cross-user spoofing.
       const assignment = await this.ucgEntity.findOne({
         where: { id: body.ucgId, userId: body.userId },
         relations: ['company', 'group'],
@@ -547,7 +541,7 @@ export class UserService {
         return { success: 0, message: 'Invalid profile selection' };
       }
 
-      // 2. Re-check activeness at selection time (company + group both still active).
+      // Re-check activeness at of company and gruop time 
       if (
         assignment.company?.status?.toLowerCase() !== 'active' ||
         assignment.group?.status?.toLowerCase() !== 'active'
@@ -558,7 +552,7 @@ export class UserService {
         };
       }
 
-      // 3. Load full user record for the response.
+      // Load full user record for the response.
       const user = await this.userEntity
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.userCompanyGroups', 'ucg')
@@ -571,14 +565,13 @@ export class UserService {
         return { success: 0, message: 'User not found' };
       }
 
-      // 4. Issue the real access token — profileId encoded exactly as switchProfile does.
       const token = this.jwtService.sign({
         userId: user.userId,
         email: user.email,
         profileId: assignment.id,
       });
 
-      // 5. Permissions for the chosen group.
+      // Permissions for the chosen group.
       const groupPerms = assignment.groupId
         ? await this.groupPermissionEntity.find({
             where: { groupId: assignment.groupId },

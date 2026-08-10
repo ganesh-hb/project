@@ -15,6 +15,8 @@ import { GroupEntity } from 'src/group/entity/group.entity';
 import { ActivityMasterEntity } from 'src/activity/entity/activity-master.entity';
 import { ManufacturerEntity } from 'src/manufacturer/entity/manufacturer.entity';
 import { BrandEntity } from 'src/brand_master/entity/brand.entity';
+import { UomEntity } from 'src/item_uom/entity/uom.entity';
+import { PackageEntity } from 'src/package_master/entity/package.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: (process.env.DB_CLIENT as 'mysql') ?? 'mysql',
@@ -37,6 +39,8 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     ItemCategoryEntity,
     ManufacturerEntity,
     BrandEntity,
+    UomEntity,
+    PackageEntity,
   ],
   synchronize: true,
   migrationsRun: true,

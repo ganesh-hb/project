@@ -36,12 +36,11 @@ export class ItemCategoryService {
   @Inject(EventEmitter2)
   private readonly eventEmitter!: EventEmitter2;
 
-  // Auto-generation of code
   private async generateCategoryCode(
     itemCategoryName: string,
     companyId: number,
   ): Promise<string> {
-    const prefix = itemCategoryName.trim().substring(0, 8).toUpperCase();
+    const prefix = itemCategoryName.trim().replace(/\s/g, "").substring(0, 8).toUpperCase();
     let counter = 1;
     let code: string;
     do {
@@ -112,7 +111,8 @@ export class ItemCategoryService {
       const authCtx = await resolveAuthContext(req, this.ucgEntity);
       const queryBuilder =
         this.itemCategoryEntity.createQueryBuilder('itemCategory')
-        .leftJoinAndSelect('itemCategory.parentCategory', 'parentCategory');
+        .leftJoinAndSelect('itemCategory.parentCategory', 'parentCategory')
+        .leftJoinAndSelect('itemCategory.company', 'company');
 
       if (!authCtx.isSuperAdmin) {
         const scopedCompanyIds = req?.scopedCompanyIds || [
@@ -149,14 +149,15 @@ export class ItemCategoryService {
       )) as [number, number];
 
       queryBuilder.skip(skip).take(limit);
-      queryBuilder.orderBy('itemCategory.itemCategoryId', 'DESC');
+      queryBuilder.orderBy('itemCategory.itemCategoryName', 'ASC');
 
       const [rawHits, total] = await queryBuilder.getManyAndCount();
 
-      // Explicit response flattening for parentCategoryName & parentCategoryId side by side
+      // Explicit response flattening for parentCategoryName & companyName
       const data = rawHits.map((cat) => ({
         ...cat,
         parentCategoryName: cat.parentCategory?.itemCategoryName ?? null,
+        companyName: cat.company?.companyName ?? null,
       }));
 
       return_data = {
@@ -175,7 +176,7 @@ export class ItemCategoryService {
     const authCtx = await resolveAuthContext(req, this.ucgEntity);
     const category = await this.itemCategoryEntity.findOne({
       where: { itemCategoryId: id },
-      relations: ['parentCategory'],
+      relations: ['parentCategory', 'company'],
     });
     if (!category) {
       throw new NotFoundException('Item category not found');
@@ -204,6 +205,7 @@ export class ItemCategoryService {
     return {
       ...category,
       parentCategoryName: category.parentCategory?.itemCategoryName ?? null,
+      companyName: category.company?.companyName ?? null,
       addedByName: addedByUser?.name ?? null,
       updatedByName: updatedByUser?.name ?? null,
     };
@@ -225,7 +227,6 @@ export class ItemCategoryService {
         }
       }
 
-      // Validate Parent Category 
       if (params.parentCategoryId) {
         const errMsg = await this.validateParentCategory(
           Number(params.parentCategoryId),
@@ -236,7 +237,6 @@ export class ItemCategoryService {
         }
       }
 
-      // Auto-generate unique code scoped per company
       const itemCategoryCode = await this.generateCategoryCode(
         params.itemCategoryName,
         Number(params.companyId),
