@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useContext } from "react";
 import { loginContext } from "@/components/hooks/LoginContext";
 import { ArrowUpDown, Eye, Pencil, ExternalLink, MoreVertical } from "lucide-react";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -85,9 +86,10 @@ export const getBrandColumns = (onPreview, onEdit, router) => [
         accessorKey: "companyName",
         header: sortableHeader("Company"),
         cell: ({ row }) => (
-            <span className="text-gray-700 text-sm font-medium">
-                {row.original.companyName || row.original.company?.companyName || "-"}
-            </span>
+            <LinkedCompanyCell
+                companyId={row.original.companyId}
+                companyName={row.original.companyName || row.original.company?.companyName}
+            />
         ),
         filterFn: "includesString",
     },

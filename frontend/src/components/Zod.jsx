@@ -1,5 +1,6 @@
 import { min } from "date-fns";
 import z from "zod";
+import dayjs from "dayjs";
 
 export const userLoginSchema = z.object({
     email: z.string()
@@ -44,13 +45,14 @@ export const UpdateFormSchema = z.object({
         .max(50, "Last name must be at most 50 characters."),
     // .regex(/^[a-zA-Z0-9]+$/, "Surname cannot contain special characters."),
 
-    age: z
-        .coerce
-        .number({
-            required_error: "Please enter the Age.",
-            invalid_type_error: "Age must be a Number.",
+    dob: z
+        .any()
+        .refine((val) => val && dayjs(val).isValid(), {
+            message: "Please select Date of Birth.",
         })
-        .min(18, { message: "You must be at least 18 years old." }),
+        .refine((val) => val && dayjs().diff(dayjs(val), "year") >= 18, {
+            message: "You must be at least 18 years old.",
+        }),
 
     phone: z.string().min(1, "Please Enter Phone number "),
     dialCode: z.string().optional().or(z.literal("")),
@@ -121,6 +123,15 @@ export const AddFormSchema = z.object({
 
     groupId: z.string().min(1, "Please select Role."),
     companyId: z.string().min(1, "Please select Company."),
+
+    dob: z
+        .any()
+        .refine((val) => val && dayjs(val).isValid(), {
+            message: "Please select Date of Birth.",
+        })
+        .refine((val) => val && dayjs().diff(dayjs(val), "year") >= 18, {
+            message: "You must be at least 18 years old.",
+        }),
 
     userFile: z.any()
         .optional()
@@ -292,7 +303,7 @@ export const ItemCategoryFormSchema = z.object({
     type: z.enum(["Goods", "Service"], {
         errorMap: () => ({ message: "Please select a valid Type." }),
     }),
-    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+    companyId: z.coerce.number("Please select a Company.")
         .min(1, "Please select a Company."),
     parentCategoryId: z.coerce.number().nullable().optional().or(z.literal("")),
     status: z.enum(["Active", "Inactive"], {
@@ -317,7 +328,7 @@ export const ItemCategoryUpdateSchema = z.object({
 export const ManufacturerFormSchema = z.object({
     manufacturerName: z.string()
         .min(1, "Please enter Manufacturer Name."),
-    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+    companyId: z.coerce.number("Please select a Company.")
         .min(1, "Please select a Company."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
@@ -337,9 +348,9 @@ export const ManufacturerUpdateSchema = z.object({
 export const BrandFormSchema = z.object({
     brandName: z.string()
         .min(1, "Please enter Brand Name."),
-    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+    companyId: z.coerce.number("Please select a Company.")
         .min(1, "Please select a Company."),
-    manufacturerId: z.coerce.number({ invalid_type_error: "Please select a Manufacturer." })
+    manufacturerId: z.coerce.number("Please select a Manufacturer.")
         .min(1, "Please select a Manufacturer."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
@@ -351,7 +362,7 @@ export const BrandUpdateSchema = z.object({
     brandName: z.string()
         .min(1, "Please enter Brand Name."),
     companyId: z.coerce.number().min(1, "Please select a Company."),
-    manufacturerId: z.coerce.number({ invalid_type_error: "Please select a Manufacturer." })
+    manufacturerId: z.coerce.number("Please select a Manufacturer.")
         .min(1, "Please select a Manufacturer."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
@@ -365,7 +376,7 @@ export const UomFormSchema = z.object({
         .min(1, "Please enter Abbreviation."),
     isoCode: z.string()
         .min(1, "Please enter ISO Code."),
-    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+    companyId: z.coerce.number("Please select a Company.")
         .min(1, "Please select a Company."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
@@ -390,7 +401,7 @@ export const PackageFormSchema = z.object({
     packageName: z.string()
         .min(1, "Please enter Package Name."),
     description: z.string().optional(),
-    companyId: z.coerce.number({ invalid_type_error: "Please select a Company." })
+    companyId: z.coerce.number("Please select a Company.")
         .min(1, "Please select a Company."),
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
@@ -406,4 +417,82 @@ export const PackageUpdateSchema = z.object({
     status: z.enum(["Active", "Inactive"], {
         errorMap: () => ({ message: "Please select a valid Status." }),
     }),
+});
+
+export const CustomerFormSchema = z.object({
+    customerName: z.string()
+        .min(1, "Please enter Customer Name."),
+    customerLogo: z.any().optional(),
+    customerEmail: z.string()
+        .min(1, "Please enter Customer Email.")
+        .email("Please enter valid Email."),
+    customerIncorporationDate: z.string().optional().or(z.literal("")),
+    dialCode: z.coerce.number("Please enter Dial Code.")
+        .min(1, "Please enter Dial Code."),
+    phone: z.string()
+        .min(1, "Please enter Phone."),
+    companyId: z.coerce.number("Please select a Company.")
+        .min(1, "Please select a Company."),
+    country: z.string()
+        .min(1, "Please enter Country."),
+    state: z.string()
+        .min(1, "Please enter State."),
+    city: z.string().optional().or(z.literal("")),
+    AddressLineOne: z.string().optional().or(z.literal("")),
+    postalCode: z.coerce.number().optional().nullable().or(z.literal("")),
+    ownerFirstName: z.string()
+        .min(1, "Please enter Owner First Name."),
+    ownerLastName: z.string()
+        .min(1, "Please enter Owner Last Name."),
+    ownerEmail: z.string()
+        .min(1, "Please enter Owner Email.")
+        .email("Please enter valid Email."),
+    ownerPhone: z.string()
+        .min(1, "Please enter Owner Phone."),
+    ownerDialCode: z.coerce.number().optional().nullable().or(z.literal("")),
+    ownerDob: z.string().optional().or(z.literal("")),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+    curIds: z.array(z.number()).optional(),
+});
+
+export const CustomerUpdateSchema = z.object({
+    customerId: z.coerce.number(),
+    customerName: z.string()
+        .min(1, "Please enter Customer Name."),
+    customerLogo: z.any().optional(),
+    removeCustomerLogo: z.string().optional(),
+    customerEmail: z.string()
+        .min(1, "Please enter Customer Email.")
+        .email("Please enter valid Email."),
+    customerIncorporationDate: z.string().optional().or(z.literal("")),
+    dialCode: z.coerce.number("Please enter Dial Code.")
+        .min(1, "Please enter Dial Code."),
+    phone: z.string()
+        .min(1, "Please enter Phone."),
+    companyId: z.coerce.number("Please select a Company.")
+        .min(1, "Please select a Company."),
+    country: z.string()
+        .min(1, "Please enter Country."),
+    state: z.string()
+        .min(1, "Please enter State."),
+    city: z.string().optional().or(z.literal("")),
+    AddressLineOne: z.string().optional().or(z.literal("")),
+    postalCode: z.coerce.number().optional().nullable().or(z.literal("")),
+    ownerFirstName: z.string()
+        .min(1, "Please enter Owner First Name."),
+    ownerLastName: z.string()
+        .min(1, "Please enter Owner Last Name."),
+    ownerEmail: z.string()
+        .min(1, "Please enter Owner Email.")
+        .email("Please enter valid Email."),
+    ownerPhone: z.string()
+        .min(1, "Please enter Owner Phone."),
+    ownerDialCode: z.coerce.number().optional().nullable().or(z.literal("")),
+    ownerDob: z.string().optional().or(z.literal("")),
+    status: z.enum(["Active", "Inactive"], {
+        errorMap: () => ({ message: "Please select a valid Status." }),
+    }),
+    curIds: z.array(z.number()).optional(),
 });

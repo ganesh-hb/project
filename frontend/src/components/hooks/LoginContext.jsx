@@ -69,6 +69,8 @@ export default function LoginContext({ children }) {
                             email: adminData.email,
                             userFile: adminData.userFile,
                             status: adminData.status,
+                            age: adminData.age,
+                            dob: adminData.dob,
                             primaryProfile: adminPrimary ? {
                                 companyName: adminPrimary.companyName,
                                 groupName: adminPrimary.groupName,
@@ -93,6 +95,8 @@ export default function LoginContext({ children }) {
                             email: data.email,
                             userFile: data.userFile,
                             status: data.status,
+                            age: data.age,
+                            dob: data.dob,
                             primaryProfile: targetPrimary ? {
                                 companyName: targetPrimary.companyName,
                                 groupName: targetPrimary.groupName,
@@ -124,6 +128,8 @@ export default function LoginContext({ children }) {
                             email: data.email,
                             userFile: data.userFile,
                             status: data.status,
+                            age: data.age,
+                            dob: data.dob,
                             primaryProfile: primary ? {
                                 companyName: primary.companyName,
                                 groupName: primary.groupName,

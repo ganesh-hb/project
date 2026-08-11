@@ -8,6 +8,7 @@ import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import BrandFormSidePanel from "./BrandFormSidePanel";
 import UserSidePanel from "../user/UserSidePanel";
 
@@ -195,12 +196,15 @@ export default function BrandDetails({ id }) {
                                             {brand.brandCode || "-"}
                                         </div>
                                     </div>
-                                    <div>
-                                        <div className="text-sm text-gray-500">Company</div>
-                                        <div className="text-[#101010] font-bold text-[#374151] mt-1">
-                                            {brand.companyName || brand.company?.companyName || "-"}
-                                        </div>
-                                    </div>
+                                     <div>
+                                         <div className="text-sm text-gray-500">Company</div>
+                                         <div className="text-[#101010] font-bold text-[#374151] mt-1">
+                                             <LinkedCompanyCell
+                                                 companyId={brand.companyId}
+                                                 companyName={brand.companyName || brand.company?.companyName}
+                                             />
+                                         </div>
+                                     </div>
                                     <div>
                                         <div className="text-sm text-gray-500">Manufacturer</div>
                                         <div className="text-[#101010] font-bold text-[#374151] mt-1">

@@ -13,6 +13,7 @@ function getServiceBase(request) {
     if (module === "brand") return "http://localhost:4000/brand";
     if (module === "uom") return "http://localhost:4000/uom";
     if (module === "package") return "http://localhost:4000/package";
+    if (module === "customer") return "http://localhost:4000/customer";
     return "http://localhost:4000";
 }
 

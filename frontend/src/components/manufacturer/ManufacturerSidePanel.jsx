@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import SidePanel from "../common/SidePanel";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import { formatDate } from "@/lib/utils";
 import { loginContext } from "../hooks/LoginContext";
 
@@ -64,6 +65,15 @@ export default function ManufacturerSidePanel({ manufacturerId, onClose }) {
                   rows: [
                       { label: "Manufacturer Code", value: manufacturer.manufacturerCode || "-" },
                       { label: "Manufacturer Name", value: manufacturer.manufacturerName || "-" },
+                      {
+                          label: "Company",
+                          value: (
+                              <LinkedCompanyCell
+                                  companyId={manufacturer.companyId}
+                                  companyName={manufacturer.companyName || manufacturer.company?.companyName}
+                              />
+                          ),
+                      },
                       { label: "Status", value: manufacturer.status || "-" },
                   ],
               },

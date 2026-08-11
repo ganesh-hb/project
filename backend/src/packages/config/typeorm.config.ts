@@ -17,6 +17,8 @@ import { ManufacturerEntity } from 'src/manufacturer/entity/manufacturer.entity'
 import { BrandEntity } from 'src/brand_master/entity/brand.entity';
 import { UomEntity } from 'src/item_uom/entity/uom.entity';
 import { PackageEntity } from 'src/package_master/entity/package.entity';
+import { CustomerEntity } from 'src/customer/entity/customer.entity';
+import { CustomerCurrencyEntity } from 'src/customer/entity/customer.currency.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: (process.env.DB_CLIENT as 'mysql') ?? 'mysql',
@@ -41,8 +43,10 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     BrandEntity,
     UomEntity,
     PackageEntity,
+    CustomerEntity,
+    CustomerCurrencyEntity,
   ],
-  synchronize: true,
+  synchronize: true, 
   migrationsRun: true,
   logging: false,
   migrations: [__dirname + '/../../migration/*{.ts,.js}'],

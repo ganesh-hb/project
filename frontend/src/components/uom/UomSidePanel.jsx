@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import SidePanel from "../common/SidePanel";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import { formatDate } from "@/lib/utils";
 
 export default function UomSidePanel({ uomId, onClose }) {
@@ -65,7 +66,15 @@ export default function UomSidePanel({ uomId, onClose }) {
                       { label: "UOM Name", value: uom.uomName || "-" },
                       { label: "Abbreviation", value: uom.abbreviation || "-" },
                       { label: "ISO Code", value: uom.isoCode || "-" },
-                      { label: "Company", value: uom.companyName || uom.company?.companyName || "-" },
+                      {
+                          label: "Company",
+                          value: (
+                              <LinkedCompanyCell
+                                  companyId={uom.companyId}
+                                  companyName={uom.companyName || uom.company?.companyName}
+                              />
+                          ),
+                      },
                       { label: "Status", value: uom.status || "-" },
                   ],
               },

@@ -2,6 +2,7 @@
 
 import { useContext } from "react";
 import { ArrowUpDown, Eye, MoreVertical, Pencil, ExternalLink } from "lucide-react";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import { loginContext } from "../hooks/LoginContext";
 import {
     DropdownMenu,
@@ -89,9 +90,10 @@ export const getPackageColumns = (onPreview, onEdit, router) => [
         accessorKey: "companyName",
         header: sortableHeader("Company"),
         cell: ({ row }) => (
-            <span className="text-gray-700 text-sm font-medium">
-                {row.getValue("companyName") || row.original.company?.companyName || "-"}
-            </span>
+            <LinkedCompanyCell
+                companyId={row.original.companyId}
+                companyName={row.getValue("companyName") || row.original.company?.companyName}
+            />
         ),
         filterFn: "includesString",
     },

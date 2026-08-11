@@ -349,19 +349,7 @@ export default function CompanyUpdate({ id, onBack }) {
     const gotoPages = async (e, url) => {
         e.stopPropagation();
         e.preventDefault();
-        const result = await MySwal.fire({
-            title: "Discard changes?",
-            text: "Any unsaved data will be lost.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Yes, go back",
-            cancelButtonText: "Stay",
-        });
-        if (result.isConfirmed) {
-            router.push(url);
-        }
+        router.push(url);
     };
 
     return (

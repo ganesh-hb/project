@@ -11,7 +11,41 @@ import {
   Min,
   ValidateNested,
   Matches,
+  IsDateString,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
+
+export function IsAdult(minAge = 18, validationOptions?: ValidationOptions) {
+  return function (object: Object, propertyName: string) {
+    registerDecorator({
+      name: 'isAdult',
+      target: object.constructor,
+      propertyName: propertyName,
+      constraints: [minAge],
+      options: validationOptions,
+      validator: {
+        validate(value: any, args: ValidationArguments) {
+          if (!value) return true;
+          const dob = new Date(value);
+          if (isNaN(dob.getTime())) return false;
+          const today = new Date();
+          let age = today.getFullYear() - dob.getFullYear();
+          const monthDiff = today.getMonth() - dob.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            age--;
+          }
+          const targetMinAge = args.constraints[0];
+          return age >= targetMinAge;
+        },
+        defaultMessage(args: ValidationArguments) {
+          return `User must be at least ${args.constraints[0]} years old`;
+        },
+      },
+    });
+  };
+}
 
 export enum isOptional {
   true = 'true',
@@ -55,10 +89,10 @@ export class UserDto {
   @IsEmail()
   email!: string;
 
-  @IsInt()
-  @Min(18)
-  @Transform(({ value }) => Number(value))
-  age!: number;
+  @IsNotEmpty({ message: 'Date of Birth is required' })
+  @IsDateString({}, { message: 'Invalid Date of Birth format' })
+  @IsAdult(18, { message: 'User must be at least 18 years old' })
+  dob!: string;
 
   @IsString()
   @IsEnum(isStatus)
@@ -151,10 +185,9 @@ export class userUpdateDto {
   removeUserFile?: string;
 
   @IsOptional()
-  @IsInt()
-  @Min(18)
-  @Transform(({ value }) => Number(value))
-  age!: number;
+  @IsDateString({}, { message: 'Invalid Date of Birth format' })
+  @IsAdult(18, { message: 'User must be at least 18 years old' })
+  dob?: string;
 
   @IsOptional()
   @IsString()

@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity('permissions')
@@ -23,6 +24,7 @@ export class PermissionEntity {
 }
 
 @Entity('group_permissions')
+@Unique('UQ_group_permissions_groupId_permissionId', ['groupId', 'permissionId'])
 export class GroupPermissionEntity {
   @PrimaryGeneratedColumn()
   id!: number;

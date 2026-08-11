@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, DataSource } from 'typeorm';
+import { Repository, Not, DataSource, In } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ActivityCode } from '../activity/enums/activity-code.enum';
 import { FileTransfer } from 'src/utilities/file.transfer';
@@ -358,15 +358,39 @@ export class CompanyService {
         );
 
         if (params.curIds && Array.isArray(params.curIds)) {
-          await manager.delete(CompanyCurrencyEntity, {
-            companyId: params.companyId,
+          const existingMappings = await manager.find(CompanyCurrencyEntity, {
+            where: { companyId: Number(params.companyId) },
+            select: ['id', 'curId'],
           });
-          const currencyInsertions = params.curIds.map((curId: number) => ({
-            companyId: Number(params.companyId),
-            curId: Number(curId),
-          }));
-          if (currencyInsertions.length > 0) {
-            await manager.insert(CompanyCurrencyEntity, currencyInsertions);
+
+          const currentCurIds = new Set<number>(
+            existingMappings.map((m) => Number(m.curId)),
+          );
+          const incomingCurIds = new Set<number>(
+            params.curIds.map((id: any) => Number(id)),
+          );
+
+          const toRemove = existingMappings.filter(
+            (m) => !incomingCurIds.has(Number(m.curId)),
+          );
+          const toAdd: number[] = Array.from(incomingCurIds).filter(
+            (curId: number) => !currentCurIds.has(curId),
+          );
+
+          if (toRemove.length > 0) {
+            await manager.delete(CompanyCurrencyEntity, {
+              id: In(toRemove.map((m) => m.id)),
+            });
+          }
+
+          if (toAdd.length > 0) {
+            await manager.insert(
+              CompanyCurrencyEntity,
+              toAdd.map((curId: number) => ({
+                companyId: Number(params.companyId),
+                curId,
+              })),
+            );
           }
         }
       });

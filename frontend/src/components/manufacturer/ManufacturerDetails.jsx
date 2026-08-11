@@ -8,6 +8,7 @@ import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import ManufacturerFormSidePanel from "./ManufacturerFormSidePanel";
 import UserSidePanel from "../user/UserSidePanel";
 
@@ -196,11 +197,14 @@ export default function ManufacturerDetails({ id }) {
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="text-sm text-gray-500">Company</div>
-                                        <div className="text-[#101010] font-bold text-[#374151] mt-1">
-                                            {manufacturer.companyName || manufacturer.company?.companyName || "-"}
-                                        </div>
-                                    </div>
+                                         <div className="text-sm text-gray-500">Company</div>
+                                         <div className="text-[#101010] font-bold text-[#374151] mt-1">
+                                             <LinkedCompanyCell
+                                                 companyId={manufacturer.companyId}
+                                                 companyName={manufacturer.companyName || manufacturer.company?.companyName}
+                                             />
+                                         </div>
+                                     </div>
                                     <div>
                                         <div className="text-sm text-gray-500">Status</div>
                                         <div className="mt-1">

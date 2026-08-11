@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useContext } from "react";
 import { loginContext } from "@/components/hooks/LoginContext";
 import { ArrowUpDown, Eye, Pencil } from "lucide-react";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 
 function StatusBadge({ status }) {
     if (!status) return <span className="text-gray-400 text-sm">-</span>;
@@ -72,6 +73,17 @@ export const getManufacturerColumns = (onPreview, onEdit) => [
             <span className="text-gray-700 text-sm font-mono font-medium">
                 {row.getValue("manufacturerCode") || "-"}
             </span>
+        ),
+        filterFn: "includesString",
+    },
+    {
+        accessorKey: "companyName",
+        header: sortableHeader("Company"),
+        cell: ({ row }) => (
+            <LinkedCompanyCell
+                companyId={row.original.companyId}
+                companyName={row.original.companyName || row.original.company?.companyName}
+            />
         ),
         filterFn: "includesString",
     },

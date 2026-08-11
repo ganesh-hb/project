@@ -25,6 +25,18 @@ import { GroupEntity } from 'src/group/entity/group.entity';
 
 @Injectable()
 export class UserService {
+  private calculateAge(dobInput: Date | string | null | undefined): number | null {
+    if (!dobInput) return null;
+    const dob = new Date(dobInput);
+    if (isNaN(dob.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  }
   constructor(
     private readonly fileTransfer: FileTransfer,
     private readonly filter: Filter,
@@ -56,26 +68,21 @@ export class UserService {
   ) {
     if (!assignments?.length) {
       if (replace) {
-        // Delete only child mappings, preserving the parent mapping
         await this.ucgEntity.delete({ userId: Number(userId), is_parent: Not(0) });
       }
       return;
     }
 
     if (replace) {
-      // Load all existing mappings for the user
       const existing = await this.ucgEntity.find({
         where: { userId: Number(userId) },
       });
 
-      // Keep the parent row (is_parent === 0)
       const parentRow = existing.find((a) => a.is_parent === 0);
 
-      // Distinguish primary and secondary incoming assignments
       const incomingParent = assignments.find((a) => a.is_parent === 0);
       const incomingChildren = assignments.filter((a) => a.is_parent !== 0);
 
-      // Update parent row in-place if submitted
       if (parentRow && incomingParent) {
         parentRow.companyId = Number(incomingParent.companyId);
         parentRow.groupId = Number(incomingParent.groupId);
@@ -91,10 +98,8 @@ export class UserService {
         );
       }
 
-      // Diff secondary/child mappings
       const existingChildren = existing.filter((a) => a.is_parent !== 0);
 
-      // 1. Delete child mappings not in incomingChildren
       const toDelete = existingChildren.filter(
         (ext) =>
           !incomingChildren.some(
@@ -107,7 +112,6 @@ export class UserService {
         await this.ucgEntity.remove(toDelete);
       }
 
-      // 2. Insert new child mappings
       const toInsert = incomingChildren
         .filter(
           (inc) =>
@@ -203,7 +207,7 @@ export class UserService {
         middleName: params.middleName,
         surname: params.surname,
         email: params.email,
-        age: params.age,
+        dob: params.dob ? new Date(params.dob) : (null as any),
         remarks: params.remarks || null,
         password: await bcrypt.hash(params.password, 10),
         phone: params.phone,
@@ -353,7 +357,7 @@ export class UserService {
       if (params.middleName !== undefined) user.middleName = params.middleName;
       if (params.surname) user.surname = params.surname;
       if (params.email) user.email = params.email;
-      if (params.age) user.age = params.age;
+      if (params.dob) user.dob = new Date(params.dob);
       if (params.remarks !== undefined) user.remarks = params.remarks;
       if (params.dialCode) user.dialCode = params.dialCode;
       if (params.phone) user.phone = params.phone;
@@ -629,7 +633,8 @@ export class UserService {
           middleName: user.middleName,
           surname: user.surname,
           email: user.email,
-          age: user.age,
+          dob: user.dob,
+          age: this.calculateAge(user.dob),
           phone: user.phone,
           alternatePhone: user.alternatePhone,
           status: user.status,
@@ -791,7 +796,8 @@ export class UserService {
           dialCode: user?.dialCode,
           status: user.status,
           userFile: user.userFile,
-          age: user.age,
+          dob: user.dob,
+          age: this.calculateAge(user.dob),
           assignments: primary
             ? [
                 {
@@ -913,7 +919,8 @@ export class UserService {
         middleName: user.middleName,
         surname: user.surname,
         email: user.email,
-        age: user.age,
+        dob: user.dob,
+        age: this.calculateAge(user.dob),
         dialCode: user?.dialCode,
         phone: user.phone,
         status: user.status,
@@ -1315,7 +1322,8 @@ export class UserService {
           middleName: target.middleName,
           surname: target.surname,
           email: target.email,
-          age: target.age,
+          dob: target.dob,
+          age: this.calculateAge(target.dob),
           phone: target.phone,
           alternatePhone: target.alternatePhone,
           status: target.status,

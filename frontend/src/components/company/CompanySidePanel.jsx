@@ -54,40 +54,40 @@ export default function CompanySidePanel({ companyId, onClose, onMoreDetails }) 
 
     const sections = company
         ? [
-              {
-                  title: "Basic Info",
-                  rows: [
-                      { label: "Location", value: company.companyLocation || "N/A" },
-                      { label: "Website", value: websiteValue },
-                  ],
-              },
-              {
-                  title: "Contact",
-                  rows: [
-                      { label: "Email", value: company.email || "N/A" },
-                      {
-                          label: "Phone",
-                          value: `${company.dialCode ? `+${company.dialCode} ` : ""}${company.phone || "N/A"}`,
-                      },
-                  ],
-              },
-              {
-                  title: "Address",
-                  rows: [
-                      { label: "Address", value: company.AddressLineOne || "N/A" },
-                      { label: "City / State", value: cityStateCountry },
-                      { label: "Postal Code", value: company.postalCode || "N/A" },
-                  ],
-              },
-              {
-                  title: "Owner",
-                  rows: [
-                      { label: "Name", value: company.ownerName || "N/A" },
-                      { label: "Email", value: company.ownerEmail || "N/A" },
-                      { label: "Phone", value: company.ownerPhone || "N/A" },
-                  ],
-              },
-          ]
+            {
+                title: "Basic Info",
+                rows: [
+                    { label: "Location", value: company.companyLocation || "N/A" },
+                    { label: "Website", value: websiteValue },
+                ],
+            },
+            {
+                title: "Contact",
+                rows: [
+                    { label: "Email", value: company.email || "N/A" },
+                    {
+                        label: "Phone",
+                        value: `${company.dialCode ? `+${company.dialCode} ` : ""}${company.phone || "N/A"}`,
+                    },
+                ],
+            },
+            {
+                title: "Address",
+                rows: [
+                    { label: "Address", value: company.AddressLineOne || "N/A" },
+                    { label: "City / State", value: cityStateCountry },
+                    { label: "Postal Code", value: company.postalCode || "N/A" },
+                ],
+            },
+            {
+                title: "Owner",
+                rows: [
+                    { label: "Name", value: company.ownerName || "N/A" },
+                    { label: "Email", value: company.ownerEmail || "N/A" },
+                    { label: "Phone", value: company.ownerPhone || "N/A" },
+                ],
+            },
+        ]
         : [];
 
     const avatarUrl = company?.companyFile

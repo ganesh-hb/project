@@ -78,23 +78,13 @@ export default function CurrencyFormRenderer({ context = "currency-add", id, onB
             e.stopPropagation();
             e.preventDefault();
         }
-        const result = await MySwal.fire({
-            title: "Discard changes?",
-            text: "Any unsaved data will be lost.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Yes, go back",
-            cancelButtonText: "Stay",
-        });
-        if (result.isConfirmed) {
-            if (url === "/currency" && onBack) {
-                onBack();
-            } else {
-                router.push(url);
-            }
+
+        if (url === "/currency" && onBack) {
+            onBack();
+        } else {
+            router.push(url);
         }
+
     };
 
     const handleCancel = async () => {

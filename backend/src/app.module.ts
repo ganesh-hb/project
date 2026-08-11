@@ -17,6 +17,7 @@ import { ManufacturerModule } from './manufacturer/manufacturer.module';
 import { BrandModule } from './brand_master/brand.module';
 import { UomModule } from './item_uom/uom.module';
 import { PackageModule } from './package_master/package.module';
+import { CustomerModule } from './customer/customer.module';
 import { PermissionEntity } from './group/entity/capability.entity';
 import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
 
@@ -40,6 +41,7 @@ import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
     BrandModule,
     UomModule,
     PackageModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

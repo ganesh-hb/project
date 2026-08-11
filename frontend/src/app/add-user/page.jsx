@@ -30,28 +30,7 @@ export default function AddUserPage() {
     const gotoPages = async (e, url) => {
         e.stopPropagation();
         e.preventDefault();
-        const result = await MySwal.fire({
-            title: "Discard edits?",
-            text: "Changes you made will not be saved.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Discard changes",
-            cancelButtonText: "Keep editing",
-            confirmButtonColor: "#EF4444",
-            cancelButtonColor: "#1F2937",
-            reverseButtons: true,
-            focusCancel: true,
-            customClass: {
-                popup: 'rounded-[20px] shadow-2xl',
-                confirmButton: 'rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90',
-                cancelButton: 'rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:bg-black',
-                title: 'text-2xl font-bold text-gray-800',
-                htmlContainer: 'text-gray-600'
-            }
-        });
-        if (result.isConfirmed) {
-            router.push(url);
-        }
+        router.push(url);
     };
 
     const [formData, setFormData] = useState({
@@ -60,8 +39,6 @@ export default function AddUserPage() {
         middleName: "",
         surname: "",
         email: "",
-        email: "",
-        age: "",
         phone: "",
         dialCode: "91",
         remarks: "",
@@ -88,9 +65,7 @@ export default function AddUserPage() {
         firstName: "",
         middleName: "",
         surname: "",
-        age: "",
-        name: "",
-        age: "",
+        dob: "",
         phone: "",
         userFile: "",
         password: "",
@@ -181,8 +156,7 @@ export default function AddUserPage() {
     };
 
     const handleDateChange = (date) => {
-        const calculatedAge = date && date.isValid() ? dayjs().diff(date, "year") : "";
-        setFormData((prev) => ({ ...prev, dob: date, age: calculatedAge }));
+        setFormData((prev) => ({ ...prev, dob: date }));
     };
 
     const handleImage = (e) => {
@@ -213,7 +187,7 @@ export default function AddUserPage() {
                     firstName: "",
                     middleName: "",
                     surname: "",
-                    age: "",
+                    dob: "",
                     password: "",
                     phone: "",
                     userFile: "",
@@ -250,7 +224,6 @@ export default function AddUserPage() {
                     payload.append("middleName", formData.middleName);
                     payload.append("surname", formData.surname);
                     payload.append("email", formData.email);
-                    payload.append("age", String(formData.age));
                     payload.append("phone", formData.phone);
                     payload.append("dialCode", formData.dialCode);
                     payload.append("remarks", formData.remarks || "");
@@ -447,7 +420,7 @@ export default function AddUserPage() {
                                             max={MAX_DOB.format("YYYY-MM-DD")}
                                             className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                         />
-                                        {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                                        {errors.dob && <p className="mt-1 text-sm text-red-500">{errors.dob}</p>}
                                     </div>
 
                                     {/* Profile Image */}

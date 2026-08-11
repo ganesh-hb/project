@@ -103,6 +103,28 @@ export default function ManufacturerFormSidePanel({
         }
     };
 
+    const handleClose = async (e, flag) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        if (flag) {
+            const result = await MySwal.fire({
+                title: "Discard changes?",
+                text: "Any unsaved data will be lost.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#6b7280",
+                confirmButtonText: "Yes, discard",
+                cancelButtonText: "Stay",
+            });
+            if (result.isConfirmed) onClose();
+        } else {
+            onClose();
+        }
+    };
+
     const fetchCompanies = async () => {
         setCompaniesLoading(true);
         try {
@@ -329,7 +351,7 @@ export default function ManufacturerFormSidePanel({
                                 <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
                                     <button
                                         type="button"
-                                        onClick={onClose}
+                                        onClick={(e) => handleClose(e, true)}
                                         className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition cursor-pointer"
                                     >
                                         Cancel

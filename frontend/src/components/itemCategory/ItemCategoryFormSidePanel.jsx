@@ -13,9 +13,6 @@ import Loader from "../ui/Loader";
 
 const MySwal = withReactContent(Swal);
 
-/**
- * Slide-over Add / Update form panel for Item Categories.
- */
 export default function ItemCategoryFormSidePanel({
     isOpen,
     onClose,
@@ -31,7 +28,6 @@ export default function ItemCategoryFormSidePanel({
         (a) => a.is_parent === 1
     ) ?? false;
 
-    // Build initial empty form state from config fields
     const buildInitial = () =>
         config.fields.reduce((acc, f) => {
             acc[f.name] = f.defaultValue ?? "";
@@ -45,7 +41,6 @@ export default function ItemCategoryFormSidePanel({
     const [companies, setCompanies] = useState([]);
     const [companiesLoading, setCompaniesLoading] = useState(false);
 
-    // Parent category dropdown state
     const [parentCategories, setParentCategories] = useState([]);
     const [parentsLoading, setParentsLoading] = useState(false);
 
@@ -53,10 +48,8 @@ export default function ItemCategoryFormSidePanel({
     const [mounted, setMounted] = useState(false);
     const timerRef = useRef(null);
 
-    // Mount guard for portal
     useEffect(() => { setMounted(true); }, []);
 
-    // Animate open/close
     useEffect(() => {
         if (isOpen) {
             setVisible(true);
@@ -66,7 +59,6 @@ export default function ItemCategoryFormSidePanel({
         return () => clearTimeout(timerRef.current);
     }, [isOpen]);
 
-    // Reset + fetch data when panel opens/context changes
     useEffect(() => {
         if (!isOpen) return;
         setErrors({});
@@ -74,7 +66,6 @@ export default function ItemCategoryFormSidePanel({
         if (config.mode === "update" && id) {
             fetchDetails();
         } else {
-            // Seed company for non-superAdmin on add
             const initial = buildInitial();
             if (!isSuperAdmin && activeAssignment?.companyId) {
                 initial.companyId = String(activeAssignment.companyId);
@@ -191,7 +182,6 @@ export default function ItemCategoryFormSidePanel({
         const { name, value } = e.target;
         setErrors((prev) => ({ ...prev, [name]: "" }));
 
-        // If Super Admin changes Company, reset parentCategoryId selection
         if (name === "companyId") {
             setFormData((prev) => ({ ...prev, [name]: value, parentCategoryId: "" }));
         } else {
@@ -199,18 +189,26 @@ export default function ItemCategoryFormSidePanel({
         }
     };
 
-    const handleClose = async () => {
-        const result = await MySwal.fire({
-            title: "Discard changes?",
-            text: "Any unsaved data will be lost.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#6b7280",
-            confirmButtonText: "Yes, discard",
-            cancelButtonText: "Stay",
-        });
-        if (result.isConfirmed) onClose();
+    const handleClose = async (e, flag) => {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        if (flag) {
+            const result = await MySwal.fire({
+                title: "Discard changes?",
+                text: "Any unsaved data will be lost.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#6b7280",
+                confirmButtonText: "Yes, discard",
+                cancelButtonText: "Stay",
+            });
+            if (result.isConfirmed) onClose();
+        } else {
+            onClose();
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -305,7 +303,6 @@ export default function ItemCategoryFormSidePanel({
         }
     };
 
-    // Render a single field based on its type
     const renderField = (field) => {
         if (field.hidden) return null;
 
@@ -457,24 +454,21 @@ export default function ItemCategoryFormSidePanel({
 
     const panelContent = (
         <>
-            {/* Backdrop */}
             <div
                 className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                     }`}
-                onClick={handleClose}
+                onClick={(e) => handleClose(e, false)}
             />
 
-            {/* Slide-over panel */}
             <div
                 className={`fixed right-0 top-0 z-50 h-full w-full max-w-sm bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
             >
-                {/* Header */}
                 <div className="flex items-center justify-between border-b px-6 py-4 bg-white sticky top-0 z-10">
                     <h2 className="text-lg font-semibold text-gray-800">{config.title}</h2>
                     <button
                         type="button"
-                        onClick={handleClose}
+                        onClick={(e) => handleClose(e, false)}
                         className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
                     >
                         ✕
@@ -499,7 +493,7 @@ export default function ItemCategoryFormSidePanel({
                         <div className="border-t bg-white px-6 py-4 flex gap-3">
                             <button
                                 type="button"
-                                onClick={handleClose}
+                                onClick={(e) => handleClose(e, true)}
                                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition cursor-pointer"
                             >
                                 Cancel

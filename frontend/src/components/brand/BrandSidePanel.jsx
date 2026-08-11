@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import SidePanel from "../common/SidePanel";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import { formatDate } from "@/lib/utils";
 
 export default function BrandSidePanel({ brandId, onClose }) {
@@ -62,7 +63,15 @@ export default function BrandSidePanel({ brandId, onClose }) {
                   rows: [
                       { label: "Brand Code", value: brand.brandCode || "-" },
                       { label: "Brand Name", value: brand.brandName || "-" },
-                      { label: "Company", value: brand.companyName || "-" },
+                      {
+                          label: "Company",
+                          value: (
+                              <LinkedCompanyCell
+                                  companyId={brand.companyId}
+                                  companyName={brand.companyName || brand.company?.companyName}
+                              />
+                          ),
+                      },
                       { label: "Manufacturer", value: brand.manufacturerName || "-" },
                       { label: "Status", value: brand.status || "-" },
                   ],

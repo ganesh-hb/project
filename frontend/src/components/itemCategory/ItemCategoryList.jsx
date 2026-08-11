@@ -179,6 +179,7 @@ export default function ItemCategoryList() {
                             filterableColumns={[
                                 { id: "itemCategoryName", label: "Category Name", filterKey: "itemCategoryName" },
                                 { id: "itemCategoryCode", label: "Code", filterKey: "itemCategoryCode" },
+                                { id: "companyName", label: "Company", filterKey: "companyName" },
                                 { id: "type", label: "Type", filterKey: "type" },
                                 { id: "status", label: "Status", filterKey: "status" },
                             ]}

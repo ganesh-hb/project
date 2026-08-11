@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import SidePanel from "../common/SidePanel";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import { formatDate } from "@/lib/utils";
 
 export default function PackageSidePanel({ packageId, onClose }) {
@@ -64,7 +65,15 @@ export default function PackageSidePanel({ packageId, onClose }) {
                       { label: "Package Code", value: pkg.packageCode || "-" },
                       { label: "Package Name", value: pkg.packageName || "-" },
                       { label: "Description", value: pkg.description || "-" },
-                      { label: "Company", value: pkg.companyName || pkg.company?.companyName || "-" },
+                      {
+                          label: "Company",
+                          value: (
+                              <LinkedCompanyCell
+                                  companyId={pkg.companyId}
+                                  companyName={pkg.companyName || pkg.company?.companyName}
+                              />
+                          ),
+                      },
                       { label: "Status", value: pkg.status || "-" },
                   ],
               },

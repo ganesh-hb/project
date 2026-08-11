@@ -177,6 +177,7 @@ export default function ManufacturerList() {
                             filterableColumns={[
                                 { id: "manufacturerName", label: "Manufacturer Name", filterKey: "manufacturerName" },
                                 { id: "manufacturerCode", label: "Code", filterKey: "manufacturerCode" },
+                                { id: "companyName", label: "Company", filterKey: "companyName" },
                                 { id: "status", label: "Status", filterKey: "status" },
                             ]}
                             onColumnFilterChange={handleSearch}

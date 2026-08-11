@@ -8,6 +8,7 @@ import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import ItemCategoryFormSidePanel from "./ItemCategoryFormSidePanel";
 import UserSidePanel from "../user/UserSidePanel";
 
@@ -222,9 +223,12 @@ export default function ItemCategoryDetails({ id }) {
                                     </div>
                                     <div className="grid grid-cols-2">
                                         <p className="text-gray-500">Company</p>
-                                        <p className="font-medium text-gray-800">
-                                            {category.companyName || category.company?.companyName || "-"}
-                                        </p>
+                                        <div className="font-medium text-gray-800">
+                                            <LinkedCompanyCell
+                                                companyId={category.companyId}
+                                                companyName={category.companyName || category.company?.companyName}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

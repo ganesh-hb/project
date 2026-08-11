@@ -35,26 +35,7 @@ export default function EditUserPage({ user, onBack }) {
         e.stopPropagation();
         e.preventDefault();
         if (url === "/user") {
-            const result = await MySwal.fire({
-                title: "Discard edits?",
-                text: "Changes you made will not be saved.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Discard changes",
-                cancelButtonText: "Keep editing",
-                confirmButtonColor: "#EF4444",
-                cancelButtonColor: "#1F2937",
-                reverseButtons: true,
-                focusCancel: true,
-                customClass: {
-                    popup: 'rounded-[20px] shadow-2xl',
-                    confirmButton: 'rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90',
-                    cancelButton: 'rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:bg-black',
-                    title: 'text-2xl font-bold text-gray-800',
-                    htmlContainer: 'text-gray-600'
-                }
-            });
-            if (result.isConfirmed) onBack();
+            onBack();
         } else {
             router.push(url);
         }
@@ -67,8 +48,6 @@ export default function EditUserPage({ user, onBack }) {
         middleName: "",
         surname: "",
         email: "",
-        email: "",
-        age: "",
         remarks: "",
         phone: "",
         dialCode: "",
@@ -99,7 +78,7 @@ export default function EditUserPage({ user, onBack }) {
         firstName: "",
         middleName: "",
         surname: "",
-        age: "",
+        dob: "",
         phone: "",
         userFile: "",
         alternatePhone: "",
@@ -157,9 +136,7 @@ export default function EditUserPage({ user, onBack }) {
 
         const parsedDob = user.user_dob
             ? dayjs(user.user_dob)
-            : MAX_DOB;
-        const calculatedAge =
-            parsedDob && parsedDob.isValid() ? dayjs().diff(parsedDob, "year") : "";
+            : (user.dob ? dayjs(user.dob) : MAX_DOB);
 
         setFormData({
             name: user.user_name || "",
@@ -167,7 +144,6 @@ export default function EditUserPage({ user, onBack }) {
             middleName: user.middleName || "",
             surname: user.surname || "",
             email: user.user_email || "",
-            age: calculatedAge,
             remarks: user.user_remarks || "",
             phone: String(user.user_phone || ""),
             dialCode: String(user.user_dialCode || "91"),
@@ -220,8 +196,7 @@ export default function EditUserPage({ user, onBack }) {
     };
 
     const handleDateChange = (date) => {
-        const calculatedAge = date && date.isValid() ? dayjs().diff(date, "year") : "";
-        setFormData((prev) => ({ ...prev, dob: date, age: calculatedAge }));
+        setFormData((prev) => ({ ...prev, dob: date }));
     };
 
     const handleImage = (e) => {
@@ -299,7 +274,7 @@ export default function EditUserPage({ user, onBack }) {
                         firstName: "",
                         middleName: "",
                         surname: "",
-                        age: "",
+                        dob: "",
                         status: "",
                         phone: "",
                         userFile: "",
@@ -320,7 +295,6 @@ export default function EditUserPage({ user, onBack }) {
                 payload.append("middleName", formData.middleName);
                 payload.append("surname", formData.surname);
                 // payload.append("email", formData.email);
-                payload.append("age", formData.age);
                 payload.append("phone", formData.phone);
                 payload.append("dialCode", formData.dialCode);
                 payload.append("status", formData.status);
@@ -530,7 +504,7 @@ export default function EditUserPage({ user, onBack }) {
                                         max={MAX_DOB.format("YYYY-MM-DD")}
                                         className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                                     />
-                                    {errors.age && <p className="mt-1 text-sm text-red-500">{errors.age}</p>}
+                                    {errors.dob && <p className="mt-1 text-sm text-red-500">{errors.dob}</p>}
                                 </div>
 
                                 {/* Profile Image */}

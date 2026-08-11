@@ -27,8 +27,8 @@ export class UserEntity {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
-  age!: number;
+  @Column({ type: 'date', nullable: true })
+  dob!: Date;
 
   @Column({ nullable: true })
   otp!: number;

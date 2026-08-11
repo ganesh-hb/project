@@ -8,6 +8,7 @@ import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import UomFormSidePanel from "./UomFormSidePanel";
 import UserSidePanel from "../user/UserSidePanel";
 
@@ -209,7 +210,10 @@ export default function UomDetails({ id }) {
                                     <div>
                                         <div className="text-sm text-gray-500">Company</div>
                                         <div className="text-[#101010] font-bold text-[#374151] mt-1">
-                                            {uom.companyName || uom.company?.companyName || "-"}
+                                            <LinkedCompanyCell
+                                                companyId={uom.companyId}
+                                                companyName={uom.companyName || uom.company?.companyName}
+                                            />
                                         </div>
                                     </div>
                                     <div>

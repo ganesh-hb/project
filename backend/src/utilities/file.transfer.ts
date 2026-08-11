@@ -102,11 +102,37 @@ export class FileTransfer {
 
       //await fss.move(source, dest, { overwrite: true });
       await fs.promises.rename(source, dest);
-      // await fs.promises.copyFile(source, dest)
+    } catch (error) {
+      return error;
+    }
+  }
 
-      //  await fs.promises.unlink(source)
+  async fileTransfer4(filename, id, fid?) {
+    const targetDir = `./upload/customer/${id}`;
+    try {
+      const source = path.join('./temp-upload', filename);
+      const dest = path.join(targetDir, filename);
+
+      if (fid && fs.existsSync(targetDir)) {
+        fs.readdir(`./upload/customer/${id}`, 'utf-8', (err, files) => {
+          if (!err && files) {
+            files.forEach((file) => {
+              if (file) {
+                fs.promises.unlink(`./upload/customer/${id}/` + file);
+              }
+            });
+          }
+        });
+      }
+
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+
+      await fs.promises.rename(source, dest);
     } catch (error) {
       return error;
     }
   }
 }
+

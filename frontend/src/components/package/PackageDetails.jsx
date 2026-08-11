@@ -8,6 +8,7 @@ import Header from "../Header";
 import { decryptResponse } from "@/app/lib/crypto";
 import { loginContext } from "../hooks/LoginContext";
 import Loader from "../ui/Loader";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import PackageFormSidePanel from "./PackageFormSidePanel";
 import UserSidePanel from "../user/UserSidePanel";
 
@@ -197,7 +198,10 @@ export default function PackageDetails({ id }) {
                                     <div>
                                         <div className="text-sm text-gray-500">Company</div>
                                         <div className="text-[#101010] font-bold text-[#374151] mt-1">
-                                            {pkg.companyName || pkg.company?.companyName || "-"}
+                                            <LinkedCompanyCell
+                                                companyId={pkg.companyId}
+                                                companyName={pkg.companyName || pkg.company?.companyName}
+                                            />
                                         </div>
                                     </div>
                                     <div className="sm:col-span-2">

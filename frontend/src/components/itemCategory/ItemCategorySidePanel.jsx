@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { authHeaders } from "@/app/lib/auth";
 import { decryptResponse } from "@/app/lib/crypto";
 import SidePanel from "../common/SidePanel";
+import LinkedCompanyCell from "../common/LinkedCompanyCell";
 import { formatDate } from "@/lib/utils";
 import { loginContext } from "../hooks/LoginContext";
 
@@ -89,6 +90,15 @@ export default function ItemCategorySidePanel({ itemCategoryId, onClose, onSelec
                       { label: "Category Code", value: category.itemCategoryCode || "-" },
                       { label: "Category Name", value: category.itemCategoryName || "-" },
                       { label: "Parent Category", value: parentDisplayValue },
+                      {
+                          label: "Company",
+                          value: (
+                              <LinkedCompanyCell
+                                  companyId={category.companyId}
+                                  companyName={category.companyName || category.company?.companyName}
+                              />
+                          ),
+                      },
                       { label: "Type", value: category.type || "-" },
                   ],
               },

@@ -241,23 +241,21 @@ export default function PackageFormSidePanel({
     return createPortal(
         <div className="fixed inset-0 z-50 overflow-hidden">
             <div
-                className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
-                    isOpen ? "opacity-100" : "opacity-0"
-                }`}
-                onClick={handleClose}
+                className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"
+                    }`}
+                onClick={onClose}
             />
 
             <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
                 <div
-                    className={`w-screen max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${
-                        isOpen ? "translate-x-0" : "translate-x-full"
-                    }`}
+                    className={`w-screen max-w-md bg-white shadow-2xl flex flex-col transform transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"
+                        }`}
                 >
                     {/* Header */}
                     <div className="px-6 py-5 bg-[#1f2937] text-white flex items-center justify-between">
                         <h2 className="text-xl font-semibold">{config.title}</h2>
                         <button
-                            onClick={handleClose}
+                            onClick={onClose}
                             className="text-gray-300 hover:text-white rounded-lg p-1 transition cursor-pointer"
                         >
                             ✕
@@ -291,9 +289,8 @@ export default function PackageFormSidePanel({
                                                         value={formData[field.name]}
                                                         onChange={handleChange}
                                                         disabled={field.readOnly || companiesLoading}
-                                                        className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${
-                                                            errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                        } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                        className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                            } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                                     >
                                                         <option value="">Select Company</option>
                                                         {companies.map((c) => (
@@ -328,9 +325,8 @@ export default function PackageFormSidePanel({
                                                     value={formData[field.name]}
                                                     onChange={handleChange}
                                                     disabled={field.readOnly}
-                                                    className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${
-                                                        errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                    } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                    className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                        } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                                 >
                                                     {field.options.map((opt) => (
                                                         <option key={opt.value} value={opt.value}>
@@ -358,9 +354,8 @@ export default function PackageFormSidePanel({
                                                     readOnly={field.readOnly}
                                                     placeholder={field.placeholder}
                                                     rows={3}
-                                                    className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition resize-none ${
-                                                        errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                    } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                    className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition resize-none ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                        } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                                 />
                                                 {errors[field.name] && (
                                                     <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>
@@ -381,9 +376,8 @@ export default function PackageFormSidePanel({
                                                 onChange={handleChange}
                                                 readOnly={field.readOnly}
                                                 placeholder={field.placeholder}
-                                                className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${
-                                                    errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
-                                                } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
+                                                className={`w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none transition ${errors[field.name] ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                                                    } ${field.readOnly ? "bg-gray-100 text-gray-500 cursor-not-allowed" : "bg-white text-gray-800"}`}
                                             />
                                             {errors[field.name] && (
                                                 <p className="mt-1 text-sm text-red-500">{errors[field.name]}</p>

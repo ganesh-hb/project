@@ -54,6 +54,11 @@ const MODULES = [
         key: "package",
         permissions: ["packageList", "packageView", "packageAdd", "packageUpdate"],
     },
+    {
+        label: "Customer",
+        key: "customer",
+        permissions: ["customerList", "customerView", "customerAdd", "customerUpdate"],
+    },
 ];
 
 const COL_HEADERS = ["List", "View", "Add", "Update"];

@@ -40,8 +40,7 @@ export default function SiteMap() {
                 { label: "Item Category", redirectTo: "/item-category-list", show: permissions.includes("itemCategoryList") },
                 { label: "Manufacturer", redirectTo: "/manufacturer-list", show: permissions.includes("manufacturerList") },
                 { label: "Brand", redirectTo: "/brand-list", show: permissions.includes("brandList") },
-                // { label: "UOM", redirectTo: "/uom-list", show: permissions.includes("uomList") },
-                // { label: "Package", redirectTo: "/package-list", show: permissions.includes("packageList") },
+
             ],
         },
         {
@@ -49,6 +48,7 @@ export default function SiteMap() {
             items: [
                 { label: "Users", redirectTo: "/users", show: permissions.includes("userList") || superAdmin },
                 { label: "Roles", redirectTo: "/roles", show: permissions.includes("groupList") || superAdmin },
+                { label: "Customers", redirectTo: "/customer-list", show: permissions.includes("customerList") },
             ],
         },
         {
@@ -63,6 +63,14 @@ export default function SiteMap() {
                 { label: "Currencies", redirectTo: "/currency-list", show: permissions.includes("currencyList") || superAdmin },
             ],
         },
+        {
+            title: "Item Unit",
+            items: [
+                { label: "Item UOM", redirectTo: "/uom-list", show: permissions.includes("uomList") },
+                { label: "Package Type", redirectTo: "/package-list", show: permissions.includes("packageList") },
+            ],
+        },
+
     ];
 
     const dashboardSections = rawSections.filter((s) => s.items.some((i) => i.show));
@@ -124,7 +132,7 @@ export default function SiteMap() {
                                         </h3>
                                     </div>
 
-                                    <ul className="space-y-3 px-6 py-5">
+                                    <ul className="space-y-3 px-6 py-3">
                                         {section.items.filter((i) => i.show).map((item, itemIndex) => (
                                             <li
                                                 key={itemIndex}

@@ -33,6 +33,7 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
             title: "Users",
             items: [
                 { label: "Users", redirectTo: "/users", show: activePermissions.includes("userList") },
+                { label: "Customers", redirectTo: "/customer-list", show: activePermissions.includes("customerList") },
             ]
         },
         {
@@ -48,8 +49,14 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                         { label: "Item Category", redirectTo: "/item-category-list", show: activePermissions.includes("itemCategoryList") },
                         { label: "Manufacturer", redirectTo: "/manufacturer-list", show: activePermissions.includes("manufacturerList") },
                         { label: "Brand", redirectTo: "/brand-list", show: activePermissions.includes("brandList") },
-                        // { label: "UOM", redirectTo: "/uom-list", show: activePermissions.includes("uomList") },
-                        // { label: "Package", redirectTo: "/package-list", show: activePermissions.includes("packageList") },
+
+                    ]
+                },
+                {
+                    groupLabel: "Item Unit",
+                    children: [
+                        { label: "UOM", redirectTo: "/uom-list", show: activePermissions.includes("uomList") },
+                        { label: "Package", redirectTo: "/package-list", show: activePermissions.includes("packageList") },
                     ]
                 },
             ]
