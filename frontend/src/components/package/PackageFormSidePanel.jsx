@@ -12,7 +12,7 @@ import { loginContext } from "../hooks/LoginContext";
 import { packageFormConfig } from "./configs/packageForm.config";
 import Loader from "../ui/Loader";
 
-const MySwal = withReactContent(Swal);
+const getMySwal = () => withReactContent(Swal);
 
 export default function PackageFormSidePanel({
     isOpen,
@@ -77,7 +77,7 @@ export default function PackageFormSidePanel({
     }, [isOpen, context, id]);
 
     const handleClose = async () => {
-        const result = await MySwal.fire({
+        const result = await getMySwal().fire({
             title: "Discard changes?",
             text: "Any unsaved data will be lost.",
             icon: "warning",
@@ -179,7 +179,7 @@ export default function PackageFormSidePanel({
         }
 
         const isUpdate = config.mode === "update";
-        const confirmRes = await MySwal.fire({
+        const confirmRes = await getMySwal().fire({
             title: isUpdate ? "Update Package?" : "Add Package?",
             text: isUpdate
                 ? "Are you sure you want to save these changes?"

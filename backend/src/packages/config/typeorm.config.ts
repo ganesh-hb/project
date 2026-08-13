@@ -19,6 +19,8 @@ import { UomEntity } from 'src/item_uom/entity/uom.entity';
 import { PackageEntity } from 'src/package_master/entity/package.entity';
 import { CustomerEntity } from 'src/customer/entity/customer.entity';
 import { CustomerCurrencyEntity } from 'src/customer/entity/customer.currency.entity';
+import { ItemEntity } from 'src/item/entity/item.entity';
+import { ItemImageEntity } from 'src/item/entity/item.image.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: (process.env.DB_CLIENT as 'mysql') ?? 'mysql',
@@ -45,6 +47,8 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
     PackageEntity,
     CustomerEntity,
     CustomerCurrencyEntity,
+    ItemEntity,
+    ItemImageEntity,
   ],
   synchronize: true, 
   migrationsRun: true,

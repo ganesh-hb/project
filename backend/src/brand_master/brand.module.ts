@@ -8,6 +8,7 @@ import { Filter } from "src/utilities/filter";
 import { BrandController } from "./brand.controller";
 import { BrandService } from "./brand.service";
 import { BrandEntity } from "./entity/brand.entity";
+import { ItemEntity } from "src/item/entity/item.entity";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { BrandEntity } from "./entity/brand.entity";
       BrandEntity,
       UserCompanyGroupEntity,
       UserEntity,
+      ItemEntity,
       GroupPermissionEntity,
     ]),
   ],

@@ -12,14 +12,16 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { UserModule } from './user/user.module';
 import { CurrencyModule } from './currency/currency.module';
-import { ItemCategoryModule } from './item_category/item.module';
+import { ItemCategoryModule } from './item_category/item.category.module';
 import { ManufacturerModule } from './manufacturer/manufacturer.module';
 import { BrandModule } from './brand_master/brand.module';
 import { UomModule } from './item_uom/uom.module';
 import { PackageModule } from './package_master/package.module';
 import { CustomerModule } from './customer/customer.module';
+import { ItemModule } from './item/item.module';
 import { PermissionEntity } from './group/entity/capability.entity';
 import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
+import { ItemEntity } from './item/entity/item.entity';
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { ActivityMasterEntity } from './activity/entity/activity-master.entity';
     UomModule,
     PackageModule,
     CustomerModule,
+    ItemModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -11,7 +11,7 @@ import { loginContext } from "../hooks/LoginContext";
 import { manufacturerFormConfig } from "./configs/manufacturerForm.config";
 import Loader from "../ui/Loader";
 
-const MySwal = withReactContent(Swal);
+const getMySwal = () => withReactContent(Swal);
 
 export default function ManufacturerFormSidePanel({
     isOpen,
@@ -109,7 +109,7 @@ export default function ManufacturerFormSidePanel({
             e.preventDefault();
         }
         if (flag) {
-            const result = await MySwal.fire({
+            const result = await getMySwal().fire({
                 title: "Discard changes?",
                 text: "Any unsaved data will be lost.",
                 icon: "warning",

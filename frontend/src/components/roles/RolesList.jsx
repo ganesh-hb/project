@@ -16,18 +16,35 @@ import { Plus } from "lucide-react";
 
 const LIMIT = 10;
 
+function GroupNameCell({ row }) {
+    const router = useRouter();
+    const { can } = useContext(loginContext);
+    const group = row.original;
+    const isClickable = can ? (can("groupUpdate") || can("groupView")) : true;
+
+    return (
+        <span
+            className={`font-semibold ${
+                isClickable
+                    ? "text-blue-600 cursor-pointer hover:underline"
+                    : "text-gray-800"
+            }`}
+            onClick={(e) => {
+                if (!isClickable) return;
+                e.stopPropagation();
+                router.push(`/roles/${group.groupId}`);
+            }}
+        >
+            {group.groupName ? group.groupName.replace(/([A-Z])/g, " $1").trim() : "-"}
+        </span>
+    );
+}
+
 const roleColumns = [
     {
         accessorKey: "groupName",
         header: "Group Name",
-        cell: ({ row }) => {
-            const group = row.original;
-            return (
-                <span className="font-semibold text-blue-600 hover:underline">
-                    {group.groupName ? group.groupName.replace(/([A-Z])/g, " $1").trim() : "-"}
-                </span>
-            );
-        },
+        cell: ({ row }) => <GroupNameCell row={row} />,
         filterFn: "includesString",
     },
     {

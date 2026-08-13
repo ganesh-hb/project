@@ -12,7 +12,7 @@ import { loginContext } from "../hooks/LoginContext";
 import { uomFormConfig } from "./configs/uomForm.config";
 import Loader from "../ui/Loader";
 
-const MySwal = withReactContent(Swal);
+const getMySwal = () => withReactContent(Swal);
 
 export default function UomFormSidePanel({
     isOpen,
@@ -77,7 +77,7 @@ export default function UomFormSidePanel({
     }, [isOpen, context, id]);
 
     const handleClose = async () => {
-        const result = await MySwal.fire({
+        const result = await getMySwal().fire({
             title: "Discard changes?",
             text: "Any unsaved data will be lost.",
             icon: "warning",
@@ -180,7 +180,7 @@ export default function UomFormSidePanel({
         }
 
         const isUpdate = config.mode === "update";
-        const confirmRes = await MySwal.fire({
+        const confirmRes = await getMySwal().fire({
             title: isUpdate ? "Update UOM?" : "Add UOM?",
             text: isUpdate
                 ? "Are you sure you want to save these changes?"

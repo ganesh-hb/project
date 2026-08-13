@@ -15,6 +15,7 @@ import { BrandEntity } from 'src/brand_master/entity/brand.entity';
 import { UomEntity } from 'src/item_uom/entity/uom.entity';
 import { PackageEntity } from 'src/package_master/entity/package.entity';
 import { CustomerEntity } from 'src/customer/entity/customer.entity';
+import { ItemEntity } from 'src/item/entity/item.entity';
 
 @Entity('company')
 export class CompanyEntity {
@@ -120,5 +121,8 @@ export class CompanyEntity {
 
   @OneToMany(()=>CustomerEntity,(customer)=>customer.company)
   customers?:CustomerEntity[];
+
+  @OneToMany(() => ItemEntity, (item) => item.company)
+  items?: ItemEntity[];
 }
 
