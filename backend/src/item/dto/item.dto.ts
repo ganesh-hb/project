@@ -106,10 +106,10 @@ export class ItemDto {
   @Transform(({ value }) => Number(value))
   sourceCurrencyId!: number;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
   @Transform(({ value }) => Number(value))
-  conversionRate!: number;
+  conversionRate?: number;
 
   @IsOptional()
   @IsEnum(IsDecimalAllowed)

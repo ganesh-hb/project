@@ -55,6 +55,11 @@ const MODULES = [
         permissions: ["packageList", "packageView", "packageAdd", "packageUpdate"],
     },
     {
+        label: "Item",
+        key: "item",
+        permissions: ["itemList", "itemView", "itemAdd", "itemUpdate"],
+    },
+    {
         label: "Customer",
         key: "customer",
         permissions: ["customerList", "customerView", "customerAdd", "customerUpdate"],

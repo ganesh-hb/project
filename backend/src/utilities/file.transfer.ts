@@ -134,5 +134,28 @@ export class FileTransfer {
       return error;
     }
   }
+
+  async fileTransferItem(filename, id) {
+    const targetDir = `./upload/item/${id}`;
+    try {
+      const source = path.join('./temp-upload', filename);
+      const dest = path.join(targetDir, filename);
+
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+
+      if (fs.existsSync(source)) {
+        try {
+          await fs.promises.rename(source, dest);
+        } catch {
+          await fs.promises.copyFile(source, dest);
+          await fs.promises.unlink(source);
+        }
+      }
+    } catch (error) {
+      return error;
+    }
+  }
 }
 

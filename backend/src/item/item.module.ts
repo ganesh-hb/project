@@ -13,6 +13,7 @@ import { PackageEntity } from "src/package_master/entity/package.entity";
 import { UserCompanyGroupEntity } from "src/packages/entity/user.company.group.entity";
 import { UserEntity } from "src/user/entity/user.entity";
 import { Filter } from "src/utilities/filter";
+import { FileTransfer } from "src/utilities/file.transfer";
 import { ItemController } from "./item.controller";
 import { ItemService } from "./item.service";
 
@@ -34,7 +35,7 @@ import { ItemService } from "./item.service";
     ]),
   ],
   controllers: [ItemController],
-  providers: [ItemService, Filter],
+  providers: [ItemService, Filter, FileTransfer],
   exports: [TypeOrmModule],
 })
 export class ItemModule {}

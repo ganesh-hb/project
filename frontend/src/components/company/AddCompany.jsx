@@ -53,6 +53,7 @@ export default function AddCompany() {
     const fileInputRef = useRef(null);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [response, setResponse] = useState("")
 
     const [countries] = useState(Country.getAllCountries());
     const [states, setStates] = useState([]);
@@ -239,16 +240,22 @@ export default function AddCompany() {
                     body: payload,
                 });
 
-                const data = await response.json();
                 if (response.status === 401 || response.status === 403) {
                     router.push("/forbidden");
                     return;
                 }
-                if (response.ok && data?.settings?.success === 1) {
+
+                const resJson = await response.json();
+                const data = resJson?.encrypted ? decryptResponse(resJson.encrypted) : resJson;
+                console.log(data.data)
+                if (response.ok && (data?.success === 1 || data?.status === 1 || data?.settings?.success === 1)) {
                     toast.success("Company created successfully", { position: "top-right" });
                     setTimeout(() => router.push("/company-list"), 1000);
                 } else {
-                    toast.error(data?.message || "Failed to create company.", { position: "top-right" });
+                    const msg = Array.isArray(data?.message)
+                        ? data.message.join(", ")
+                        : (data?.message || data?.settings?.message || "Failed to create company.");
+                    toast.error(msg, { position: "top-right" });
                 }
             } catch (err) {
                 toast.error(`${err}`, { position: "top-right" });

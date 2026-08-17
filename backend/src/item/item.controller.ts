@@ -70,7 +70,8 @@ export class ItemController {
     @Body() body: ItemUpdateDto,
     @UploadedFiles() itemImages: Express.Multer.File[],
   ) {
-    const result = await this.itemService.updateItem(body, req, itemImages);
+    const param = { ...body, updatedBy: req.user.userId };
+    const result = await this.itemService.updateItem(param, req, itemImages);
     return { encrypted: encryptResponse(result) };
   }
 }

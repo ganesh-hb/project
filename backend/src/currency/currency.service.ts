@@ -87,6 +87,20 @@ export class CurrencyService {
   }
   
 
+  async getCurrencyRate(curId: number) {
+    const currency = await this.currencyEntity.findOne({ where: { curId } });
+    if (!currency) {
+      throw new NotFoundException('Currency not found');
+    }
+    return {
+      curId: currency.curId,
+      code: currency.code,
+      name: currency.name,
+      symbol: currency.symbol,
+      conversionRate: currency.conversionRate,
+    };
+  }
+
   async insertCurrency(params: CurrencyDto, req?: any) {
     try {
       if (params.code) {

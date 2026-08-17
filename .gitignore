@@ -35,7 +35,7 @@ temp-upload/
 backend/upload/
 backend/temp-upload/
 
-# Package lock files (optional - uncomment if you want to track them)
+# Package lock files 
 # package-lock.json
 
 # Coverage

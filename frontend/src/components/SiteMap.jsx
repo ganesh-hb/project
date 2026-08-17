@@ -37,9 +37,10 @@ export default function SiteMap() {
         {
             title: "Item Management",
             items: [
-                { label: "Item Category", redirectTo: "/item-category-list", show: permissions.includes("itemCategoryList") },
-                { label: "Manufacturer", redirectTo: "/manufacturer-list", show: permissions.includes("manufacturerList") },
-                { label: "Brand", redirectTo: "/brand-list", show: permissions.includes("brandList") },
+                { label: "Item Category", redirectTo: "/item-category-list", show: permissions.includes("itemCategoryList") || superAdmin },
+                { label: "Manufacturer", redirectTo: "/manufacturer-list", show: permissions.includes("manufacturerList") || superAdmin },
+                { label: "Brand", redirectTo: "/brand-list", show: permissions.includes("brandList") || superAdmin },
+                { label: "Item", redirectTo: "/item-list", show: permissions.includes("itemList") || superAdmin },
 
             ],
         },

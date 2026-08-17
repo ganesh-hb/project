@@ -17,6 +17,7 @@ import { CurrencyEntity } from 'src/currency/entity/currency.entity';
 import { resolveAuthContext } from 'src/utilities/auth-helper';
 import { CompanyEntity } from 'src/company/entity/company.entity';
 import { generateBarcodeImage } from 'src/utilities/barcode.util';
+import { FileTransfer } from 'src/utilities/file.transfer';
 import { ItemEntity } from './entity/item.entity';
 import { ItemImageEntity } from './entity/item.image.entity';
 import { ItemDto, ItemListDto, ItemUpdateDto } from './dto/item.dto';
@@ -37,6 +38,7 @@ export class ItemService {
     @InjectRepository(UserEntity)
     private readonly userEntity: Repository<UserEntity>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly fileTransfer: FileTransfer,
   ) {}
 
   @Inject()
@@ -105,7 +107,7 @@ export class ItemService {
       queryBuilder.leftJoinAndSelect('item.manufacturer', 'manufacturer');
       queryBuilder.leftJoinAndSelect('item.brand', 'brand');
       queryBuilder.leftJoinAndSelect('item.itemUomRel', 'itemUomRel');
-      queryBuilder.leftJoinAndSelect('item.packageUomRel', 'packageUomRel');
+      queryBuilder.leftJoinAndSelect('item.packageRel', 'packageRel');
       queryBuilder.leftJoinAndSelect('item.currency', 'currency');
       queryBuilder.leftJoinAndSelect('item.images', 'images');
       queryBuilder.skip(skip).take(limit);
@@ -122,7 +124,7 @@ export class ItemService {
           manufacturerName: item.manufacturer?.manufacturerName ?? null,
           brandName: item.brand?.brandName ?? null,
           itemUomName: item.itemUomRel?.uomName ?? null,
-          packageUomName: item.packageUomRel?.uomName ?? null,
+          packageName: item.packageRel?.packageName ?? null,
           currencyName: item.currency?.name ?? null,
           currencyCode: item.currency?.code ?? null,
           currencySymbol: item.currency?.symbol ?? null,
@@ -152,7 +154,7 @@ export class ItemService {
         'manufacturer',
         'brand',
         'itemUomRel',
-        'packageUomRel',
+        'packageRel',
         'currency',
         'images',
       ],
@@ -160,6 +162,10 @@ export class ItemService {
     if (!item) {
       throw new NotFoundException('Item not found');
     }
+
+    const baseCurrency = await this.currencyEntity.findOne({
+      where :{code:process.env.CURRENCY_CONVERSION || "INR"}
+    })
 
     if (!authCtx.isSuperAdmin) {
       const scopedCompanyIds = req?.scopedCompanyIds || [
@@ -188,13 +194,15 @@ export class ItemService {
       manufacturerName: item.manufacturer?.manufacturerName ?? null,
       brandName: item.brand?.brandName ?? null,
       itemUomName: item.itemUomRel?.uomName ?? null,
-      packageUomName: item.packageUomRel?.uomName ?? null,
+      packageName: item.packageRel?.packageName ?? null,
       currencyName: item.currency?.name ?? null,
       currencyCode: item.currency?.code ?? null,
       currencySymbol: item.currency?.symbol ?? null,
       primaryImage: primaryImg ? primaryImg.itemImageUrl : null,
       addedByName: addedByUser?.name ?? null,
       updatedByName: updatedByUser?.name ?? null,
+      baseCurrencySymbol:baseCurrency?.symbol ?? null,
+      baseCurrencyCode : baseCurrency?.symbol ?? null
     };
   }
 
@@ -224,8 +232,7 @@ export class ItemService {
       });
       const companyCode = company?.companyCode ?? '';
       const barcodeText = `${companyCode}${itemCode}`;
-
-      // Generate barcode image buffer purely to verify utility functionality
+      
       const barcodeImage = await generateBarcodeImage(barcodeText);
 
       const performerId = req?.user?.isImpersonation
@@ -234,6 +241,13 @@ export class ItemService {
       const performerEmail = req?.user?.isImpersonation
         ? req?.user?.impersonatorEmail
         : (req?.user?.email ?? '');
+
+      const srcCurrency = await this.currencyEntity.findOne({
+        where: { curId: Number(params.sourceCurrencyId) },
+      });
+      const conversionRate = srcCurrency?.conversionRate ?? 1;
+      const convertedPurchasePrice = Number(params.purchasePrice) / conversionRate;
+      const convertedCostPerUnit = Number(params.costPerUnit) / conversionRate;
 
       const queryParams: any = {
         itemCode,
@@ -248,7 +262,9 @@ export class ItemService {
         purchasePrice: params.purchasePrice,
         costPerUnit: params.costPerUnit,
         sourceCurrencyId: Number(params.sourceCurrencyId),
-        conversionRate: params.conversionRate,
+        conversionRate,
+        convertedPurchasePrice,
+        convertedCostPerUnit,
       };
 
       if (params.packageUom !== undefined && params.packageUom !== null) {
@@ -273,26 +289,10 @@ export class ItemService {
 
       // Handle image uploads
       if (itemImages && itemImages.length > 0 && insertId) {
-        const targetDir = `./upload/item/${insertId}`;
-        if (!fs.existsSync(targetDir)) {
-          fs.mkdirSync(targetDir, { recursive: true });
-        }
-
         for (let idx = 0; idx < itemImages.length; idx++) {
           const file = itemImages[idx];
           const filename = file.filename || file.originalname;
-          const sourcePath = file.path || path.join('./temp-upload', filename);
-          const destPath = path.join(targetDir, filename);
-
-          try {
-            if (fs.existsSync(sourcePath)) {
-              await fs.promises.rename(sourcePath, destPath);
-            }
-          } catch {
-            // Fallback copy if rename fails
-            await fs.promises.copyFile(sourcePath, destPath);
-            await fs.promises.unlink(sourcePath);
-          }
+          await this.fileTransfer.fileTransferItem(filename, insertId);
 
           const itemImageUrl = `/upload/item/${insertId}/${filename}`;
           const isParent = idx === 0 ? 0 : insertId;
@@ -374,7 +374,6 @@ export class ItemService {
       if (params.purchasePrice !== undefined) queryParams.purchasePrice = params.purchasePrice;
       if (params.costPerUnit !== undefined) queryParams.costPerUnit = params.costPerUnit;
       if (params.sourceCurrencyId !== undefined) queryParams.sourceCurrencyId = Number(params.sourceCurrencyId);
-      if (params.conversionRate !== undefined) queryParams.conversionRate = params.conversionRate;
       if (params.isDecimalAllowed !== undefined) queryParams.isDecimalAllowed = params.isDecimalAllowed;
       if (params.checkShelfLife !== undefined) queryParams.checkShelfLife = params.checkShelfLife;
       if (params.shelfLifeUnit !== undefined) queryParams.shelfLifeUnit = params.shelfLifeUnit;
@@ -384,6 +383,31 @@ export class ItemService {
       if (params.archive !== undefined) queryParams.archive = params.archive;
       if (params.status !== undefined) queryParams.status = params.status;
 
+      // Recompute conversionRate + converted prices whenever any of the three price-related fields change
+      if (
+        params.sourceCurrencyId !== undefined ||
+        params.purchasePrice !== undefined ||
+        params.costPerUnit !== undefined
+      ) {
+        const effectiveCurrencyId = params.sourceCurrencyId !== undefined
+          ? Number(params.sourceCurrencyId)
+          : existingItem.sourceCurrencyId;
+        const effectivePurchasePrice = params.purchasePrice !== undefined
+          ? Number(params.purchasePrice)
+          : Number(existingItem.purchasePrice);
+        const effectiveCostPerUnit = params.costPerUnit !== undefined
+          ? Number(params.costPerUnit)
+          : Number(existingItem.costPerUnit);
+
+        const srcCurrency = await this.currencyEntity.findOne({
+          where: { curId: effectiveCurrencyId },
+        });
+        const conversionRate = srcCurrency?.conversionRate ?? 1;
+        queryParams.conversionRate = conversionRate;
+        queryParams.convertedPurchasePrice = effectivePurchasePrice / conversionRate;
+        queryParams.convertedCostPerUnit = effectiveCostPerUnit / conversionRate;
+      }
+      console.log(req?.user,"user details")
       const performerId = req?.user?.isImpersonation
         ? req?.user?.impersonatedBy
         : (req?.user?.userId ?? params.updatedBy);
@@ -427,25 +451,10 @@ export class ItemService {
         });
         const hasPrimary = !!existingPrimary;
 
-        const targetDir = `./upload/item/${itemId}`;
-        if (!fs.existsSync(targetDir)) {
-          fs.mkdirSync(targetDir, { recursive: true });
-        }
-
         for (let idx = 0; idx < itemImages.length; idx++) {
           const file = itemImages[idx];
           const filename = file.filename || file.originalname;
-          const sourcePath = file.path || path.join('./temp-upload', filename);
-          const destPath = path.join(targetDir, filename);
-
-          try {
-            if (fs.existsSync(sourcePath)) {
-              await fs.promises.rename(sourcePath, destPath);
-            }
-          } catch {
-            await fs.promises.copyFile(sourcePath, destPath);
-            await fs.promises.unlink(sourcePath);
-          }
+          await this.fileTransfer.fileTransferItem(filename, itemId);
 
           const itemImageUrl = `/upload/item/${itemId}/${filename}`;
 

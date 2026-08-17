@@ -50,3 +50,12 @@ export function formatDate(dateString) {
   const strTime = String(hours).padStart(2, "0") + ":" + minutes + " " + ampm;
   return `${day}/${month}/${year} ${strTime}`;
 }
+
+export function getImageUrl(path) {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("blob:") || path.startsWith("data:")) {
+    return path;
+  }
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `http://localhost:4000${cleanPath}`;
+}

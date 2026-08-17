@@ -9,6 +9,7 @@ function getServiceBase(request) {
     if (module === "activity") return "http://localhost:4000/activity";
     if (module === "currency") return "http://localhost:4000/currency";
     if (module === "item-category") return "http://localhost:4000/item-category";
+    if (module === "item") return "http://localhost:4000/item";
     if (module === "manufacturer") return "http://localhost:4000/manufacturer";
     if (module === "brand") return "http://localhost:4000/brand";
     if (module === "uom") return "http://localhost:4000/uom";

@@ -54,16 +54,25 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                     { id: "groupCode", label: "Group Code" },
                     { id: "status", label: "Status" }
                 ]
-                : [
-                    { id: "name", label: "Name" },
-                    { id: "email", label: "Email" },
-                    { id: "phone", label: "Phone" },
-                    { id: "groupName", label: "Group Name" },
-                    { id: "status", label: "Status" }
-                ];
+                : page === "items"
+                    ? [
+                        { id: "itemName", label: "Item Name" },
+                        { id: "itemCode", label: "Item Code" },
+                        { id: "barcode", label: "Barcode" },
+                        { id: "categoryName", label: "Category" },
+                        { id: "companyName", label: "Company" },
+                        { id: "status", label: "Status" }
+                    ]
+                    : [
+                        { id: "name", label: "Name" },
+                        { id: "email", label: "Email" },
+                        { id: "phone", label: "Phone" },
+                        { id: "groupName", label: "Group Name" },
+                        { id: "status", label: "Status" }
+                    ];
 
     const defaultField = fieldsConfig[0]?.id || "name";
-    const isListPage = page === "users" || page === "companies" || page === "currencies" || page === "groups";
+    const isListPage = page === "users" || page === "companies" || page === "currencies" || page === "groups" || page === "items";
 
     const [hasMounted, setHasMounted] = useState(false);
     useEffect(() => {
@@ -352,7 +361,8 @@ export default function Header({ onSearch, page, viewMode, onViewModeChange, onA
                             companies: { perm: "companyAdd", label: "Add Company" },
                             users: { perm: "userAdd", label: "Add User" },
                             groups: { perm: "groupAdd", label: "Add Group" },
-                            currencies: { perm: "currencyAdd", label: "Add Currency" }
+                            currencies: { perm: "currencyAdd", label: "Add Currency" },
+                            items: { perm: "itemAdd", label: "Add Item" }
                         };
 
                         const currentAddConfig = addBtnConfigs[page];

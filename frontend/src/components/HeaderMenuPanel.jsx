@@ -49,7 +49,7 @@ export default function HeaderMenuPanel({ isOpen, onClose, hasMounted }) {
                         { label: "Item Category", redirectTo: "/item-category-list", show: activePermissions.includes("itemCategoryList") },
                         { label: "Manufacturer", redirectTo: "/manufacturer-list", show: activePermissions.includes("manufacturerList") },
                         { label: "Brand", redirectTo: "/brand-list", show: activePermissions.includes("brandList") },
-
+                        { label: "Items", redirectTo: "/item-list", show: activePermissions.includes("itemList") },
                     ]
                 },
                 {

@@ -3,6 +3,7 @@ import { ItemCategoryEntity } from "src/item_category/entity/item-category.entit
 import { ManufacturerEntity } from "src/manufacturer/entity/manufacturer.entity";
 import { BrandEntity } from "src/brand_master/entity/brand.entity";
 import { UomEntity } from "src/item_uom/entity/uom.entity";
+import { PackageEntity } from "src/package_master/entity/package.entity";
 import { CurrencyEntity } from "src/currency/entity/currency.entity";
 import { ItemImageEntity } from "./item.image.entity";
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
@@ -95,15 +96,21 @@ export class ItemEntity {
     @Column({ nullable: true })
     packageUom?: number;
 
-    @ManyToOne(() => UomEntity, { onDelete: 'RESTRICT', nullable: true })
+    @ManyToOne(() => PackageEntity, { onDelete: 'RESTRICT', nullable: true })
     @JoinColumn({ name: 'packageUom' })
-    packageUomRel?: UomEntity;
+    packageRel?: PackageEntity;
 
     @Column('decimal', { precision: 10, scale: 2 })
     purchasePrice!: number;
 
     @Column('decimal', { precision: 10, scale: 2 })
     costPerUnit!: number;
+
+    @Column('decimal', { precision: 10, scale: 2, nullable: true })
+    convertedPurchasePrice?: number;
+
+    @Column('decimal', { precision: 10, scale: 2, nullable: true })
+    convertedCostPerUnit?: number;
 
     @Column({
         type: "enum",

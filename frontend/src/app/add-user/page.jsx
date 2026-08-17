@@ -176,7 +176,6 @@ export default function AddUserPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const result = AddFormSchema.safeParse(formData);
-        console.log(result)
 
 
         try {

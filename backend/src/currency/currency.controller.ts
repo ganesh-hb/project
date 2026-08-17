@@ -25,6 +25,14 @@ export class CurrencyController {
     return { encrypted: encryptResponse(result) };
   }
 
+  @Get('currency-rate/:id')
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermission('currencyList')
+  async getCurrencyRate(@Req() req, @Param('id') id: string) {
+    const result = await this.currencyService.getCurrencyRate(Number(id));
+    return { encrypted: encryptResponse(result) };
+  }
+
   @Post('currency-add')
   @UseGuards(AuthGuard('jwt'), PermissionsGuard)
   @RequirePermission('currencyAdd')
